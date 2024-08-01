@@ -1,0 +1,16 @@
+# Asegura que todos los archivos de texto usen LF en el repositorio
+* text=auto
+
+# Archivos específicos que deben usar LF
+*.sh text eol=lf
+*.php text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+
+# Archivos binarios que no deben ser convertidos
+*.jpg binary
+*.png binary
+*.gif binary
+*.pdf binary
+*.zip binary
