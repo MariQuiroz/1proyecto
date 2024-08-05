@@ -2,6 +2,15 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Estudiante extends CI_Controller {
+	public function demo(){
+		$lista=$this->estudiante_model->listaestudiantes();
+		$data['alumnos']=$lista;
+
+		$this->load->view('inc/vistaslte/head');
+		$this->load->view('inc/vistaslte/menu');
+		$this->load->view('inc/vistaslte/test');
+		$this->load->view('inc/vistaslte/footer');
+	}
 
 	public function curso()
 	{
@@ -43,13 +52,13 @@ class Estudiante extends CI_Controller {
         $data['nota']=$_POST['nota'];
 
 		$this->estudiante_model->agregarestudiante($data);
-        redirect('estudiante/curso','refresh');
+        redirect('estudiante/demo','refresh');
 	}
     public function eliminarbd()
 	{
 		$idestudiante=$_POST['idestudiante'];
 		$this->estudiante_model->eliminarestudiante($idestudiante);
-        redirect('estudiante/curso','refresh');
+        redirect('estudiante/demo','refresh');
 	}
 	public function modificar()
 	{
@@ -71,7 +80,7 @@ class Estudiante extends CI_Controller {
         $data['nota']=$_POST['nota'];
 
 		$this->estudiante_model->modificarestudiante($idestudiante,$data);
-		redirect('estudiante/curso','refresh');
+		redirect('estudiante/demo','refresh');
 	}
 	public function deshabilitarbd()
 	{

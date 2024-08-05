@@ -1,9 +1,5 @@
 
 		<h1>Lista de Estudiantes</h1>
-		<br>
-		<?php 
-		echo date ('Y/m/d H:i:s');
-		?>
         <br>
 		<a href="<?php echo base_url(); ?>index.php/estudiante/deshabilitados">
         <button type="button" class="btn btn-warning">ver deshabilitados</button>
@@ -21,11 +17,9 @@
 				<th>Primer Apellido</th>
 				<th>Segundo Apellido</th>
 				<th>Nota</th>
-				<th>Creado</th>
 				<th>Modificar</th>
 				<th>Eliminar</th>
 				<th>Deshabilitar</th>
-				
 			</thead>
 			<tbody>
 				<?php
@@ -38,11 +32,7 @@
 					<td><?php echo $row->nombre; ?></td>
 					<td><?php echo $row->primerApellido; ?></td>
 					<td><?php echo $row->segundoApellido; ?></td>
-					<td><?php echo $row->nota; ?>
-						<?php echo estado ($row->nota); ?>
-					</td>
-					<td><?php echo $row->creado; ?></td>
-					<td><?php echo formatearFecha ($row->creado); ?></td>
+					<td><?php echo $row->nota; ?></td>
 					<td>
 <?php
 	echo form_open_multipart("estudiante/modificar");
