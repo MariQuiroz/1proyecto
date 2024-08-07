@@ -8,6 +8,18 @@ class Estudiante extends CI_Controller {
 
 		$this->load->view('inc/vistaslte/head');
 		$this->load->view('inc/vistaslte/menu');
+		$this->load->view('inc/vistaslte/aside');
+		$this->load->view('inc/vistaslte/test');
+		$this->load->view('inc/vistaslte/footer');
+	}
+
+	public function demo1(){
+		$lista=$this->estudiante_model->listaestudiantes();
+		$data['alumnos']=$lista;
+
+		$this->load->view('inc/vistaslte/head');
+		//$this->load->view('inc/vistaslte/menu');
+		$this->load->view('datatable');
 		$this->load->view('inc/vistaslte/test');
 		$this->load->view('inc/vistaslte/footer');
 	}

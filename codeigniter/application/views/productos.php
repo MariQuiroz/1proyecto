@@ -6,4 +6,3 @@
     <p>Back to <a href="../examples/sticky-footer/">the default sticky footer</a> minus the navbar.</p>
   </div>
 </main>
-	

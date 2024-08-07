@@ -9,8 +9,7 @@
 
     <title>Data Tables | Nifty - Admin Template</title>
 
-
-    <!--STYLESHEET-->
+<!--STYLESHEET-->
     <!--=================================================-->
 
     <!--Open Sans Font [ OPTIONAL ]-->
@@ -18,15 +17,15 @@
 
 
     <!--Bootstrap Stylesheet [ REQUIRED ]-->
-    <link href="<?php echo base_url(); ?>adminNifty\pages\assets\css\bootstrap.min.css" rel="stylesheet">
+    <link href="adminNifty\pages\assets\css\bootstrap.min.css" rel="stylesheet">
 
 
     <!--Nifty Stylesheet [ REQUIRED ]-->
-    <link href="<?php echo base_url(); ?>adminNifty\pages\assets\css\nifty.min.css" rel="stylesheet">
+    <link href="adminNifty\pages\assets\css\nifty.min.css" rel="stylesheet">
 
 
     <!--Nifty Premium Icon [ DEMONSTRATION ]-->
-    <link href="<?php echo base_url(); ?>adminNifty\pages\assets\css\demo\nifty-demo-icons.min.css" rel="stylesheet">
+    <link href="adminNifty\pages\assets\css\demo\nifty-demo-icons.min.css" rel="stylesheet">
 
 
     <!--=================================================-->
@@ -34,18 +33,21 @@
 
 
     <!--Pace - Page Load Progress Par [OPTIONAL]-->
-    <link href="<?php echo base_url(); ?>adminNifty\pages\plugins\pace\pace.min.css" rel="stylesheet">
-    <script src="<?php echo base_url(); ?>adminNifty\pages\plugins\pace\pace.min.js"></script>
+    <link href="adminNifty\pages\plugins\pace\pace.min.css" rel="stylesheet">
+    <script src="adminNifty\pages\plugins\pace\pace.min.js"></script>
 
 
     <!--Demo [ DEMONSTRATION ]-->
-    <link href="<?php echo base_url(); ?>adminNifty\pages\assets\css\demo\nifty-demo.min.css" rel="stylesheet">
+    <link href="adminNifty\pages\assets\css\demo\nifty-demo.min.css" rel="stylesheet">
 
 
         
     <!--DataTables [ OPTIONAL ]-->
-    <link href="<?php echo base_url(); ?>adminNifty\pages\plugins\datatables\media\css\dataTables.bootstrap.css" rel="stylesheet">
-	<link href="<?php echo base_url(); ?>adminNifty\pages\plugins\datatables\extensions\Responsive\css\responsive.dataTables.min.css" rel="stylesheet">
+    <link href="adminNifty\pages\plugins\datatables\media\css\dataTables.bootstrap.css" rel="stylesheet">
+	<link href="adminNifty\pages\plugins\datatables\extensions\Responsive\css\responsive.dataTables.min.css" rel="stylesheet">
+
+    
+
 
     
     <!--=================================================
@@ -89,7 +91,7 @@
                 <!--Brand logo & name-->
                 <!--================================-->
                 <div class="navbar-header">
-                    <a href="index.html" class="navbar-brand">
+                    <a href="index.php" class="navbar-brand">
                         <img src="img\logo.png" alt="Nifty Logo" class="brand-icon">
                         <div class="brand-title">
                             <span class="brand-text">Nifty</span>
@@ -390,7 +392,7 @@
                                         <a href="#"><i class="demo-pli-computer-secure icon-lg icon-fw"></i> Lock screen</a>
                                     </li>
                                     <li>
-                                        <a href="pages-login.html"><i class="demo-pli-unlock icon-lg icon-fw"></i> Logout</a>
+                                        <a href="<?php echo base_url(); ?>adminNifty\pages\pages-login.php"><i class="demo-pli-unlock icon-lg icon-fw"></i> Logout</a>
                                     </li>
                                 </ul>
                             </div>
@@ -2789,9 +2791,9 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse">
-						                    <li><a href="index.html">Dashboard 1</a></li>
-											<li><a href="dashboard-2.html">Dashboard 2</a></li>
-											<li><a href="dashboard-3.html">Dashboard 3</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\index.php">Dashboard 1</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\dashboard-2.php">Dashboard 2</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\dashboard-3.php">Dashboard 3</a></li>
 											
 						                </ul>
 						            </li>
@@ -2806,24 +2808,24 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse">
-						                    <li><a href="layouts-collapsed-navigation.html">Collapsed Navigation</a></li>
-											<li><a href="layouts-offcanvas-navigation.html">Off-Canvas Navigation</a></li>
-											<li><a href="layouts-offcanvas-slide-in-navigation.html">Slide-in Navigation</a></li>
-											<li><a href="layouts-offcanvas-revealing-navigation.html">Revealing Navigation</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\layouts-collapsed-navigation.php">Collapsed Navigation</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\layouts-offcanvas-navigation.php">Off-Canvas Navigation</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\layouts-offcanvas-slide-in-navigation.php">Slide-in Navigation</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\layouts-offcanvas-revealing-navigation.php">Revealing Navigation</a></li>
 											<li class="list-divider"></li>
-											<li><a href="layouts-aside-right-side.html">Aside on the right side</a></li>
-											<li><a href="layouts-aside-left-side.html">Aside on the left side</a></li>
-											<li><a href="layouts-aside-dark-theme.html">Dark version of aside</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\layouts-aside-right-side.php">Aside on the right side</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\layouts-aside-left-side.php">Aside on the left side</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\layouts-aside-dark-theme.php">Dark version of aside</a></li>
 											<li class="list-divider"></li>
-											<li><a href="layouts-fixed-navbar.html">Fixed Navbar</a></li>
-											<li><a href="layouts-fixed-footer.html">Fixed Footer</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\layouts-fixed-navbar.php">Fixed Navbar</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\layouts-fixed-footer.php">Fixed Footer</a></li>
 											
 						                </ul>
 						            </li>
 						
 						            <!--Menu list item-->
 						            <li>
-						                <a href="widgets.html">
+						                <a href="<?php echo base_url(); ?>adminNifty\pages\widgets.php">
 						                    <i class="demo-pli-gear"></i>
 						                    <span class="menu-title">
 												Widgets
@@ -2847,15 +2849,15 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse">
-						                    <li><a href="ui-buttons.html">Buttons</a></li>
-											<li><a href="ui-panels.html">Panels</a></li>
-											<li><a href="ui-modals.html">Modals</a></li>
-											<li><a href="ui-progress-bars.html">Progress bars</a></li>
-											<li><a href="ui-components.html">Components</a></li>
-											<li><a href="ui-typography.html">Typography</a></li>
-											<li><a href="ui-list-group.html">List Group</a></li>
-											<li><a href="ui-tabs-accordions.html">Tabs &amp; Accordions</a></li>
-											<li><a href="ui-alerts-tooltips.html">Alerts &amp; Tooltips</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\ui-buttons.php">Buttons</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\ui-panels.php">Panels</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\ui-modals.php">Modals</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\ui-progress-bars.php">Progress bars</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\ui-components.php">Components</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\ui-typography.php">Typography</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\ui-list-group.php">List Group</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\ui-tabs-accordions.php">Tabs &amp; Accordions</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\ui-alerts-tooltips.php">Alerts &amp; Tooltips</a></li>
 											
 						                </ul>
 						            </li>
@@ -2870,13 +2872,13 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse">
-						                    <li><a href="forms-general.html">General</a></li>
-											<li><a href="forms-components.html">Advanced Components</a></li>
-											<li><a href="forms-validation.html">Validation</a></li>
-											<li><a href="forms-wizard.html">Wizard</a></li>
-											<li><a href="forms-file-upload.html">File Upload</a></li>
-											<li><a href="forms-text-editor.html">Text Editor</a></li>
-											<li><a href="forms-markdown.html">Markdown</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\forms-general.php">General</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\forms-components.php">Advanced Components</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\forms-validation.php">Validation</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\forms-wizard.php">Wizard</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\forms-file-upload.php">File Upload</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\forms-text-editor.php">Text Editor</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\forms-markdown.php">Markdown</a></li>
 											
 						                </ul>
 						            </li>
@@ -2891,10 +2893,10 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse in">
-						                    <li><a href="tables-static.html">Static Tables</a></li>
-											<li><a href="tables-bootstrap.html">Bootstrap Tables</a></li>
-											<li class="active-link"><a href="tables-datatable.html">Data Tables</a></li>
-											<li><a href="tables-footable.html">Foo Tables</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\tables-static.php">Static Tables</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\tables-bootstrap.php">Bootstrap Tables</a></li>
+											<li class="active-link"><a href="<?php echo base_url(); ?>adminNifty\pages\tables-datatable.php">Data Tables</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\tables-footable.php">Foo Tables</a></li>
 											
 						                </ul>
 						            </li>
@@ -2909,10 +2911,10 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse">
-						                    <li><a href="charts-morris-js.html">Morris JS</a></li>
-											<li><a href="charts-flot-charts.html">Flot Charts</a></li>
-											<li><a href="charts-easy-pie-charts.html">Easy Pie Charts</a></li>
-											<li><a href="charts-sparklines.html">Sparklines</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\charts-morris-js.php">Morris JS</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\charts-flot-charts.php">Flot Charts</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\charts-easy-pie-charts.php">Easy Pie Charts</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\charts-sparklines.php">Sparklines</a></li>
 											
 						                </ul>
 						            </li>
@@ -2951,10 +2953,10 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse">
-						                    <li><a href="grid-bootstrap.html">Bootstrap Grid</a></li>
-											<li><a href="grid-liquid-fixed.html">Liquid Fixed</a></li>
-											<li><a href="grid-match-height.html">Match Height</a></li>
-											<li><a href="grid-masonry.html">Masonry</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\grid-bootstrap.php">Bootstrap Grid</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\grid-liquid-fixed.php">Liquid Fixed</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\grid-match-height.php">Match Height</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\grid-masonry.php">Masonry</a></li>
 											
 						                </ul>
 						            </li>
@@ -2974,14 +2976,14 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse">
-						                    <li><a href="app-file-manager.html">File Manager</a></li>
-											<li><a href="app-users.html">Users</a></li>
-											<li><a href="app-users-2.html">Users 2</a></li>
-											<li><a href="app-profile.html">Profile</a></li>
-											<li><a href="app-calendar.html">Calendar</a></li>
-											<li><a href="app-taskboard.html">Taskboard</a></li>
-											<li><a href="app-chat.html">Chat</a></li>
-											<li><a href="app-contact-us.html">Contact Us</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\app-file-manager.php">File Manager</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\app-users.php">Users</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\app-users-2.php">Users 2</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\app-profile.php">Profile</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\app-calendar.php">Calendar</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\app-taskboard.php">Taskboard</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\app-chat.php">Chat</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\app-contact-us.php">Contact Us</a></li>
 											
 						                </ul>
 						            </li>
@@ -2996,13 +2998,13 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse">
-						                    <li><a href="blog.html">Blog</a></li>
-											<li><a href="blog-list.html">Blog List</a></li>
-											<li><a href="blog-list-2.html">Blog List 2</a></li>
-											<li><a href="blog-details.html">Blog Details</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\blog.php">Blog</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\blog-list.php">Blog List</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\blog-list-2.php">Blog List 2</a></li>
+											<li><a href="blog-details.php">Blog Details</a></li>
 											<li class="list-divider"></li>
-											<li><a href="blog-manage-posts.html">Manage Posts</a></li>
-											<li><a href="blog-add-edit-post.html">Add Edit Post</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\blog-manage-posts.php">Manage Posts</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\blog-add-edit-post.php">Add Edit Post</a></li>
 											
 						                </ul>
 						            </li>
@@ -3017,10 +3019,10 @@
 						
 						                <!--Submenu-->
 						                <ul class="collapse">
-						                    <li><a href="mailbox.html">Inbox</a></li>
-											<li><a href="mailbox-message.html">View Message</a></li>
-											<li><a href="mailbox-compose.html">Compose Message</a></li>
-											<li><a href="mailbox-templates.html">Email Templates</a></li>
+						                    <li><a href="<?php echo base_url(); ?>adminNifty\pages\mailbox.php">Inbox</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\mailbox-message.php">View Message</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\mailbox-compose.php">Compose Message</a></li>
+											<li><a href="<?php echo base_url(); ?>adminNifty\pages\mailbox-templates.php">Email Templates</a></li>
 											
 						                </ul>
 						            </li>
@@ -3272,41 +3274,6 @@
 
 
     
-    
-    
-    <!--JAVASCRIPT-->
-    <!--=================================================-->
-
-    <!--jQuery [ REQUIRED ]-->
-    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\jquery.min.js"></script>
-
-
-    <!--BootstrapJS [ RECOMMENDED ]-->
-    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\bootstrap.min.js"></script>
-
-
-    <!--NiftyJS [ RECOMMENDED ]-->
-    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\nifty.min.js"></script>
-
-
-
-
-    <!--=================================================-->
-    
-    <!--Demo script [ DEMONSTRATION ]-->
-    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\demo\nifty-demo.min.js"></script>
-
-    
-    <!--DataTables [ OPTIONAL ]-->
-    <script src="<?php echo base_url(); ?>adminNifty\pages\plugins\datatables\media\js\jquery.dataTables.js"></script>
-	<script src="<?php echo base_url(); ?>adminNifty\pages\plugins\datatables\media\js\dataTables.bootstrap.js"></script>
-	<script src="<?php echo base_url(); ?>adminNifty\pages\plugins\datatables\extensions\Responsive\js\dataTables.responsive.min.js"></script>
-
-
-    <!--DataTables Sample [ SAMPLE ]-->
-    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\demo\tables-datatables.js"></script>
-
-
     
 
 </body>

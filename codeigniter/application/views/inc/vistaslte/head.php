@@ -68,10 +68,13 @@
     Detailed information and more samples can be found in the document.
 
     =================================================-->
-        
+
+
+
+    
 </head>
 
-<!--TIPS-->
+
 <!--You may remove all ID or Class names which contain "demo-", they are only used for demonstration. -->
 <body>
     <div id="container" class="effect aside-float aside-bright mainnav-lg">

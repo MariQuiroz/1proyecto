@@ -1,5 +1,6 @@
 
 
+      
         <!-- FOOTER -->
         <!--===================================================-->
         <footer id="footer">
@@ -24,7 +25,7 @@
             <!-- Remove the class "show-fixed" and "hide-fixed" to make the content always appears. -->
             <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-            <p class="pad-lft">&#0169; 2018 Your Company</p>
+            <p class="pad-lft">&#0169; 2024 INCOS</p>
 
 
 
@@ -51,7 +52,8 @@
     <!--=================================================-->
 
     <!--jQuery [ REQUIRED ]-->
-    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\jquery.min.js"></script>
+     <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\jquery.min.js"></script>
+
 
 
     <!--BootstrapJS [ RECOMMENDED ]-->
