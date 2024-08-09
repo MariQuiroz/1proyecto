@@ -26,8 +26,8 @@ class Estudiante extends CI_Controller {
 
 	public function curso()
 	{
-		$lista=$this->estudiante_model->listaestudiantes();
-		$data['alumnos']=$lista;
+		$lista=$this->estudiante_model->listaclientes();
+		$data['personas']=$lista;
 		//$data['usr']=$usuarios;
 		//$data['not']=$notific;
 		$this->load->view('inc/head');

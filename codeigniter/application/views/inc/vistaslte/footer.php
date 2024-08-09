@@ -48,7 +48,7 @@
     
     
     
-    <!--JAVASCRIPT-->
+    <!--JAVASCRIPT PRINCIPAL-->
     <!--=================================================-->
 
     <!--jQuery [ REQUIRED ]-->
@@ -86,7 +86,38 @@
     <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\demo\dashboard.js"></script>
 
 
-    
+     <!--JAVASCRIPT INICIO SESION-->
+    <!--=================================================-->
+
+    <!--jQuery [ REQUIRED ]-->
+    <script src="<?php echo base_url(); ?>adminNifty/pages/assets/js/jquery.min.js"></script>
+
+    <!--BootstrapJS [ RECOMMENDED ]-->
+    <script src="<?php echo base_url(); ?>adminNifty/pages/assets/js/bootstrap.min.js"></script>
+
+    <!--NiftyJS [ RECOMMENDED ]-->
+    <script src="<?php echo base_url(); ?>adminNifty/pages/assets/js/nifty.min.js"></script>
+
+    <!--Background Image [ DEMONSTRATION ]-->
+    <script src="<?php echo base_url(); ?>adminNifty/pages/assets/js/demo/bg-images.js"></script>
+
+      <!-- JAVASCRIPT  crear/REGISTRAR-->
+      <script src="<?= base_url('adminNifty/pages/assets/js/jquery.min.js'); ?>"></script>
+    <script src="<?= base_url('adminNifty/pages/assets/js/bootstrap.min.js'); ?>"></script>
+    <script src="<?= base_url('adminNifty/pages/assets/js/nifty.min.js'); ?>"></script>
+    <script src="<?= base_url('adminNifty/pages/assets/js/demo/bg-images.js'); ?>"></script>
+
+     <!--JAVASCRIPT CONTRASEÑA_OLVIDADA-->
+    <!--=================================================-->
+
+     <!--jQuery [ REQUIRED ]-->
+     <script src="<?= base_url('adminNifty/pages/assets/js/jquery.min.js'); ?>"></script>
+
+    <!--BootstrapJS [ RECOMMENDED ]-->
+    <script src="<?= base_url('adminNifty/pages/assets/js/bootstrap.min.js'); ?>"></script>
+
+    <!--NiftyJS [ RECOMMENDED ]-->
+    <script src="<?= base_url('adminNifty/pages/assets/js/nifty.min.js'); ?>"></script>
 
 </body>
 </html>

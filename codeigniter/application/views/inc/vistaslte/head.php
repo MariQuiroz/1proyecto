@@ -10,7 +10,7 @@
     <title>Dashboard | Nifty - Admin Template</title>
 
 
-    <!--STYLESHEET-->
+    <!--STYLESHEET TEMPLATE PRINCIPAL-->
     <!--=================================================-->
 
     <!--Open Sans Font [ OPTIONAL ]-->
@@ -69,8 +69,53 @@
 
     =================================================-->
 
+    
+    <!--STYLESHEET INICIO SESION-->
+    <!--=================================================-->
+
+    <!--Open Sans Font [ OPTIONAL ]-->
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700' rel='stylesheet' type='text/css'>
+
+    <!--Bootstrap Stylesheet [ REQUIRED ]-->
+    <link href="<?php echo base_url(); ?>adminNifty/pages/assets/css/bootstrap.min.css" rel="stylesheet">
+
+    <!--Nifty Stylesheet [ REQUIRED ]-->
+    <link href="<?php echo base_url(); ?>adminNifty/pages/assets/css/nifty.min.css" rel="stylesheet">
+
+    <!--Pace - Page Load Progress Par [OPTIONAL]-->
+    <link href="<?php echo base_url(); ?>adminNifty/pages/plugins/pace/pace.min.css" rel="stylesheet">
+    <script src="<?php echo base_url(); ?>adminNifty/pages/plugins/pace/pace.min.js"></script>
+
+    <!--Google reCAPTCHA-->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+    <!--STYLESHEET crear/REGISTRAR-->
+    <!--=================================================-->
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700' rel='stylesheet' type='text/css'>
+    <link href="<?= base_url('adminNifty/pages/assets/css/bootstrap.min.css'); ?>" rel="stylesheet">
+    <link href="<?= base_url('adminNifty/pages/assets/css/nifty.min.css'); ?>" rel="stylesheet">
+    <link href="<?= base_url('adminNifty/pages/assets/css/demo/nifty-demo-icons.min.css'); ?>" rel="stylesheet">
+    <link href="<?= base_url('adminNifty/pages/plugins/pace/pace.min.css'); ?>" rel="stylesheet">
+    <script src="<?= base_url('adminNifty/pages/plugins/pace/pace.min.js'); ?>"></script>
+    <link href="<?= base_url('adminNifty/pages/assets/css/demo/nifty-demo.min.css'); ?>" rel="stylesheet">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
 
+    <!--STYLESHEET CONTRASEÑA-OLVIDADA-->
+    <!--=================================================-->
+    
+    <!--Open Sans Font [ OPTIONAL ]-->
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700' rel='stylesheet' type='text/css'>
+
+    <!--Bootstrap Stylesheet [ REQUIRED ]-->
+    <link href="<?= base_url('adminNifty/pages/assets/css/bootstrap.min.css'); ?>" rel="stylesheet">
+
+    <!--Nifty Stylesheet [ REQUIRED ]-->
+    <link href="<?= base_url('adminNifty/pages/assets/css/nifty.min.css'); ?>" rel="stylesheet">
+
+    <!--Pace - Page Load Progress Par [OPTIONAL]-->
+    <link href="<?= base_url('adminNifty/pages/assets/plugins/pace/pace.min.css'); ?>" rel="stylesheet">
+    <script src="<?= base_url('adminNifty/pages/assets/plugins/pace/pace.min.js'); ?>"></script>
     
 </head>
 

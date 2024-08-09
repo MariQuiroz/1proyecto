@@ -18,51 +18,23 @@
 				<th>Segundo Apellido</th>
 				<th>Nota</th>
 				<th>Modificar</th>
-				<th>Eliminar</th>
-				<th>Deshabilitar</th>
+				
 			</thead>
 			<tbody>
 				<?php
 				$contador=1;
-				foreach($alumnos->result() as $row)
+				foreach($personas->result() as $row)
 				{
 				?>
 				<tr>
 					<td><?php echo $contador; ?></td>
-					<td><?php echo $row->nombre; ?></td>
-					<td><?php echo $row->primerApellido; ?></td>
-					<td><?php echo $row->segundoApellido; ?></td>
-					<td><?php echo $row->nota; ?></td>
-					<td>
-<?php
-	echo form_open_multipart("estudiante/modificar");
-?>
-<input type="hidden" name="idestudiante" value="<?php echo $row->idEstudiante; ?>">
-<button type="submit" class="btn btn-success">Modifcar</button>
-<?php
-echo form_close();
-?>
-					</td>
-					<td>
-<?php
-	echo form_open_multipart("estudiante/eliminarbd");
-?>
-<input type="hidden" name="idestudiante" value="<?php echo $row->idEstudiante; ?>">
-<button type="submit" class="btn btn-danger">Eliminar</button>
-<?php
-echo form_close();
-?>
-					</td>
-					<td>
-<?php
-	echo form_open_multipart("estudiante/deshabilitarbd");
-?>
-<input type="hidden" name="idestudiante" value="<?php echo $row->idEstudiante; ?>">
-<button type="submit" class="btn btn-warning">Deshabilitar</button>
-<?php
-echo form_close();
-?>
-					</td>
+					<td><?php echo $row->ciNit; ?></td>
+					<td><?php echo $row->razonSocial; ?></td>
+					<td><?php echo $row->estado; ?></td>
+					<td><?php echo $row->fechaRegistro; ?></td>
+					<td><?php echo $row->fechaActualizacion; ?></td>
+					
+					
 				</tr>
 				<?php
 				$contador++;

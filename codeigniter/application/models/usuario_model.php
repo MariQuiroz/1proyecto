@@ -2,10 +2,6 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Usuario_model extends CI_Model {
-    
-    public function __construct() {
-        $this->load->database();
-    }
 
     public function get_usuarios() {
         $query = $this->db->get('usuarios');
@@ -18,7 +14,7 @@ class Usuario_model extends CI_Model {
     }
 
     public function create_usuario($data) {
-        $data['contraseña'] = sha1($data['contraseña']);
+        $data['contraseña'] = sha1($data['contraseña']); // Encriptación de la contraseña con SHA-1
         $data['fecha_creacion'] = date('Y-m-d H:i:s');
         $data['ultima_actualizacion'] = date('Y-m-d H:i:s');
         return $this->db->insert('usuarios', $data);
@@ -26,7 +22,7 @@ class Usuario_model extends CI_Model {
 
     public function update_usuario($id, $data) {
         if (isset($data['contraseña'])) {
-            $data['contraseña'] = sha1($data['contraseña']);
+            $data['contraseña'] = sha1($data['contraseña']); // Encriptación de la contraseña si se actualiza
         }
         $data['ultima_actualizacion'] = date('Y-m-d H:i:s');
         $this->db->where('id', $id);
@@ -34,9 +30,8 @@ class Usuario_model extends CI_Model {
     }
 
     public function delete_usuario($id) {
-        // Eliminación lógica
         $data = array(
-            'estado' => 0,
+            'estado' => 0, // Eliminación lógica
             'ultima_actualizacion' => date('Y-m-d H:i:s')
         );
         $this->db->where('id', $id);
@@ -63,7 +58,7 @@ class Usuario_model extends CI_Model {
 
     public function update_password($id, $new_password) {
         $data = array(
-            'contraseña' => sha1($new_password),
+            'contraseña' => sha1($new_password), // Encriptación de la nueva contraseña
             'ultima_actualizacion' => date('Y-m-d H:i:s')
         );
         $this->db->where('id', $id);

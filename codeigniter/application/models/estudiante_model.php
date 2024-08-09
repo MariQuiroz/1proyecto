@@ -3,6 +3,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Estudiante_model extends CI_Model {
 
+	public function listaclientes()
+	{
+		$this->db->select('*');
+        $this->db->from('cliente');
+		//$this->db->where('estado','1');
+        return $this->db->get(); //devuelve el resultado
+	}
+	
 	public function listaestudiantes()
 	{
 		$this->db->select('*');

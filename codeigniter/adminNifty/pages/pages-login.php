@@ -17,15 +17,15 @@
 
 
     <!--Bootstrap Stylesheet [ REQUIRED ]-->
-    <link href="css\bootstrap.min.css" rel="stylesheet">
+    <link href="<?php echo base_url(); ?>adminNifty\pages\assets\css\bootstrap.min.css" rel="stylesheet">
 
 
     <!--Nifty Stylesheet [ REQUIRED ]-->
-    <link href="css\nifty.min.css" rel="stylesheet">
+    <link href="<?php echo base_url(); ?>adminNifty\pages\assets\css\nifty.min.css" rel="stylesheet">
 
 
     <!--Nifty Premium Icon [ DEMONSTRATION ]-->
-    <link href="css\demo\nifty-demo-icons.min.css" rel="stylesheet">
+    <link href="<?php echo base_url(); ?>adminNifty\pages\assets\css\demo\nifty-demo-icons.min.css" rel="stylesheet">
 
 
     <!--=================================================-->
@@ -33,13 +33,13 @@
 
 
     <!--Pace - Page Load Progress Par [OPTIONAL]-->
-    <link href="plugins\pace\pace.min.css" rel="stylesheet">
-    <script src="plugins\pace\pace.min.js"></script>
+    <link href="<?php echo base_url(); ?>adminNifty\pages\plugins\pace\pace.min.css" rel="stylesheet">
+    <script src="<?php echo base_url(); ?>adminNifty\pages\plugins\pace\pace.min.js"></script>
 
 
         
     <!--Demo [ DEMONSTRATION ]-->
-    <link href="css\demo\nifty-demo.min.css" rel="stylesheet">
+    <link href="<?php echo base_url(); ?>adminNifty\pages\assets\css\demo\nifty-demo.min.css" rel="stylesheet">
 
     
     <!--=================================================
@@ -131,13 +131,13 @@
 		    <div id="demo-bg-list">
 		        <div class="demo-loading"><i class="psi-repeat-2"></i></div>
 		        <img class="demo-chg-bg bg-trans active" src="img\bg-img\thumbs\bg-trns.jpeg" alt="Background Image">
-		        <img class="demo-chg-bg" src="img\bg-img\thumbs\bg-img-1.jpeg" alt="Background Image">
-		        <img class="demo-chg-bg" src="img\bg-img\thumbs\bg-img-2.jpeg" alt="Background Image">
-		        <img class="demo-chg-bg" src="img\bg-img\thumbs\bg-img-3.jpeg" alt="Background Image">
-		        <img class="demo-chg-bg" src="img\bg-img\thumbs\bg-img-4.jpeg" alt="Background Image">
-		        <img class="demo-chg-bg" src="img\bg-img\thumbs\bg-img-5.jpeg" alt="Background Image">
-		        <img class="demo-chg-bg" src="img\bg-img\thumbs\bg-img-6.jpeg" alt="Background Image">
-		        <img class="demo-chg-bg" src="img\bg-img\thumbs\bg-img-7.jpeg" alt="Background Image">
+		        <img class="demo-chg-bg" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\bg-img\thumbs\bg-img-1.jpeg" alt="Background Image">
+		        <img class="demo-chg-bg" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\bg-img\thumbs\bg-img-2.jpeg" alt="Background Image">
+		        <img class="demo-chg-bg" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\bg-img\thumbs\bg-img-3.jpeg" alt="Background Image">
+		        <img class="demo-chg-bg" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\bg-img\thumbs\bg-img-4.jpeg" alt="Background Image">
+		        <img class="demo-chg-bg" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\bg-img\thumbs\bg-img-5.jpeg" alt="Background Image">
+		        <img class="demo-chg-bg" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\bg-img\thumbs\bg-img-6.jpeg" alt="Background Image">
+		        <img class="demo-chg-bg" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\bg-img\thumbs\bg-img-7.jpeg" alt="Background Image">
 		    </div>
 		</div>
 		<!--===================================================-->
@@ -154,15 +154,15 @@
     <!--=================================================-->
 
     <!--jQuery [ REQUIRED ]-->
-    <script src="js\jquery.min.js"></script>
+    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\jquery.min.js"></script>
 
 
     <!--BootstrapJS [ RECOMMENDED ]-->
-    <script src="js\bootstrap.min.js"></script>
+    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\bootstrap.min.js"></script>
 
 
     <!--NiftyJS [ RECOMMENDED ]-->
-    <script src="js\nifty.min.js"></script>
+    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\nifty.min.js"></script>
 
 
 
@@ -170,7 +170,7 @@
     <!--=================================================-->
     
     <!--Background Image [ DEMONSTRATION ]-->
-    <script src="js\demo\bg-images.js"></script>
+    <script src="<?php echo base_url(); ?>adminNifty\pages\assets\js\demo\bg-images.js"></script>
 
 </body>
 </html>
