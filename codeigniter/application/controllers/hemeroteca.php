@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class hemeroteca extends CI_Controller {
+class Hemeroteca extends CI_Controller {
 	public function mostrar(){
 
 		$this->load->view('inc/vistaslte/head');
