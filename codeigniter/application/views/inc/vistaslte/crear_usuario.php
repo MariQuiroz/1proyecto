@@ -62,7 +62,7 @@
                             </div>
                         </div>
 
-                        <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY"></div>
+                        <div class="g-recaptcha" data-sitekey="6LcWryIqAAAAACi4lEvDwhs80IBNeQ5UrL2zNw7u"></div>
                         <button class="btn btn-primary btn-lg btn-block" type="submit">Registrar</button>
                     </form>
                 </div>

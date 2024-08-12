@@ -1,332 +1,317 @@
-<!--NAVBAR-->
-        <!--===================================================-->
-        <header id="navbar">
-            <div id="navbar-container" class="boxed">
+ <!-- Topbar Start -->
+ <div class="navbar-custom">
+                <ul class="list-unstyled topnav-menu float-right mb-0">
 
-                <!--Brand logo & name-->
-                <!--================================-->
-                <div class="navbar-header">
-                    <a href="<?php echo base_url(); ?>adminNifty\pages\index.php" class="navbar-brand">
-                        <img src="<?php echo base_url(); ?>adminNifty\pages\assets\img\logo.png" alt="Nifty Logo" class="brand-icon">
-                        <div class="brand-title">
-                            <span class="brand-text">Nifty</span>
+                    <li class="d-none d-sm-block">
+                        <form class="app-search">
+                            <div class="app-search-box">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Search...">
+                                    <div class="input-group-append">
+                                        <button class="btn" type="submit">
+                                            <i class="fe-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </li>
+        
+                    <li class="dropdown notification-list">
+                        <a class="nav-link dropdown-toggle waves-light waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                            <i class="fe-bell noti-icon"></i>
+                            <span class="badge badge-danger rounded-circle noti-icon-badge">5</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right dropdown-lg">
+
+                            <!-- item-->
+                            <div class="dropdown-item noti-title">
+                                <h5 class="m-0 text-white">
+                                    <span class="float-right">
+                                        <a href="" class="text-white">
+                                            <small>Clear All</small>
+                                        </a>
+                                    </span>Notification
+                                </h5>
+                            </div>
+
+                            <div class="slimscroll noti-scroll">
+
+                                <!-- item-->
+                                <a href="javascript:void(0);" class="dropdown-item notify-item active">
+                                    <div class="notify-icon">
+                                        <img src="<?php echo base_url(); ?>/adminXeria/dist/assets/images/users/user-1.jpg" class="img-fluid rounded-circle" alt="" /> </div>
+                                    <p class="notify-details">Cristina Pride</p>
+                                    <p class="text-muted mb-0 user-msg">
+                                        <small>Hi, How are you? What about our next meeting</small>
+                                    </p>
+                                </a>
+
+                                <!-- item-->
+                                <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                    <div class="notify-icon bg-primary">
+                                        <i class="mdi mdi-comment-account-outline"></i>
+                                    </div>
+                                    <p class="notify-details">Caleb Flakelar commented on Admin
+                                        <small class="text-muted">1 min ago</small>
+                                    </p>
+                                </a>
+
+                                <!-- item-->
+                                <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                    <div class="notify-icon">
+                                        <img src="<?php echo base_url(); ?>/adminXeria/dist/assets/images/users/user-4.jpg" class="img-fluid rounded-circle" alt="" /> </div>
+                                    <p class="notify-details">Karen Robinson</p>
+                                    <p class="text-muted mb-0 user-msg">
+                                        <small>Wow ! this admin looks good and awesome design</small>
+                                    </p>
+                                </a>
+
+                                <!-- item-->
+                                <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                    <div class="notify-icon bg-warning">
+                                        <i class="mdi mdi-account-plus"></i>
+                                    </div>
+                                    <p class="notify-details">New user registered.
+                                        <small class="text-muted">5 hours ago</small>
+                                    </p>
+                                </a>
+
+                                <!-- item-->
+                                <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                    <div class="notify-icon bg-info">
+                                        <i class="mdi mdi-comment-account-outline"></i>
+                                    </div>
+                                    <p class="notify-details">Caleb Flakelar commented on Admin
+                                        <small class="text-muted">4 days ago</small>
+                                    </p>
+                                </a>
+
+                                <!-- item-->
+                                <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                    <div class="notify-icon bg-secondary">
+                                        <i class="mdi mdi-heart text-danger"></i>
+                                    </div>
+                                    <p class="notify-details">Carlos Crouch liked
+                                        <b>Admin</b>
+                                        <small class="text-dark">13 days ago</small>
+                                    </p>
+                                </a>
+                            </div>
+
+                            <!-- All-->
+                            <a href="javascript:void(0);" class="dropdown-item text-center text-primary notify-item notify-all">
+                                View all
+                                <i class="fi-arrow-right"></i>
+                            </a>
+
                         </div>
+                    </li>
+
+                    <li class="dropdown notification-list">
+                        <a class="nav-link dropdown-toggle nav-user mr-0 waves-effect waves-light" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                            <img src="<?php echo base_url(); ?>/adminXeria/dist/assets/images/users/user-1.jpg" alt="user-image" class="rounded-circle">
+                            <span class="pro-user-name ml-1">
+                                Marcia J. <i class="mdi mdi-chevron-down"></i> 
+                            </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right profile-dropdown ">
+                            <!-- item-->
+                            <div class="dropdown-item noti-title">
+                                <h5 class="m-0 text-white">
+                                    Welcome !
+                                </h5>
+                            </div>
+
+                            <!-- item-->
+                            <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                <i class="fe-user"></i>
+                                <span>My Account</span>
+                            </a>
+
+                            <!-- item-->
+                            <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                <i class="fe-settings"></i>
+                                <span>Settings</span>
+                            </a>
+
+                            <!-- item-->
+                            <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                <i class="fe-lock"></i>
+                                <span>Lock Screen</span>
+                            </a>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- item-->
+                            <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                <i class="fe-log-out"></i>
+                                <span>Logout</span>
+                            </a>
+
+                        </div>
+                    </li>
+
+                    <li class="dropdown notification-list">
+                        <a href="javascript:void(0);" class="nav-link right-bar-toggle waves-effect waves-light">
+                            <i class="fe-settings noti-icon"></i>
+                        </a>
+                    </li>
+
+
+                </ul>
+
+                <!-- LOGO -->
+                <div class="logo-box">
+                    <a href="index.html" class="logo text-center">
+                        <span class="logo-lg">
+                            <img src="<?php echo base_url(); ?>/adminXeria/dist/assets/images/logo-light.png" alt="" height="16">
+                            <!-- <span class="logo-lg-text-light">Xeria</span> -->
+                        </span>
+                        <span class="logo-sm">
+                            <!-- <span class="logo-sm-text-dark">X</span> -->
+                            <img src="<?php echo base_url(); ?>/adminXeria/dist/assets/images/logo-sm.png" alt="" height="18">
+                        </span>
                     </a>
                 </div>
-                <!--================================-->
-                <!--End brand logo & name-->
 
-
-                <!--Navbar Dropdown-->
-                <!--================================-->
-                <div class="navbar-content">
-                    <ul class="nav navbar-top-links">
-
-                        <!--Navigation toogle button-->
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <li class="tgl-menu-btn">
-                            <a class="mainnav-toggle" href="#">
-                                <i class="demo-pli-list-view"></i>
-                            </a>
-                        </li>
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <!--End Navigation toogle button-->
-
-
-
-                        <!--Search-->
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <li>
-                            <div class="custom-search-form">
-                                <label class="btn btn-trans" for="search-input" data-toggle="collapse" data-target="#nav-searchbox">
-                                    <i class="demo-pli-magnifi-glass"></i>
-                                </label>
-                                <form>
-                                    <div class="search-container collapse" id="nav-searchbox">
-                                        <input id="search-input" type="text" class="form-control" placeholder="Type for search...">
-                                    </div>
-                                </form>
-                            </div>
-                        </li>
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <!--End Search-->
-
-                    </ul>
-                    <ul class="nav navbar-top-links">
-
-
-                        <!--Mega dropdown-->
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <li class="mega-dropdown">
-                            <a href="#" class="mega-dropdown-toggle">
-                                <i class="demo-pli-layout-grid"></i>
-                            </a>
-                            <div class="dropdown-menu mega-dropdown-menu">
-                                <div class="row">
-                                    <div class="col-sm-4 col-md-3">
-
-                                        <!--Mega menu list-->
-                                        <ul class="list-unstyled">
-									        <li class="dropdown-header"><i class="demo-pli-file icon-lg icon-fw"></i> Pages</li>
-									        <li><a href="#">Profile</a></li>
-									        <li><a href="#">Search Result</a></li>
-									        <li><a href="#">FAQ</a></li>
-									        <li><a href="#">Sreen Lock</a></li>
-									        <li><a href="#">Maintenance</a></li>
-									        <li><a href="#">Invoice</a></li>
-									        <li><a href="#" class="disabled">Disabled</a></li>                                        </ul>
-
-                                    </div>
-                                    <div class="col-sm-4 col-md-3">
-
-                                        <!--Mega menu list-->
-                                        <ul class="list-unstyled">
-									        <li class="dropdown-header"><i class="demo-pli-mail icon-lg icon-fw"></i> Mailbox</li>
-									        <li><a href="#"><span class="pull-right label label-danger">Hot</span>Indox</a></li>
-									        <li><a href="#">Read Message</a></li>
-									        <li><a href="#">Compose</a></li>
-									        <li><a href="#">Template</a></li>
-                                        </ul>
-                                        <p class="pad-top text-main text-sm text-uppercase text-bold"><i class="icon-lg demo-pli-calendar-4 icon-fw"></i>News</p>
-                                        <p class="pad-top mar-top bord-top text-sm">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes.</p>
-                                    </div>
-                                    <div class="col-sm-4 col-md-3">
-                                        <!--Mega menu list-->
-                                        <ul class="list-unstyled">
-                                            <li>
-                                                <a href="#" class="media mar-btm">
-                                                    <span class="badge badge-success pull-right">90%</span>
-                                                    <div class="media-left">
-                                                        <i class="demo-pli-data-settings icon-2x"></i>
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="text-semibold text-main mar-no">Data Backup</p>
-                                                        <small class="text-muted">This is the item description</small>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="#" class="media mar-btm">
-                                                    <div class="media-left">
-                                                        <i class="demo-pli-support icon-2x"></i>
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="text-semibold text-main mar-no">Support</p>
-                                                        <small class="text-muted">This is the item description</small>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="#" class="media mar-btm">
-                                                    <div class="media-left">
-                                                        <i class="demo-pli-computer-secure icon-2x"></i>
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="text-semibold text-main mar-no">Security</p>
-                                                        <small class="text-muted">This is the item description</small>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="#" class="media mar-btm">
-                                                    <div class="media-left">
-                                                        <i class="demo-pli-map-2 icon-2x"></i>
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="text-semibold text-main mar-no">Location</p>
-                                                        <small class="text-muted">This is the item description</small>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div class="col-sm-12 col-md-3">
-                                        <p class="dropdown-header"><i class="demo-pli-file-jpg icon-lg icon-fw"></i> Gallery</p>
-                                        <div class="row img-gallery">
-                                            <div class="col-xs-4">
-                                                <img class="img-responsive" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\thumbs\img-1.jpeg" alt="thumbs">
-                                            </div>
-                                            <div class="col-xs-4">
-                                                <img class="img-responsive" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\thumbs\img-3.jpeg" alt="thumbs">
-                                            </div>
-                                            <div class="col-xs-4">
-                                                <img class="img-responsive" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\thumbs\img-2.jpeg" alt="thumbs">
-                                            </div>
-                                            <div class="col-xs-4">
-                                                <img class="img-responsive" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\thumbs\img-4.jpeg" alt="thumbs">
-                                            </div>
-                                            <div class="col-xs-4">
-                                                <img class="img-responsive" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\thumbs\img-6.jpeg" alt="thumbs">
-                                            </div>
-                                            <div class="col-xs-4">
-                                                <img class="img-responsive" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\thumbs\img-5.jpeg" alt="thumbs">
-                                            </div>
-                                        </div>
-                                        <a href="#" class="btn btn-block btn-primary">Browse Gallery</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <!--End mega dropdown-->
-
-
-
-                        <!--Notification dropdown-->
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <li class="dropdown">
-                            <a href="#" data-toggle="dropdown" class="dropdown-toggle">
-                                <i class="demo-pli-bell"></i>
-                                <span class="badge badge-header badge-danger"></span>
+                <ul class="list-unstyled topnav-menu topnav-menu-left m-0">
+                    <li>
+                        <button class="button-menu-mobile waves-effect waves-light">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
+                    </li>
+        
+                    <li class="dropdown d-none d-lg-block">
+                        <a class="nav-link dropdown-toggle waves-effect waves-light" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                            Reports
+                            <i class="mdi mdi-chevron-down"></i> 
+                        </a>
+                        <div class="dropdown-menu">
+                            <!-- item-->
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                Finance Report
                             </a>
 
-
-                            <!--Notification dropdown menu-->
-                            <div class="dropdown-menu dropdown-menu-md dropdown-menu-right">
-                                <div class="nano scrollable">
-                                    <div class="nano-content">
-                                        <ul class="head-list">
-                                            <li>
-                                                <a href="#" class="media add-tooltip" data-title="Used space : 95%" data-container="body" data-placement="bottom">
-                                                    <div class="media-left">
-                                                        <i class="demo-pli-data-settings icon-2x text-main"></i>
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="text-nowrap text-main text-semibold">HDD is full</p>
-                                                        <div class="progress progress-sm mar-no">
-                                                            <div style="width: 95%;" class="progress-bar progress-bar-danger">
-                                                                <span class="sr-only">95% Complete</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="media" href="#">
-                                                    <div class="media-left">
-                                                        <i class="demo-pli-file-edit icon-2x"></i>
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="mar-no text-nowrap text-main text-semibold">Write a news article</p>
-                                                        <small>Last Update 8 hours ago</small>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="media" href="#">
-                                                    <span class="label label-info pull-right">New</span>
-                                                    <div class="media-left">
-                                                        <i class="demo-pli-speech-bubble-7 icon-2x"></i>
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="mar-no text-nowrap text-main text-semibold">Comment Sorting</p>
-                                                        <small>Last Update 8 hours ago</small>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="media" href="#">
-                                                    <div class="media-left">
-                                                        <i class="demo-pli-add-user-star icon-2x"></i>
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="mar-no text-nowrap text-main text-semibold">New User Registered</p>
-                                                        <small>4 minutes ago</small>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="media" href="#">
-                                                    <div class="media-left">
-                                                        <img class="img-circle img-sm" alt="Profile Picture" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\profile-photos\9.png">
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="mar-no text-nowrap text-main text-semibold">Lucy sent you a message</p>
-                                                        <small>30 minutes ago</small>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="media" href="#">
-                                                    <div class="media-left">
-                                                        <img class="img-circle img-sm" alt="Profile Picture" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\profile-photos\3.png">
-                                                    </div>
-                                                    <div class="media-body">
-                                                        <p class="mar-no text-nowrap text-main text-semibold">Jackson sent you a message</p>
-                                                        <small>40 minutes ago</small>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-
-                                <!--Dropdown footer-->
-                                <div class="pad-all bord-top">
-                                    <a href="#" class="btn-link text-main box-block">
-                                        <i class="pci-chevron chevron-right pull-right"></i>Show All Notifications
-                                    </a>
-                                </div>
-                            </div>
-                        </li>
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <!--End notifications dropdown-->
-
-
-
-                        <!--User dropdown-->
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <li id="dropdown-user" class="dropdown">
-                            <a href="#" data-toggle="dropdown" class="dropdown-toggle text-right">
-                                <span class="ic-user pull-right">
-                                    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                                    <!--You can use an image instead of an icon.-->
-                                    <!--<img class="img-circle img-user media-object" src="img/profile-photos/1.png" alt="Profile Picture">-->
-                                    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                                    <i class="demo-pli-male"></i>
-                                </span>
-                                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                                <!--You can also display a user name in the navbar.-->
-                                <!--<div class="username hidden-xs">Aaron Chavez</div>-->
-                                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+                            <!-- item-->
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                Monthly Report
                             </a>
 
+                            <!-- item-->
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                Revenue Report
+                            </a>
 
-                            <div class="dropdown-menu dropdown-menu-sm dropdown-menu-right panel-default">
-                                <ul class="head-list">
-                                    <li>
-                                        <a href="#"><i class="demo-pli-male icon-lg icon-fw"></i> Profile</a>
-                                    </li>
-                                    <li>
-                                        <a href="#"><span class="badge badge-danger pull-right">9</span><i class="demo-pli-mail icon-lg icon-fw"></i> Messages</a>
-                                    </li>
-                                    <li>
-                                        <a href="#"><span class="label label-success pull-right">New</span><i class="demo-pli-gear icon-lg icon-fw"></i> Settings</a>
-                                    </li>
-                                    <li>
-                                        <a href="#"><i class="demo-pli-computer-secure icon-lg icon-fw"></i> Lock screen</a>
-                                    </li>
-                                    <li>
-                                        <a href="<?php echo base_url(); ?>adminNifty\pages\pages-login.php"><i class="demo-pli-unlock icon-lg icon-fw"></i> Logout</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                        <!--End user dropdown-->
- 
+                            <!-- item-->
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                Settings
+                            </a>
+
+                            <!-- item-->
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                Help & Support
+                            </a>
+
+                        </div>
+                    </li>
+
+                    <li class="dropdown dropdown-mega d-none d-lg-block">
+                        <a class="nav-link dropdown-toggle waves-effect waves-light" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                            Mega Menu
+                            <i class="mdi mdi-chevron-down"></i> 
+                        </a>
+                        <div class="dropdown-menu dropdown-megamenu">
+                            <div class="row">
+                                <div class="col-sm-8">
                         
-                        <li>
-                            <a href="#" class="aside-toggle">
-                                <i class="demo-pli-dot-vertical"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <!--================================-->
-                <!--End Navbar Dropdown-->
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <h5 class="text-dark mt-0">UI Components</h5>
+                                            <ul class="list-unstyled megamenu-list mt-2">
+                                                <li>
+                                                    <a href="javascript:void(0);">Widgets</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Nestable List</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Range Sliders</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Masonry Items</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Sweet Alerts</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Treeview Page</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Tour Page</a>
+                                                </li>
+                                            </ul>
+                                        </div>
 
+                                        <div class="col-md-4">
+                                            <h5 class="text-dark mt-0">Applications</h5>
+                                            <ul class="list-unstyled megamenu-list mt-2">
+                                                <li>
+                                                    <a href="javascript:void(0);">Email Pages</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Profile</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Calendar</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Team Contacts</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Maintenance</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Coming Soon Page</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <h5 class="text-dark mt-0">Layouts</h5>
+                                            <ul class="list-unstyled megamenu-list mt-2">
+                                                <li>
+                                                    <a href="javascript:void(0);">Small Sidebar</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Light Sidebar</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Dark Topbar</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Preloader</a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">Sidebar Collapsed</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="text-center mt-3">
+                                        <h3 class="text-dark">Launching Discount Sale!</h3>
+                                        <p class="font-16">Save up to 55% off.</p>
+                                        <button class="btn btn-primary mt-1">Download Now <i class="mdi mdi-arrow-right-bold-outline ml-1"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </li>
+                </ul>
             </div>
-        </header>
-        <!--===================================================-->
-        <!--END NAVBAR-->
+            <!-- end Topbar -->

@@ -1,278 +1,422 @@
- <!--ASIDE-->
-            <!--===================================================-->
-            <aside id="aside-container">
-                <div id="aside">
-                    <div class="nano">
-                        <div class="nano-content">
-                            
-                            <!--Nav tabs-->
-                            <!--================================-->
-                            <ul class="nav nav-tabs nav-justified">
-                                <li class="active">
-                                    <a href="#demo-asd-tab-1" data-toggle="tab">
-                                        <i class="demo-pli-speech-bubble-7 icon-lg"></i>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#demo-asd-tab-2" data-toggle="tab">
-                                        <i class="demo-pli-information icon-lg icon-fw"></i> Report
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#demo-asd-tab-3" data-toggle="tab">
-                                        <i class="demo-pli-wrench icon-lg icon-fw"></i> Settings
-                                    </a>
-                                </li>
-                            </ul>
-                            <!--================================-->
-                            <!--End nav tabs-->
+     <!-- ========== Left Sidebar Start ========== -->
+     <div class="left-side-menu">
 
+<div class="slimscroll-menu">
 
+    <!--- Sidemenu -->
+    <div id="sidebar-menu">
 
-                            <!-- Tabs Content -->
-                            <!--================================-->
-                            <div class="tab-content">
+        <ul class="metismenu" id="side-menu">
 
-                                <!--First tab (Contact list)-->
-                                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                                <div class="tab-pane fade in active" id="demo-asd-tab-1">
-                                    <p class="pad-all text-main text-sm text-uppercase text-bold">
-                                        <span class="pull-right badge badge-warning">3</span> Family
-                                    </p>
+            <li class="menu-title">Navigation</li>
 
-                                    <!--Family-->
-                                    <div class="list-group bg-trans">
-							            <a href="#" class="list-group-item">
-							                <div class="media-left pos-rel">
-							                    <img class="img-circle img-xs" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\profile-photos\2.png" alt="Profile Picture">
-												<i class="badge badge-success badge-stat badge-icon pull-left"></i>
-							                </div>
-							                <div class="media-body">
-							                    <p class="mar-no text-main">Stephen Tran</p>
-							                    <small class="text-muteds">Availabe</small>
-							                </div>
-							            </a>
-							            <a href="#" class="list-group-item">
-							                <div class="media-left pos-rel">
-							                    <img class="img-circle img-xs" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\profile-photos\7.png" alt="Profile Picture">
-							                </div>
-							                <div class="media-body">
-							                    <p class="mar-no text-main">Brittany Meyer</p>
-							                    <small class="text-muteds">I think so</small>
-							                </div>
-							            </a>
-							            <a href="#" class="list-group-item">
-							                <div class="media-left pos-rel">
-							                    <img class="img-circle img-xs" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\profile-photos\1.png" alt="Profile Picture">
-												<i class="badge badge-info badge-stat badge-icon pull-left"></i>
-							                </div>
-							                <div class="media-body">
-							                    <p class="mar-no text-main">Jack George</p>
-							                    <small class="text-muteds">Last Seen 2 hours ago</small>
-							                </div>
-							            </a>
-							            <a href="#" class="list-group-item">
-							                <div class="media-left pos-rel">
-							                    <img class="img-circle img-xs" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\profile-photos\4.png" alt="Profile Picture">
-							                </div>
-							                <div class="media-body">
-							                    <p class="mar-no text-main">Donald Brown</p>
-							                    <small class="text-muteds">Lorem ipsum dolor sit amet.</small>
-							                </div>
-							            </a>
-							            <a href="#" class="list-group-item">
-							                <div class="media-left pos-rel">
-							                    <img class="img-circle img-xs" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\profile-photos\8.png" alt="Profile Picture">
-												<i class="badge badge-warning badge-stat badge-icon pull-left"></i>
-							                </div>
-							                <div class="media-body">
-							                    <p class="mar-no text-main">Betty Murphy</p>
-							                    <small class="text-muteds">Idle</small>
-							                </div>
-							            </a>
-							            <a href="#" class="list-group-item">
-							                <div class="media-left pos-rel">
-							                    <img class="img-circle img-xs" src="<?php echo base_url(); ?>adminNifty\pages\assets\img\profile-photos\9.png" alt="Profile Picture">
-												<i class="badge badge-danger badge-stat badge-icon pull-left"></i>
-							                </div>
-							                <div class="media-body">
-							                    <p class="mar-no text-main">Samantha Reid</p>
-							                    <small class="text-muteds">Offline</small>
-							                </div>
-							            </a>
-                                    </div>
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-dashboard"></i>
+                    <span class="badge badge-info badge-pill float-right">2</span>
+                    <span> Dashboards </span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="index.html">Dashboard 1</a>
+                    </li>
+                    <li>
+                        <a href="dashboard-2.html">Dashboard 2</a>
+                    </li>
+                </ul>
+            </li>
 
-                                    <hr>
-                                    <p class="pad-all text-main text-sm text-uppercase text-bold">
-                                        <span class="pull-right badge badge-success">Offline</span> Friends
-                                    </p>
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-cube"></i>
+                    <span> Apps </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="apps-calendar.html">Calendar</a>
+                    </li>
+                    <li>
+                        <a href="apps-contacts.html">Contacts</a>
+                    </li>
+                    <li>
+                        <a href="apps-tickets.html">Tickets</a>
+                    </li>
+                </ul>
+            </li>
 
-                                    <!--Works-->
-                                    <div class="list-group bg-trans">
-                                        <a href="#" class="list-group-item">
-                                            <span class="badge badge-purple badge-icon badge-fw pull-left"></span> Joey K. Greyson
-                                        </a>
-                                        <a href="#" class="list-group-item">
-                                            <span class="badge badge-info badge-icon badge-fw pull-left"></span> Andrea Branden
-                                        </a>
-                                        <a href="#" class="list-group-item">
-                                            <span class="badge badge-success badge-icon badge-fw pull-left"></span> Johny Juan
-                                        </a>
-                                        <a href="#" class="list-group-item">
-                                            <span class="badge badge-danger badge-icon badge-fw pull-left"></span> Susan Sun
-                                        </a>
-                                    </div>
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-clone"></i>
+                    <span> Layouts </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="layouts-sidebar-sm.html">Small Sidebar</a>
+                    </li>
+                    <li>
+                        <a href="layouts-light-sidebar.html">Light Sidebar</a>
+                    </li>
+                    <li>
+                        <a href="layouts-dark-topbar.html">Dark Topbar</a>
+                    </li>
+                    <li>
+                        <a href="layouts-preloader.html">Preloader</a>
+                    </li>
+                    <li>
+                        <a href="layouts-sidebar-collapsed.html">Sidebar Collapsed</a>
+                    </li>
+                    <li>
+                        <a href="layouts-boxed.html">Boxed</a>
+                    </li>
+                </ul>
+            </li>
 
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-envelope"></i>
+                    <span> Email </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="email-inbox.html">Inbox</a>
+                    </li>
+                    <li>
+                        <a href="email-read.html">Read Email</a>
+                    </li>
+                    <li>
+                        <a href="email-compose.html">Compose Email</a>
+                    </li>
+                    <li>
+                        <a href="email-templates.html">Email Templates</a>
+                    </li>
+                </ul>
+            </li>
 
-                                    <hr>
-                                    <p class="pad-all text-main text-sm text-uppercase text-bold">News</p>
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-file-text-o"></i>
+                    <span> Pages </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="pages-starter.html">Starter</a>
+                    </li>
+                    <li>
+                        <a href="pages-login.html">Log In</a>
+                    </li>
+                    <li>
+                        <a href="pages-register.html">Register</a>
+                    </li>
+                    <li>
+                        <a href="pages-recoverpw.html">Recover Password</a>
+                    </li>
+                    <li>
+                        <a href="pages-lock-screen.html">Lock Screen</a>
+                    </li>
+                    <li>
+                        <a href="pages-logout.html">Logout</a>
+                    </li>
+                    <li>
+                        <a href="pages-confirm-mail.html">Confirm Mail</a>
+                    </li>
+                    <li>
+                        <a href="pages-404.html">Error 404</a>
+                    </li>
+                    <li>
+                        <a href="pages-404-alt.html">Error 404-alt</a>
+                    </li>
+                    <li>
+                        <a href="pages-500.html">Error 500</a>
+                    </li>
+                </ul>
+            </li>
 
-                                    <div class="pad-hor">
-                                        <p>Lorem ipsum dolor sit amet, consectetuer
-                                            <a data-title="45%" class="add-tooltip text-semibold text-main" href="#">adipiscing elit</a>, sed diam nonummy nibh. Lorem ipsum dolor sit amet.
-                                        </p>
-                                        <small><em>Last Update : Des 12, 2014</em></small>
-                                    </div>
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-diamond"></i>
+                    <span class="badge badge-danger float-right">New</span>
+                    <span> Extra Pages </span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="extras-profile.html">Profile</a>
+                    </li>
+                    <li>
+                        <a href="extras-timeline.html">Timeline</a>
+                    </li>
+                    <li>
+                        <a href="extras-invoice.html">Invoice</a>
+                    </li>
+                    <li>
+                        <a href="extras-faqs.html">FAQs</a>
+                    </li>
+                    <li>
+                        <a href="extras-pricing.html">Pricing</a>
+                    </li>
+                    <li>
+                        <a href="extras-maintenance.html">Maintenance</a>
+                    </li>
+                    <li>
+                        <a href="extras-coming-soon.html">Coming Soon</a>
+                    </li>
+                </ul>
+            </li>
 
+            <li class="menu-title mt-2">Components</li>
 
-                                </div>
-                                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                                <!--End first tab (Contact list)-->
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-briefcase"></i>
+                    <span> UI Elements </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="ui-buttons.html">Buttons</a>
+                    </li>
+                    <li>
+                        <a href="ui-cards.html">Cards</a>
+                    </li>
+                    <li>
+                        <a href="ui-tabs-accordions.html">Tabs & Accordions</a>
+                    </li>
+                    <li>
+                        <a href="ui-modals.html">Modals</a>
+                    </li>
+                    <li>
+                        <a href="ui-progress.html">Progress</a>
+                    </li>
+                    <li>
+                        <a href="ui-notifications.html">Notifications</a>
+                    </li>
+                    <li>
+                        <a href="ui-general.html">General UI</a>
+                    </li>
+                    <li>
+                        <a href="ui-typography.html">Typography</a>
+                    </li>
+                    <li>
+                        <a href="ui-grid.html">Grid</a>
+                    </li>
+                </ul>
+            </li>
 
+            <li>
+                <a href="widgets.html">
+                    <i class="la la-coffee"></i>
+                    <span> Widgets </span>
+                </a>
+            </li>
 
-                                <!--Second tab (Custom layout)-->
-                                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                                <div class="tab-pane fade" id="demo-asd-tab-2">
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-bullhorn"></i>
+                    <span class="badge badge-info float-right">Hot</span>
+                    <span> Admin UI </span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="admin-sweet-alert.html">Sweet Alert</a>
+                    </li>
+                    <li>
+                        <a href="admin-nestable.html">Nestable List</a>
+                    </li>
+                    <li>
+                        <a href="admin-range-slider.html">Range Slider</a>
+                    </li>
+                    <li>
+                        <a href="admin-tour.html">Tour Page</a>
+                    </li>
+                    <li>
+                        <a href="admin-lightbox.html">Lightbox</a>
+                    </li>
+                    <li>
+                        <a href="admin-treeview.html">Treeview</a>
+                    </li>
+                </ul>
+            </li>
 
-                                    <!--Monthly billing-->
-                                    <div class="pad-all">
-                                        <p class="pad-ver text-main text-sm text-uppercase text-bold">Billing &amp; reports</p>
-                                        <p>Get <strong class="text-main">$5.00</strong> off your next bill by making sure your full payment reaches us before August 5, 2018.</p>
-                                    </div>
-                                    <hr class="new-section-xs">
-                                    <div class="pad-all">
-                                        <span class="pad-ver text-main text-sm text-uppercase text-bold">Amount Due On</span>
-                                        <p class="text-sm">August 17, 2018</p>
-                                        <p class="text-2x text-thin text-main">$83.09</p>
-                                        <button class="btn btn-block btn-success mar-top">Pay Now</button>
-                                    </div>
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-bullseye"></i>
+                    <span> Icons </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="icons-feather.html">Feather Icons</a>
+                    </li>
+                    <li>
+                        <a href="icons-lineawesome.html">Line Awesome</a>
+                    </li>
+                    <li>
+                        <a href="icons-mdi.html">Material Design Icons</a>
+                    </li>
+                    <li>
+                        <a href="icons-font-awesome.html">Font Awesome</a>
+                    </li>
+                    <li>
+                        <a href="icons-simple-line.html">Simple Line</a>
+                    </li>
+                </ul>
+            </li>
 
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-wrench"></i>
+                    <span> Forms </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="forms-elements.html">General Elements</a>
+                    </li>
+                    <li>
+                        <a href="forms-advanced.html">Advanced</a>
+                    </li>
+                    <li>
+                        <a href="forms-validation.html">Validation</a>
+                    </li>
+                    <li>
+                        <a href="forms-pickers.html">Pickers</a>
+                    </li>
+                    <li>
+                        <a href="forms-wizard.html">Wizard</a>
+                    </li>
+                    <li>
+                        <a href="forms-masks.html">Masks</a>
+                    </li>
+                    <li>
+                        <a href="forms-summernote.html">Summernote</a>
+                    </li>
+                    <li>
+                        <a href="forms-quilljs.html">Quilljs Editor</a>
+                    </li>
+                    <li>
+                        <a href="forms-file-uploads.html">File Uploads</a>
+                    </li>
+                </ul>
+            </li>
 
-                                    <hr>
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-table"></i>
+                    <span> Tables </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="tables-basic.html">Basic Tables</a>
+                    </li>
+                    <li>
+                        <a href="tables-datatables.html">Data Tables</a>
+                    </li>
+                    <li>
+                        <a href="tables-editable.html">Editable Tables</a>
+                    </li>
+                    <li>
+                        <a href="tables-responsive.html">Responsive Tables</a>
+                    </li>
+                    <li>
+                        <a href="tables-tablesaw.html">Tablesaw Tables</a>
+                    </li>
+                </ul>
+            </li>
 
-                                    <p class="pad-all text-main text-sm text-uppercase text-bold">Additional Actions</p>
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-bar-chart"></i>
+                    <span> Charts </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="charts-apex.html">Apex Charts</a>
+                    </li>
+                    <li>
+                        <a href="charts-flot.html">Flot Charts</a>
+                    </li>
+                    <li>
+                        <a href="charts-morris.html">Morris Charts</a>
+                    </li>
+                    <li>
+                        <a href="charts-chartjs.html">Chartjs Charts</a>
+                    </li>
+                    <li>
+                        <a href="charts-bright.html">Bright Charts</a>
+                    </li>
+                    <li>
+                        <a href="charts-chartist.html">Chartist Charts</a>
+                    </li>
+                    <li>
+                        <a href="charts-peity.html">Peity Charts</a>
+                    </li>
+                    <li>
+                        <a href="charts-sparklines.html">Sparklines Charts</a>
+                    </li>
+                    <li>
+                        <a href="charts-knob.html">Jquery Knob Charts</a>
+                    </li>
+                </ul>
+            </li>
 
-                                    <!--Simple Menu-->
-                                    <div class="list-group bg-trans">
-                                        <a href="#" class="list-group-item"><i class="demo-pli-information icon-lg icon-fw"></i> Service Information</a>
-                                        <a href="#" class="list-group-item"><i class="demo-pli-mine icon-lg icon-fw"></i> Usage Profile</a>
-                                        <a href="#" class="list-group-item"><span class="label label-info pull-right">New</span><i class="demo-pli-credit-card-2 icon-lg icon-fw"></i> Payment Options</a>
-                                        <a href="#" class="list-group-item"><i class="demo-pli-support icon-lg icon-fw"></i> Message Center</a>
-                                    </div>
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-map"></i>
+                    <span> Maps </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="maps-google.html">Google Maps</a>
+                    </li>
+                    <li>
+                        <a href="maps-vector.html">Vector Maps</a>
+                    </li>
+                    <li>
+                        <a href="maps-mapael.html">Mapael Maps</a>
+                    </li>
+                </ul>
+            </li>
 
+            <li>
+                <a href="javascript: void(0);">
+                    <i class="la la-plus-square-o"></i>
+                    <span> Multi Level </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <ul class="nav-second-level nav" aria-expanded="false">
+                    <li>
+                        <a href="javascript: void(0);">Level 1.1</a>
+                    </li>
+                    <li>
+                        <a href="javascript: void(0);" aria-expanded="false">Level 1.2
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <ul class="nav-third-level nav" aria-expanded="false">
+                            <li>
+                                <a href="javascript: void(0);">Level 2.1</a>
+                            </li>
+                            <li>
+                                <a href="javascript: void(0);">Level 2.2</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
 
-                                    <hr>
+    </div>
+    <!-- End Sidebar -->
 
-                                    <div class="text-center">
-                                        <div><i class="demo-pli-old-telephone icon-3x"></i></div>
-                                        Questions?
-                                        <p class="text-lg text-semibold text-main"> (415) 234-53454 </p>
-                                        <small><em>We are here 24/7</em></small>
-                                    </div>
-                                </div>
-                                <!--End second tab (Custom layout)-->
-                                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+    <div class="clearfix"></div>
 
+</div>
+<!-- Sidebar -left -->
 
-                                <!--Third tab (Settings)-->
-                                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                                <div class="tab-pane fade" id="demo-asd-tab-3">
-                                    <ul class="list-group bg-trans">
-                                        <li class="pad-top list-header">
-                                            <p class="text-main text-sm text-uppercase text-bold mar-no">Account Settings</p>
-                                        </li>
-                                        <li class="list-group-item">
-                                            <div class="pull-right">
-                                                <input class="toggle-switch" id="demo-switch-1" type="checkbox" checked="">
-                                                <label for="demo-switch-1"></label>
-                                            </div>
-                                            <p class="mar-no text-main">Show my personal status</p>
-                                            <small class="text-muted">Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</small>
-                                        </li>
-                                        <li class="list-group-item">
-                                            <div class="pull-right">
-                                                <input class="toggle-switch" id="demo-switch-2" type="checkbox" checked="">
-                                                <label for="demo-switch-2"></label>
-                                            </div>
-                                            <p class="mar-no text-main">Show offline contact</p>
-                                            <small class="text-muted">Aenean commodo ligula eget dolor. Aenean massa.</small>
-                                        </li>
-                                        <li class="list-group-item">
-                                            <div class="pull-right">
-                                                <input class="toggle-switch" id="demo-switch-3" type="checkbox">
-                                                <label for="demo-switch-3"></label>
-                                            </div>
-                                            <p class="mar-no text-main">Invisible mode </p>
-                                            <small class="text-muted">Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. </small>
-                                        </li>
-                                    </ul>
-
-
-                                    <hr>
-
-                                    <ul class="list-group pad-btm bg-trans">
-                                        <li class="list-header"><p class="text-main text-sm text-uppercase text-bold mar-no">Public Settings</p></li>
-                                        <li class="list-group-item">
-                                            <div class="pull-right">
-                                                <input class="toggle-switch" id="demo-switch-4" type="checkbox" checked="">
-                                                <label for="demo-switch-4"></label>
-                                            </div>
-                                            Online status
-                                        </li>
-                                        <li class="list-group-item">
-                                            <div class="pull-right">
-                                                <input class="toggle-switch" id="demo-switch-5" type="checkbox" checked="">
-                                                <label for="demo-switch-5"></label>
-                                            </div>
-                                            Show offline contact
-                                        </li>
-                                        <li class="list-group-item">
-                                            <div class="pull-right">
-                                                <input class="toggle-switch" id="demo-switch-6" type="checkbox" checked="">
-                                                <label for="demo-switch-6"></label>
-                                            </div>
-                                            Show my device icon
-                                        </li>
-                                    </ul>
-
-
-
-                                    <hr>
-
-                                    <p class="pad-hor text-main text-sm text-uppercase text-bold mar-no">Task Progress</p>
-                                    <div class="pad-all">
-                                        <p class="text-main">Upgrade Progress</p>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar progress-bar-success" style="width: 15%;"><span class="sr-only">15%</span></div>
-                                        </div>
-                                        <small>15% Completed</small>
-                                    </div>
-                                    <div class="pad-hor">
-                                        <p class="text-main">Database</p>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar progress-bar-danger" style="width: 75%;"><span class="sr-only">75%</span></div>
-                                        </div>
-                                        <small>17/23 Database</small>
-                                    </div>
-
-                                </div>
-                                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                                <!--Third tab (Settings)-->
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-            <!--===================================================-->
-            <!--END ASIDE-->
+</div>
+<!-- Left Sidebar End -->

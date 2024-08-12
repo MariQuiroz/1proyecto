@@ -8,7 +8,6 @@ class hemeroteca extends CI_Controller {
 		$this->load->view('inc/vistaslte/navar');
 		$this->load->view('inc/vistaslte/aside');
         $this->load->view('inc/vistaslte/menu');
-		$this->load->view('inc/vistaslte/test');
 		$this->load->view('inc/vistaslte/footer');
 	}
 
@@ -29,7 +28,7 @@ class hemeroteca extends CI_Controller {
             } else {
                 $correo = $this->input->post('correo');
                 $password = $this->input->post('password');
-                $usuario = $this->Usuario_model->authenticate($correo, $password);
+                $usuario = $this->usuario_model->authenticate($correo, $password);
 
                 if ($usuario) {
                     $this->session->set_userdata('usuario_id', $usuario['id']);
@@ -84,7 +83,7 @@ class hemeroteca extends CI_Controller {
                             'id_usuario' => $this->input->post('rol') // ID de usuario se asocia al rol
                         );
     
-                        $this->Usuario_model->create_usuario($data);
+                        $this->usuario_model->create_usuario($data);
                         $this->session->set_flashdata('message', 'Usuario creado exitosamente');
                         redirect('hemeroteca/login');
                     }
@@ -103,7 +102,7 @@ class hemeroteca extends CI_Controller {
         $this->load->view('inc/vistaslte/head');
         if ($_POST) {
             $correo = $this->input->post('correo');
-            $usuario = $this->Usuario_model->get_by_correo($correo);
+            $usuario = $this->usuario_model->get_by_correo($correo);
 
             if ($usuario) {
                 $token = bin2hex(random_bytes(50));
