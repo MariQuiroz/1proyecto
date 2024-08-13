@@ -3,65 +3,79 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Usuario_model extends CI_Model {
 
-    public function get_usuarios() {
-        $query = $this->db->get('usuarios');
-        return $query->result_array();
+	public function listaUsuarios()
+	{
+		$this->db->select('*'); // select *
+		$this->db->from('usuarios'); // tabla
+		$this->db->where('estado', 1);
+		return $this->db->get(); // devolución del resultado de la consulta
+	}
+
+	public function agregarUsuario($data)
+	{
+		public function agregarUsuario($data)
+{
+    // Verificar si el email ya existe
+    $this->db->where('email', $data['email']);
+    $query = $this->db->get('usuarios');
+    
+    if ($query->num_rows() > 0) {
+        return array('status' => FALSE, 'message' => 'El correo electrónico ya está registrado.');
     }
 
-    public function get_usuario($id) {
-        $query = $this->db->get_where('usuarios', array('id' => $id));
-        return $query->row_array();
+    // Verificar si el login ya existe
+    $this->db->where('login', $data['login']);
+    $query = $this->db->get('usuarios');
+    
+    if ($query->num_rows() > 0) {
+        return array('status' => FALSE, 'message' => 'El login ya está en uso.');
     }
 
-    public function create_usuario($data) {
-        $data['contraseña'] = sha1($data['contraseña']); // Encriptación de la contraseña con SHA-1
-        $data['fecha_creacion'] = date('Y-m-d H:i:s');
-        $data['ultima_actualizacion'] = date('Y-m-d H:i:s');
-        return $this->db->insert('usuarios', $data);
+    // Agregar el usuario si no existe
+    if ($this->db->insert('usuarios', $data)) {
+        return array('status' => TRUE, 'message' => 'Usuario agregado exitosamente.');
+    } else {
+        return array('status' => FALSE, 'message' => 'Error al agregar el usuario.');
     }
+}
 
-    public function update_usuario($id, $data) {
-        if (isset($data['contraseña'])) {
-            $data['contraseña'] = sha1($data['contraseña']); // Encriptación de la contraseña si se actualiza
-        }
-        $data['ultima_actualizacion'] = date('Y-m-d H:i:s');
-        $this->db->where('id', $id);
-        return $this->db->update('usuarios', $data);
-    }
+	}
 
-    public function delete_usuario($id) {
-        $data = array(
-            'estado' => 0, // Eliminación lógica
-            'ultima_actualizacion' => date('Y-m-d H:i:s')
-        );
-        $this->db->where('id', $id);
-        return $this->db->update('usuarios', $data);
-    }
+	public function eliminarUsuario($id)
+	{
+		$this->db->where('id', $id);
+		$this->db->delete('usuarios');
+	}
 
-    public function authenticate($correo, $password) {
-        $this->db->where('correo', $correo);
-        $this->db->where('estado', 1); // Solo usuarios activos
-        $query = $this->db->get('usuarios');
-        $usuario = $query->row_array();
+	public function recuperarUsuario($id)
+	{
+		$this->db->select('*'); // select *
+		$this->db->from('usuarios'); // tabla
+		$this->db->where('id', $id);
+		return $this->db->get(); // devolución del resultado de la consulta
+	}
 
-        if ($usuario && $usuario['contraseña'] === sha1($password)) {
-            return $usuario;
-        } else {
-            return false;
-        }
-    }
+	public function modificarUsuario($id, $data)
+	{
+		$this->db->where('id', $id);
+		$this->db->update('usuarios', $data);		
+	}
 
-    public function get_by_correo($correo) {
-        $query = $this->db->get_where('usuarios', array('correo' => $correo));
-        return $query->row_array();
-    }
+	public function listaUsuariosDeshabilitados()
+	{
+		$this->db->select('*'); // select *
+		$this->db->from('usuarios'); // tabla
+		$this->db->where('estado', 0);
+		return $this->db->get(); // devolución del resultado de la consulta
+	}
 
-    public function update_password($id, $new_password) {
-        $data = array(
-            'contraseña' => sha1($new_password), // Encriptación de la nueva contraseña
-            'ultima_actualizacion' => date('Y-m-d H:i:s')
-        );
-        $this->db->where('id', $id);
-        return $this->db->update('usuarios', $data);
-    }
+	//para el inicio de sesion
+	public function validar($login, $password)
+	{
+		$this->db->select('*');
+		$this->db->from('usuarios');
+		$this->db->where('login', $login);
+		$this->db->where('password', $password);
+		return $this->db->get();
+	}
 }

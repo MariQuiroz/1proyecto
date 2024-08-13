@@ -18,6 +18,17 @@
         <link href="<?php echo base_url(); ?>/adminXeria/dist/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
         <link href="<?php echo base_url(); ?>/adminXeria/dist/assets/css/app.min.css" rel="stylesheet" type="text/css" />
 
+        <!-- PARA EL INICIO DE SESION -->
+        
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="<?php echo base_url(); ?>/adminXeria/dist/assets/images/favicon.ico">
+
+        <!-- App css -->
+        <link href="<?php echo base_url(); ?>/adminXeria/dist/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+        <link href="<?php echo base_url(); ?>/adminXeria/dist/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <link href="<?php echo base_url(); ?>/adminXeria/dist/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+
+
     </head>
 
     <body>
