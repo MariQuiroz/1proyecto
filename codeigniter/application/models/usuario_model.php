@@ -10,10 +10,7 @@ class Usuario_model extends CI_Model {
 		$this->db->where('estado', 1);
 		return $this->db->get(); // devolución del resultado de la consulta
 	}
-
-	public function agregarUsuario($data)
-	{
-		public function agregarUsuario($data)
+public function agregarUsuario($data)
 {
     // Verificar si el email ya existe
     $this->db->where('email', $data['email']);
@@ -39,7 +36,9 @@ class Usuario_model extends CI_Model {
     }
 }
 
-	}
+
+
+	
 
 	public function eliminarUsuario($id)
 	{

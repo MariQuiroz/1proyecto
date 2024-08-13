@@ -39,24 +39,22 @@ class Usuario extends CI_Controller {
 
 
 	public function agregarbd()
-	{
-		$data['nombre' ]=$_POST['nombre'];
-        $data['primerApellido' ]=$_POST['primerapellido'];
-        $data['segundoApellido' ]=$_POST['segundoapellido'];
-        $data['ci']=$_POST['ci'];
-        $data['domicilio' ]=$_POST['domicilio'];
-        $data['telefono' ]=$_POST['telefono'];
-        $data['email']=$_POST['email'];
-        $data['login']=$_POST['login'];
-        $data['password'] = hash('sha256', $_POST['password']);
-        $data['rol' ]=$_POST['rol'];
-        $data['estado']=1; // Suponiendo que el estado por defecto es activo
-       	$data['foto' ]=null; // Puedes añadir lógica para manejar la foto si es necesario
+{
+    $data['nombre'] = $_POST['nombre'];
+    $data['primerApellido'] = $_POST['primerapellido'];
+    $data['segundoApellido'] = $_POST['segundoapellido'];
+    $data['ci'] = $_POST['ci'];
+    $data['domicilio'] = $_POST['domicilio'];
+    $data['telefono'] = $_POST['telefono'];
+    $data['email'] = $_POST['email'];
+    $data['login'] = $_POST['login'];
+    $data['password'] = hash('sha256', $_POST['password']);
+    $data['rol'] = $_POST['rol'];
+    $data['estado'] = 1; // Asignar un valor simple, no un array
+    $data['foto'] = null; // Puedes añadir lógica para manejar la foto si es necesario
     
-
     // Determinar el valor de idUsuario basado en el rol
-    $rol = $this->input->post('rol');
-    switch ($rol) {
+    switch ($data['rol']) {
         case 1:
             $data['idUsuario'] = 1; // Administrador
             break;
@@ -64,13 +62,12 @@ class Usuario extends CI_Controller {
             $data['idUsuario'] = 2; // Encargado
             break;
         case 3:
-            $data['idUsuario'] = 3; // Lector
-            break;
         default:
-            $data['idUsuario'] = 3; // Valor por defecto si el rol no es reconocido
+            $data['idUsuario'] = 3; // Lector o valor por defecto si el rol no es reconocido
             break;
     }
-	$result = $this->usuario_model->agregarUsuario($data);
+
+    $result = $this->usuario_model->agregarUsuario($data);
 
     if ($result['status']) {
         $this->session->set_flashdata('message', $result['message']);
@@ -79,14 +76,14 @@ class Usuario extends CI_Controller {
         $this->session->set_flashdata('error', $result['message']);
         redirect('usuario/agregar', 'refresh'); // Redirigir de vuelta al formulario de agregar
     }
-    
 }
+
 
 		
 
 	public function eliminarbd()
 	{
-		$idusuario=$_POST['id'];
+		$id=$_POST['id'];
 		$this->usuario_model->eliminarUsuario($id);
 		redirect('usuario/mostrar','refresh');
 	}
@@ -102,42 +99,57 @@ class Usuario extends CI_Controller {
 	}
 
 	public function modificarbd()
-	{
-		$id=$_POST['id'];
-		$data['nombre']=$_POST['nombre'];
-		$data['primerApellido']=$_POST['primerapellido'];
-		$data['segundoApellido']=$_POST['segundoapellido'];
-		$nombrearchivo=$id.".jpg";
+{
+    $id = $_POST['id'];
+    
+    // Recopilación de datos
+    $data['nombre'] = $_POST['nombre'];
+    $data['primerApellido'] = $_POST['primerapellido'];
+    $data['segundoApellido'] = $_POST['segundoapellido'];
+    $data['ci'] = $_POST['ci'];
+    $data['domicilio'] = $_POST['domicilio'];
+    $data['telefono'] = $_POST['telefono'];
+    $data['email'] = $_POST['email'];
+    $data['login'] = $_POST['login'];
+    $data['password'] = hash('sha256', $_POST['password']);
+    $data['rol'] = $_POST['rol'];
+    $data['estado'] = 1; // Mantén el estado activo por defecto
+    $nombrearchivo = $id.".jpg";
 
-		
-		/*$config['upload_path']='./uploads/';
-		$config['file_name']=$nombrearchivo;
-		$direccion="./uploads/".$nombrearchivo;
-		if(file_exists($direccion))
-		{
-			unlink($direccion);
-		}
-		$config['allowed_types']='jpg';
-		$this->load->library('upload',$config);
+    // Configuración para la carga del archivo
+    $config['upload_path'] = './uploads/';
+    $config['file_name'] = $nombrearchivo;
+    $config['allowed_types'] = 'jpg';
+    $this->load->library('upload', $config);
 
-		if(!$this->upload->do_upload())
-		{
-			$data['error']=$this->upload->display_errors();
-		}
-		else
-		{
-			$data['foto']=$nombrearchivo;
-		}
+    // Verificación si existe un archivo anterior y eliminarlo
+    $direccion = "./uploads/".$nombrearchivo;
+    if (file_exists($direccion)) {
+        unlink($direccion);
+    }
 
-		$this->usuario_model->modificarUsuario($id,$data);
-		$this->upload->data();
-		redirect('usuario/mostrar','refresh');*/
-	}
+    // Intento de carga de archivo
+    if ($this->upload->do_upload('userfile')) {
+        // Si la carga es exitosa, se actualiza el campo 'foto'
+        $data['foto'] = $nombrearchivo;
+    } else {
+        // Si falla, se puede mostrar el error en la vista pero no en la base de datos
+        $uploadError = $this->upload->display_errors();
+        // Puedes decidir qué hacer con este error, como guardarlo en la sesión o redirigir con el mensaje
+    }
+
+    // Actualización de usuario en la base de datos
+    $this->usuario_model->modificarUsuario($id, $data);
+
+    // Redirección después de la actualización
+    redirect('usuario/mostrar', 'refresh');
+}
+
 
 	public function deshabilitarbd()
 	{
 		$id=$_POST['id'];
-		$data['habilitado']=0;
+		$data['estado']=0;
 
 		$this->usuario_model->modificarUsuario($id,$data);
 		redirect('usuario/mostrar','refresh');
@@ -243,7 +255,7 @@ class Usuario extends CI_Controller {
     public function validar()
     {
         $login = $_POST['login'];
-        $password = md5($_POST['password']);
+        $password = hash('sha256', $_POST['password']);
 
         $consulta = $this->usuario_model->validar($login, $password);
 
