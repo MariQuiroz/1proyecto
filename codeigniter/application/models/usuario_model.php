@@ -3,78 +3,77 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Usuario_model extends CI_Model {
 
-	public function listaUsuarios()
-	{
-		$this->db->select('*'); // select *
-		$this->db->from('usuarios'); // tabla
-		$this->db->where('estado', 1);
-		return $this->db->get(); // devolución del resultado de la consulta
-	}
-public function agregarUsuario($data)
+    public function obtener_por_username($username)
+    {
+        $this->db->select('*');
+        $this->db->from('USUARIO');
+        $this->db->where('username', $username);
+        $query = $this->db->get();
+        
+        if ($query->num_rows() > 0) {
+            return $query->row();
+        }
+        return null;
+    }
+
+    public function registrarUsuario($data)
+    {
+        // Asegúrate de hashear la contraseña antes de guardarla
+        $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+        $this->db->insert('USUARIO', $data);
+    }
+		public function listaUsuarios()
+    {
+        $this->db->select('*');
+        $this->db->from('USUARIO');
+        $this->db->where('estado', 1);
+        return $this->db->get();
+    }
+
+
+    public function agregarUsuario($data)
+    {
+        $this->db->insert('USUARIO', $data);
+    }
+
+    public function eliminarUsuario($idUsuario)
+    {
+        $this->db->where('idUsuario', $idUsuario);
+        $this->db->delete('USUARIO');
+    }
+
+    public function recuperarUsuario($idUsuario)
+    {
+        $this->db->select('*');
+        $this->db->from('USUARIO');
+        $this->db->where('idUsuario', $idUsuario);
+        return $this->db->get();
+    }
+
+    public function modificarUsuario($idUsuario, $data)
+    {
+        $this->db->where('idUsuario', $idUsuario);
+        $this->db->update('USUARIO', $data);
+    }
+    public function modificarUsuarioRestringido($idUsuario, $data)
 {
-    // Verificar si el email ya existe
-    $this->db->where('email', $data['email']);
-    $query = $this->db->get('usuarios');
-    
-    if ($query->num_rows() > 0) {
-        return array('status' => FALSE, 'message' => 'El correo electrónico ya está registrado.');
-    }
+    // Lista de campos permitidos para actualizar
+    $campos_permitidos = [
+        'nombres', 'apellidoPaterno', 'apellidoMaterno', 'carnet', 
+        'profesion', 'fechaNacimiento', 'sexo', 'email', 'usuarioSesion'
+    ];
 
-    // Verificar si el login ya existe
-    $this->db->where('login', $data['login']);
-    $query = $this->db->get('usuarios');
-    
-    if ($query->num_rows() > 0) {
-        return array('status' => FALSE, 'message' => 'El login ya está en uso.');
-    }
+    // Filtrar $data para incluir solo los campos permitidos
+    $data_filtrada = array_intersect_key($data, array_flip($campos_permitidos));
 
-    // Agregar el usuario si no existe
-    if ($this->db->insert('usuarios', $data)) {
-        return array('status' => TRUE, 'message' => 'Usuario agregado exitosamente.');
-    } else {
-        return array('status' => FALSE, 'message' => 'Error al agregar el usuario.');
-    }
+    $this->db->where('idUsuario', $idUsuario);
+    return $this->db->update('USUARIO', $data_filtrada);
 }
-
-
-
-	
-
-	public function eliminarUsuario($id)
-	{
-		$this->db->where('id', $id);
-		$this->db->delete('usuarios');
-	}
-
-	public function recuperarUsuario($id)
-	{
-		$this->db->select('*'); // select *
-		$this->db->from('usuarios'); // tabla
-		$this->db->where('id', $id);
-		return $this->db->get(); // devolución del resultado de la consulta
-	}
-
-	public function modificarUsuario($id, $data)
-	{
-		$this->db->where('id', $id);
-		$this->db->update('usuarios', $data);		
-	}
-
-	public function listaUsuariosDeshabilitados()
-	{
-		$this->db->select('*'); // select *
-		$this->db->from('usuarios'); // tabla
-		$this->db->where('estado', 0);
-		return $this->db->get(); // devolución del resultado de la consulta
-	}
-
-	//para el inicio de sesion
-	public function validar($login, $password)
-	{
-		$this->db->select('*');
-		$this->db->from('usuarios');
-		$this->db->where('login', $login);
-		$this->db->where('password', $password);
-		return $this->db->get();
-	}
+    public function listaUsuariosDeshabilitados()
+    {
+        $this->db->select('*');
+        $this->db->from('USUARIO');
+        $this->db->where('estado', 0);
+        return $this->db->get();
+    }
 }

@@ -1,65 +1,62 @@
+
 <div class="container">
   <div class="row">
     <div class="col-md-12">
-      <h2>Agregar usuario</h2>
 
-      <?php if ($this->session->flashdata('error')): ?>
-        <div class="alert alert-danger">
-          <?php echo $this->session->flashdata('error'); ?>
-        </div>
-      <?php endif; ?>
+      <h2>Agregar Usuario</h2>
 
-      <?php if ($this->session->flashdata('message')): ?>
-        <div class="alert alert-success">
-          <?php echo $this->session->flashdata('message'); ?>
-        </div>
-      <?php endif; ?>
+      <?php echo form_open_multipart('usuarios/agregarbd'); ?>
 
-      <?php echo form_open_multipart('usuario/agregarbd'); ?>
-
-      <div class="mb-3">
-        <label class="form-label">Nombre</label>
-        <input type="text" name="nombre" class="form-control" placeholder="Ingrese su nombre">
+      <div class="form-group">
+        <input type="text" name="nombres" class="form-control" placeholder="Ingrese sus nombres" required>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Primer Apellido</label>
-        <input type="text" name="primerapellido" class="form-control" placeholder="Ingrese su primer apellido">
+      <div class="form-group">
+        <input type="text" name="apellidoPaterno" class="form-control" placeholder="Ingrese su apellido paterno" required>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Segundo Apellido</label>
-        <input type="text" name="segundoapellido" class="form-control" placeholder="Ingrese su segundo apellido">
+      <div class="form-group">
+        <input type="text" name="apellidoMaterno" class="form-control" placeholder="Ingrese su apellido materno">
       </div>
-      <div class="mb-3">
-        <label class="form-label">CI</label>
-        <input type="text" name="ci" class="form-control" placeholder="Ingrese su CI">
+      <div class="form-group">
+        <input type="text" name="carnet" class="form-control" placeholder="Ingrese su carnet" required>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Domicilio</label>
-        <input type="text" name="domicilio" class="form-control" placeholder="Ingrese su domicilio">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Teléfono</label>
-        <input type="number" name="telefono" class="form-control" placeholder="Ingrese su teléfono">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email" name="email" class="form-control" placeholder="Ingrese su email">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Login</label>
-        <input type="text" name="login" class="form-control" placeholder="Ingrese su login">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" placeholder="Ingrese su password">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Rol</label>
-        <select name="rol" class="form-control">
-          <option value="1">Administrador</option>
-          <option value="2">Encargado</option>
-          <option value="3">Lector</option>
+      <div class="form-group">
+        <input type="text" name="profesion" class="form-control" >
+        <select name="profesion" class="form-control">
+          <option value="">Seleccione su profesion</option>
+          <option value="Estudiante Umss">Estudiante Umss</option>
+          <option value="Docente Umss">Docente Umss</option>
+          <option value="Investigador">Investigador</option>
+          <option value="Publico en General">Publico en General</option>
         </select>
+      </div>
+      <div class="form-group">
+        <input type="date" name="fechaNacimiento" class="form-control" placeholder="Fecha de nacimiento">
+      </div>
+      <div class="form-group">
+        <select name="sexo" class="form-control">
+          <option value="">Seleccione su sexo</option>
+          <option value="M">Masculino</option>
+          <option value="F">Femenino</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <input type="email" name="email" class="form-control" placeholder="Ingrese su email" required>
+      </div>
+      <div class="form-group">
+        <input type="text" name="username" class="form-control" placeholder="Ingrese su nombre de usuario" required>
+      </div>
+      <div class="form-group">
+        <input type="password" name="password" class="form-control" placeholder="Ingrese su contraseña" required>
+      </div>
+      <div class="form-group">
+        <select name="rol" class="form-control" required>
+          <option value="">Seleccione el rol</option>
+          <option value="administrador">Administrador</option>
+          <option value="lector">Lector</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <input type="file" name="foto" class="form-control-file">
       </div>
       
       <button type="submit" class="btn btn-primary">AGREGAR USUARIO</button>

@@ -2,39 +2,68 @@
   <div class="row">
     <div class="col-md-12">
 
-      <h2>Modificar usuario</h2>
+      <h2>Modificar Usuario</h2>
 
       <?php
-      foreach ($infousuario->result() as $row)
+      foreach ($infoUsuario->result() as $row)
       {
-        echo form_open_multipart('usuario/modificarbd');
-        ?>
-        <input type="hidden" name="id" value="<?php echo $row->id; ?>">
+        echo form_open_multipart('usuarios/modificarbd');
+      ?>
+        <input type="hidden" name="idUsuario" value="<?php echo $row->idUsuario; ?>">
 
-        <input type="text" name="nombre" placeholder="Ingrese su nombre" value="<?php echo $row->nombre; ?>">
-        <input type="text" name="primerapellido" placeholder="Ingrese su primer apellido" value="<?php echo $row->primerApellido; ?>">
-        <input type="text" name="segundoapellido" placeholder="Ingrese su segundo apellido" value="<?php echo $row->segundoApellido; ?>">
-        <input type="text" name="ci" placeholder="Ingrese su ci" value="<?php echo $row->ci; ?>">
-        <input type="text" name="domicilio" placeholder="Ingrese su domicilio" value="<?php echo $row->domicilio; ?>">
-        <input type="number" name="telefono" placeholder="Ingrese su telefono" value="<?php echo $row->telefono; ?>">
-        <input type="email" name="email" placeholder="Ingrese su email" value="<?php echo $row->email; ?>">
-        <input type="text" name="login" placeholder="Ingrese su login" value="<?php echo $row->login; ?>">
-        <input type="password" name="password" placeholder="Ingrese su password" value="<?php echo $row->password; ?>">
-        <input type="number" name="rol" placeholder="Ingrese su rol" value="<?php echo $row->rol; ?>">
-        <input type="text" name="foto" placeholder="Ingrese su foto" value="<?php echo $row->foto; ?>">
-        <br>
-        <input type="file" name="userfile">
-        <br>
+        <div class="form-group">
+          <input type="text" name="nombres" class="form-control" placeholder="Ingrese sus nombres" value="<?php echo $row->nombres; ?>" required>
+        </div>
+        <div class="form-group">
+          <input type="text" name="apellidoPaterno" class="form-control" placeholder="Ingrese su apellido paterno" value="<?php echo $row->apellidoPaterno; ?>" required>
+        </div>
+        <div class="form-group">
+          <input type="text" name="apellidoMaterno" class="form-control" placeholder="Ingrese su apellido materno" value="<?php echo $row->apellidoMaterno; ?>">
+        </div>
+        <div class="form-group">
+          <input type="text" name="carnet" class="form-control" placeholder="Ingrese su carnet" value="<?php echo $row->carnet; ?>" required>
+        </div>
+        <div class="form-group">
+        <select name="profesion" class="form-control">
+            <option value="">Seleccione su profesion</option>
+            <option value="M" <?php echo ($row->profesion == 'Estudiante') ? 'selected' : ''; ?>>Estudiante</option>
+            <option value="F" <?php echo ($row->profesion == 'Docente') ? 'selected' : ''; ?>>Docente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="date" name="fechaNacimiento" class="form-control" value="<?php echo $row->fechaNacimiento; ?>">
+        </div>
+        <div class="form-group">
+          <select name="sexo" class="form-control">
+            <option value="">Seleccione su sexo</option>
+            <option value="M" <?php echo ($row->sexo == 'M') ? 'selected' : ''; ?>>Masculino</option>
+            <option value="F" <?php echo ($row->sexo == 'F') ? 'selected' : ''; ?>>Femenino</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="email" name="email" class="form-control" placeholder="Ingrese su email" value="<?php echo $row->email; ?>" required>
+        </div>
+        <div class="form-group">
+          <input type="text" name="username" class="form-control" placeholder="Ingrese su nombre de usuario" value="<?php echo $row->username; ?>" required>
+        </div>
+        <div class="form-group">
+          <select name="rol" class="form-control" required>
+            <option value="">Seleccione el rol</option>
+            <option value="administrador" <?php echo ($row->rol == 'administrador') ? 'selected' : ''; ?>>Administrador</option>
+            <option value="lector" <?php echo ($row->rol == 'lector') ? 'selected' : ''; ?>>Lector</option>
+          </select>
+        </div>
+        
+        
         <button type="submit" class="btn btn-success">MODIFICAR USUARIO</button>
-        <?php
-        form_close();
+      <?php
+        echo form_close();
       }
       ?>
+
     </div>
   </div>
 </div>
-
-
 
 
 
