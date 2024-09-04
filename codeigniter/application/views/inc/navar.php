@@ -40,7 +40,7 @@
                                 <!-- item-->
                                 <a href="javascript:void(0);" class="dropdown-item notify-item active">
                                     <div class="notify-icon">
-                                        <img src="<?php echo base_url(); ?>/adminXeria/dist/assets/images/users/user-1.jpg" class="img-fluid rounded-circle" alt="" /> </div>
+                                        <img src="<?php echo base_url(); ?>adminXeria/dist/assets/images/users/user-1.jpg" class="img-fluid rounded-circle" alt="" /> </div>
                                     <p class="notify-details">Cristina Pride</p>
                                     <p class="text-muted mb-0 user-msg">
                                         <small>Hi, How are you? What about our next meeting</small>
@@ -60,7 +60,7 @@
                                 <!-- item-->
                                 <a href="javascript:void(0);" class="dropdown-item notify-item">
                                     <div class="notify-icon">
-                                        <img src="<?php echo base_url(); ?>/adminXeria/dist/assets/images/users/user-4.jpg" class="img-fluid rounded-circle" alt="" /> </div>
+                                        <img src="<?php echo base_url(); ?>adminXeria/dist/assets/images/users/user-4.jpg" class="img-fluid rounded-circle" alt="" /> </div>
                                     <p class="notify-details">Karen Robinson</p>
                                     <p class="text-muted mb-0 user-msg">
                                         <small>Wow ! this admin looks good and awesome design</small>
@@ -110,7 +110,7 @@
 
                     <li class="dropdown notification-list">
                         <a class="nav-link dropdown-toggle nav-user mr-0 waves-effect waves-light" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
-                            <img src="<?php echo base_url(); ?>/adminXeria/dist/assets/images/users/user-1.jpg" alt="user-image" class="rounded-circle">
+                            <img src="<?php echo base_url(); ?>adminXeria/dist/assets/images/users/user-1.jpg" alt="user-image" class="rounded-circle">
                             <span class="pro-user-name ml-1">
                                 Marcia J. <i class="mdi mdi-chevron-down"></i> 
                             </span>

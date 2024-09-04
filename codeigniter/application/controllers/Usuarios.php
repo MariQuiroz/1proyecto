@@ -53,9 +53,9 @@ class Usuarios extends CI_Controller {
         }
         else
         {
-            $this->load->view('inc/header');
+           //$this->load->view('inc/header');
             $this->load->view('login', $data);
-            $this->load->view('inc/footer');
+            //$this->load->view('inc/footer');
         }
     }
 
@@ -115,7 +115,11 @@ class Usuarios extends CI_Controller {
             $data['usuarios'] = $lista;
             
             $this->load->view('inc/header');
+            $this->load->view('inc/navar');
+           // $this->load->view('inc/aside');
+            //$this->load->view('inc/menu');
             $this->load->view('lista', $data);
+            
             $this->load->view('inc/footer');
         }
         else
@@ -160,11 +164,24 @@ public function registrarbd()
 
 public function lector()
 {
+    $this->_verificar_sesion();
+
     if($this->session->userdata('rol') == 'lector')
     { 
+        // Cargar el modelo de publicaciones
+        $this->load->model('publicacion_model');
+        
+        // Obtener la lista de publicaciones
+        $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
+        
+        // Cargar las vistas
         $this->load->view('inc/header');
-        $this->load->view('panelguest');
+        $this->load->view('panelguest', $data);
         $this->load->view('inc/footer');
+    }
+    else
+    {
+        redirect('usuarios/panel', 'refresh');
     }
 }
 
@@ -269,7 +286,7 @@ public function deshabilitados()
 public function habilitarbd()
 {
     $this->_verificar_sesion();
-    
+
     $idUsuario = $_POST['idUsuario'];
     $data['estado'] = 1;
 
