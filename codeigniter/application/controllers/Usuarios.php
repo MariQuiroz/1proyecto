@@ -115,10 +115,10 @@ class Usuarios extends CI_Controller {
             $data['usuarios'] = $lista;
             
             $this->load->view('inc/header');
-            $this->load->view('inc/navar');
-           // $this->load->view('inc/aside');
-            //$this->load->view('inc/menu');
-            $this->load->view('lista', $data);
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('inc/menu',$data);
+            //$this->load->view('lista', $data);
             
             $this->load->view('inc/footer');
         }
@@ -187,6 +187,8 @@ public function lector()
 
 public function agregar()
 {
+    $this->_verificar_sesion();
+    
     $this->load->view('inc/header');
     $this->load->view('formulario');
     $this->load->view('inc/footer');

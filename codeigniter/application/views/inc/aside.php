@@ -1,5 +1,5 @@
-     <!-- ========== Left Sidebar Start ========== -->
-     <div class="left-side-menu">
+<!-- ========== Left Sidebar Start ========== -->
+<div class="left-side-menu">
 
 <div class="slimscroll-menu">
 

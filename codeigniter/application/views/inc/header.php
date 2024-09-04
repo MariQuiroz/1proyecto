@@ -8,22 +8,23 @@
         <meta content="Coderthemes" name="author" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <!-- App favicon -->
-        <link rel="shortcut icon" href="<?php echo base_url(); ?>/adminXeria/dist/assets/images/favicon.ico">
+        <link rel="shortcut icon" href="<?php echo base_url(); ?>adminXeria/light/dist/assets/images/favicon.ico">
 
         <!-- plugin css -->
-        <link href="<?php echo base_url(); ?>adminXeria/dist/assets/libs/jquery-vectormap/jquery-jvectormap-1.2.2.css" rel="stylesheet" type="text/css" />
+        <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/libs/jquery-vectormap/jquery-jvectormap-1.2.2.css" rel="stylesheet" type="text/css" />
 
         <!-- App css -->
-        <link href="<?php echo base_url(); ?>adminXeria/dist/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
-        <link href="<?php echo base_url(); ?>adminXeria/dist/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
-        <link href="<?php echo base_url(); ?>adminXeria/dist/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+        <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+        <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/app.min.css" rel="stylesheet" type="text/css" />
 
-        <!-- PARA EL INICIO DE SESION -->
-        
-        <!-- App favicon -->
-        <link rel="shortcut icon" href="<?php echo base_url(); ?>adminXeria/dist/assets/images/favicon.ico">
+        <!-- third party css datatables -->
+        <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/libs/datatables/dataTables.bootstrap4.css" rel="stylesheet" type="text/css" />
+        <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/libs/datatables/responsive.bootstrap4.css" rel="stylesheet" type="text/css" />
+        <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/libs/datatables/buttons.bootstrap4.css" rel="stylesheet" type="text/css" />
+        <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/libs/datatables/select.bootstrap4.css" rel="stylesheet" type="text/css" />
+        <!-- third party css end -->
 
-        
 
 
     </head>
