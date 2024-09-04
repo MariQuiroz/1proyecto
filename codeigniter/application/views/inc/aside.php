@@ -12,9 +12,40 @@
 
             <li>
                 <a href="javascript: void(0);">
+                    <i class="la la-diamond"></i>
+                    <span class="badge badge-danger float-right">New</span>
+                    <span> Inicio </span>
+                </a>
+                <ul class="nav-second-level" aria-expanded="false">
+                    <li>
+                        <a href="extras-profile.html">Profile</a>
+                    </li>
+                    <li>
+                        <a href="extras-timeline.html">Timeline</a>
+                    </li>
+                    <li>
+                        <a href="extras-invoice.html">Invoice</a>
+                    </li>
+                    <li>
+                        <a href="extras-faqs.html">FAQs</a>
+                    </li>
+                    <li>
+                        <a href="extras-pricing.html">Pricing</a>
+                    </li>
+                    <li>
+                        <a href="extras-maintenance.html">Maintenance</a>
+                    </li>
+                    <li>
+                        <a href="extras-coming-soon.html">Coming Soon</a>
+                    </li>
+                </ul>
+            </li>
+
+            <li>
+                <a href="javascript: void(0);">
                     <i class="la la-dashboard"></i>
                     <span class="badge badge-info badge-pill float-right">2</span>
-                    <span> Dashboards </span>
+                    <span> Reservas </span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
                     <li>
@@ -29,7 +60,7 @@
             <li>
                 <a href="javascript: void(0);">
                     <i class="la la-cube"></i>
-                    <span> Apps </span>
+                    <span> Préstamos </span>
                     <span class="menu-arrow"></span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
@@ -48,57 +79,41 @@
             <li>
                 <a href="javascript: void(0);">
                     <i class="la la-clone"></i>
-                    <span> Layouts </span>
+                    <span> Publicaciones </span>
                     <span class="menu-arrow"></span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
                     <li>
-                        <a href="layouts-sidebar-sm.html">Small Sidebar</a>
+                        <a href="layouts-sidebar-sm.html">Periódicos</a>
                     </li>
                     <li>
-                        <a href="layouts-light-sidebar.html">Light Sidebar</a>
+                        <a href="layouts-light-sidebar.html">Gacetas</a>
                     </li>
-                    <li>
-                        <a href="layouts-dark-topbar.html">Dark Topbar</a>
-                    </li>
-                    <li>
-                        <a href="layouts-preloader.html">Preloader</a>
-                    </li>
-                    <li>
-                        <a href="layouts-sidebar-collapsed.html">Sidebar Collapsed</a>
-                    </li>
-                    <li>
-                        <a href="layouts-boxed.html">Boxed</a>
-                    </li>
+                    
                 </ul>
             </li>
 
             <li>
                 <a href="javascript: void(0);">
                     <i class="la la-envelope"></i>
-                    <span> Email </span>
+                    <span> Usuarios </span>
                     <span class="menu-arrow"></span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
                     <li>
-                        <a href="email-inbox.html">Inbox</a>
+                        <a href="email-inbox.html">Habilitados</a>
                     </li>
                     <li>
-                        <a href="email-read.html">Read Email</a>
+                        <a href="email-read.html">Deshabilitados</a>
                     </li>
-                    <li>
-                        <a href="email-compose.html">Compose Email</a>
-                    </li>
-                    <li>
-                        <a href="email-templates.html">Email Templates</a>
-                    </li>
+                
                 </ul>
             </li>
 
             <li>
                 <a href="javascript: void(0);">
                     <i class="la la-file-text-o"></i>
-                    <span> Pages </span>
+                    <span> Reportes </span>
                     <span class="menu-arrow"></span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
@@ -135,54 +150,25 @@
                 </ul>
             </li>
 
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-diamond"></i>
-                    <span class="badge badge-danger float-right">New</span>
-                    <span> Extra Pages </span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="extras-profile.html">Profile</a>
-                    </li>
-                    <li>
-                        <a href="extras-timeline.html">Timeline</a>
-                    </li>
-                    <li>
-                        <a href="extras-invoice.html">Invoice</a>
-                    </li>
-                    <li>
-                        <a href="extras-faqs.html">FAQs</a>
-                    </li>
-                    <li>
-                        <a href="extras-pricing.html">Pricing</a>
-                    </li>
-                    <li>
-                        <a href="extras-maintenance.html">Maintenance</a>
-                    </li>
-                    <li>
-                        <a href="extras-coming-soon.html">Coming Soon</a>
-                    </li>
-                </ul>
-            </li>
+            
 
             <li class="menu-title mt-2">Components</li>
 
             <li>
                 <a href="javascript: void(0);">
                     <i class="la la-briefcase"></i>
-                    <span> UI Elements </span>
+                    <span> Inicio</span>
                     <span class="menu-arrow"></span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
                     <li>
-                        <a href="ui-buttons.html">Buttons</a>
+                        <a href="ui-buttons.html">Registrar</a>
                     </li>
                     <li>
-                        <a href="ui-cards.html">Cards</a>
+                        <a href="ui-cards.html">Consultar</a>
                     </li>
                     <li>
-                        <a href="ui-tabs-accordions.html">Tabs & Accordions</a>
+                        <a href="ui-tabs-accordions.html">Reportes</a>
                     </li>
                     <li>
                         <a href="ui-modals.html">Modals</a>
@@ -208,7 +194,7 @@
             <li>
                 <a href="widgets.html">
                     <i class="la la-coffee"></i>
-                    <span> Widgets </span>
+                    <span> Usuarios </span>
                 </a>
             </li>
 
@@ -216,7 +202,7 @@
                 <a href="javascript: void(0);">
                     <i class="la la-bullhorn"></i>
                     <span class="badge badge-info float-right">Hot</span>
-                    <span> Admin UI </span>
+                    <span> Usuarios </span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
                     <li>
@@ -243,7 +229,7 @@
             <li>
                 <a href="javascript: void(0);">
                     <i class="la la-bullseye"></i>
-                    <span> Icons </span>
+                    <span> Préstamos </span>
                     <span class="menu-arrow"></span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
@@ -268,7 +254,7 @@
             <li>
                 <a href="javascript: void(0);">
                     <i class="la la-wrench"></i>
-                    <span> Forms </span>
+                    <span> Reservas</span>
                     <span class="menu-arrow"></span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
@@ -305,7 +291,7 @@
             <li>
                 <a href="javascript: void(0);">
                     <i class="la la-table"></i>
-                    <span> Tables </span>
+                    <span> Publicaciones</span>
                     <span class="menu-arrow"></span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
@@ -330,7 +316,7 @@
             <li>
                 <a href="javascript: void(0);">
                     <i class="la la-bar-chart"></i>
-                    <span> Charts </span>
+                    <span> Reportes</span>
                     <span class="menu-arrow"></span>
                 </a>
                 <ul class="nav-second-level" aria-expanded="false">
