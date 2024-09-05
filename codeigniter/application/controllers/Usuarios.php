@@ -133,7 +133,7 @@ public function registrar()
     if($this->session->userdata('rol') == 'administrador')
     { 
         $this->load->view('inc/header');
-        $this->load->view('registrarform');
+        $this->load->view('admin/registrarform');
         $this->load->view('inc/footer');
     }
     else
@@ -176,7 +176,7 @@ public function lector()
         
         // Cargar las vistas
         $this->load->view('inc/header');
-        $this->load->view('panelguest', $data);
+        $this->load->view('lector/panelguest', $data);
         $this->load->view('inc/footer');
     }
     else
@@ -190,31 +190,39 @@ public function agregar()
     $this->_verificar_sesion();
     
     $this->load->view('inc/header');
-    $this->load->view('formulario');
+    $this->load->view('admin/formulario');
     $this->load->view('inc/footer');
 }
 
 public function agregarbd()
 {
-
     $this->_verificar_sesion();
 
-    $data['nombres'] =strtoupper($_POST['nombres']);
-    $data['apellidoPaterno'] = strtoupper($_POST['apellidoPaterno']);
-    $data['apellidoMaterno'] = strtoupper($_POST['apellidoMaterno']);
-    $data['carnet'] = strtoupper($_POST['carnet']);
-    $data['profesion'] = strtoupper($_POST['profesion']);
-    $data['fechaNacimiento'] = $_POST['fechaNacimiento'];
-    $data['sexo'] = strtoupper($_POST['sexo']);
-    $data['email'] = $_POST['email'];
-    $data['username'] = strtolower($_POST['username']);
-    $data['password'] =password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $data['rol'] = strtoupper($_POST['rol']);
+    $idUsuarioSesion = $this->session->userdata('idUsuario');
+    if (!$idUsuarioSesion) {
+        log_message('error', 'ID de usuario no encontrado en la sesión');
+        $this->session->set_flashdata('error', 'Error de sesión. Por favor, inicie sesión nuevamente.');
+        redirect('usuarios/logout', 'refresh');
+    }
+
+    $data = array(
+        'nombres' => strtoupper($this->input->post('nombres')),
+        'apellidoPaterno' => strtoupper($this->input->post('apellidoPaterno')),
+        'apellidoMaterno' => strtoupper($this->input->post('apellidoMaterno')),
+        'carnet' => strtoupper($this->input->post('carnet')),
+        'profesion' => strtoupper($this->input->post('profesion')),
+        'fechaNacimiento' => $this->input->post('fechaNacimiento'),
+        'sexo' => strtoupper($this->input->post('sexo')),
+        'email' => $this->input->post('email'),
+        'username' => strtolower($this->input->post('username')),
+        'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
+        'rol' => strtoupper($this->input->post('rol')),
+        'usuarioSesion' => $idUsuarioSesion  // Añadimos el ID del usuario que está creando el nuevo usuario
+    );
 
     $this->usuario_model->agregarUsuario($data);
     redirect('usuarios/mostrar', 'refresh');
 }
-
 public function eliminarbd()
 {
     $this->_verificar_sesion();
@@ -230,13 +238,21 @@ public function modificar()
     $data['infoUsuario'] = $this->usuario_model->recuperarUsuario($idUsuario);
 
     $this->load->view('inc/header');
-    $this->load->view('formulariomodificar', $data);
+    $this->load->view('admin/formulariomodificar', $data);
     $this->load->view('inc/footer');
 }
 
 public function modificarbd()
 {
     $this->_verificar_sesion();
+
+    // Verificar si el ID del usuario está en la sesión
+    $idUsuarioSesion = $this->session->userdata('idUsuario');
+    if (!$idUsuarioSesion) {
+        log_message('error', 'ID de usuario no encontrado en la sesión');
+        $this->session->set_flashdata('error', 'Error de sesión. Por favor, inicie sesión nuevamente.');
+        redirect('usuarios/logout', 'refresh');
+    }
 
     $idUsuario = $this->input->post('idUsuario');
     $data = array(
@@ -248,9 +264,12 @@ public function modificarbd()
         'fechaNacimiento' => $this->input->post('fechaNacimiento'),
         'sexo' => strtoupper($this->input->post('sexo')),
         'email' => $this->input->post('email'),
-        'rol' => strtoupper($this->input->post('rol'))
+        'rol' => strtoupper($this->input->post('rol')),
+        'usuarioSesion' => $idUsuarioSesion 
     );
 
+    // Para depuración
+    log_message('debug', 'Datos a actualizar: ' . print_r($data, true));
     // Actualiza el usuario con campos restringidos
     $result = $this->usuario_model->modificarUsuarioRestringido($idUsuario, $data);
 
@@ -268,10 +287,27 @@ public function deshabilitarbd()
 {
     $this->_verificar_sesion();
 
-    $idUsuario = $_POST['idUsuario'];
-    $data['estado'] = 0;
+    $idUsuarioSesion = $this->session->userdata('idUsuario');
+    if (!$idUsuarioSesion) {
+        log_message('error', 'ID de usuario no encontrado en la sesión');
+        $this->session->set_flashdata('error', 'Error de sesión. Por favor, inicie sesión nuevamente.');
+        redirect('usuarios/logout', 'refresh');
+    }
 
-    $this->usuario_model->modificarUsuario($idUsuario, $data);
+    $idUsuario = $this->input->post('idUsuario');
+    $data = array(
+        'estado' => 0,  // 0 representa el estado deshabilitado
+        'usuarioSesion' => $idUsuarioSesion
+    );
+
+    $result = $this->usuario_model->modificarUsuario($idUsuario, $data);
+
+    if ($result) {
+        $this->session->set_flashdata('success', 'Usuario deshabilitado correctamente.');
+    } else {
+        $this->session->set_flashdata('error', 'No se pudo deshabilitar el usuario.');
+    }
+
     redirect('usuarios/mostrar', 'refresh');
 }
 
@@ -281,7 +317,7 @@ public function deshabilitados()
     $data['usuarios'] = $lista;
     
     $this->load->view('inc/header');
-    $this->load->view('listadeshabilitados', $data);
+    $this->load->view('admin/listadeshabilitados', $data);
     $this->load->view('inc/footer');
 }
 
@@ -289,11 +325,28 @@ public function habilitarbd()
 {
     $this->_verificar_sesion();
 
-    $idUsuario = $_POST['idUsuario'];
-    $data['estado'] = 1;
+    $idUsuarioSesion = $this->session->userdata('idUsuario');
+    if (!$idUsuarioSesion) {
+        log_message('error', 'ID de usuario no encontrado en la sesión');
+        $this->session->set_flashdata('error', 'Error de sesión. Por favor, inicie sesión nuevamente.');
+        redirect('usuarios/logout', 'refresh');
+    }
 
-    $this->usuario_model->modificarUsuario($idUsuario, $data);
-    redirect('usuarios/deshabilitados', 'refresh');
+    $idUsuario = $this->input->post('idUsuario');
+    $data = array(
+        'estado' => 1,  // 0 representa el estado deshabilitado
+        'usuarioSesion' => $idUsuarioSesion
+    );
+
+    $result = $this->usuario_model->modificarUsuario($idUsuario, $data);
+
+    if ($result) {
+        $this->session->set_flashdata('success', 'Usuario deshabilitado correctamente.');
+    } else {
+        $this->session->set_flashdata('error', 'No se pudo deshabilitar el usuario.');
+    }
+
+    redirect('usuarios/mostrar', 'refresh');
 }
 
 public function listapdf()

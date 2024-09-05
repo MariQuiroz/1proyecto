@@ -66,6 +66,9 @@ class Usuario_model extends CI_Model {
     // Filtrar $data para incluir solo los campos permitidos
     $data_filtrada = array_intersect_key($data, array_flip($campos_permitidos));
 
+    // Depuración
+    log_message('debug', 'Datos a actualizar: ' . print_r($data_filtrada, true));
+
     $this->db->where('idUsuario', $idUsuario);
     return $this->db->update('USUARIO', $data_filtrada);
 }
