@@ -1,47 +1,45 @@
 <?php
-defined('BASEPATH') OR exit('No se permite acceso directo al script');
+defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Publicaciones extends CI_Controller {
-    
-   
+
+    public function __construct() {
+        parent::__construct();
+        $this->load->model('publicacion_model');
+        $this->load->library('session');
+        $this->load->helper('url');
+    }
 
     private function _verificar_sesion() {
         if (!$this->session->userdata('login')) {
-            redirect('usuarios/login');
+            redirect('usuarios/index/3', 'refresh');
         }
     }
 
     public function index() {
+        $this->_verificar_sesion();
         $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
         $this->load->view('inc/header');
         $this->load->view('publicaciones/lista', $data);
         $this->load->view('inc/footer');
     }
 
-    public function ver($id) {
-        $data['publicacion'] = $this->publicacion_model->obtener_publicacion($id);
-        $this->load->view('inc/header');
-        $this->load->view('publicaciones/ver', $data);
-        $this->load->view('inc/footer');
-    }
-
     public function agregar() {
+        $this->_verificar_sesion();
         if ($this->session->userdata('rol') != 'administrador') {
-            redirect('publicaciones');
+            redirect('publicaciones/index', 'refresh');
         }
-
         $this->load->view('inc/header');
-        $this->load->view('publicaciones/formulario');
+        $this->load->view('publicaciones/agregar');
         $this->load->view('inc/footer');
     }
 
     public function agregarbd() {
+        $this->_verificar_sesion();
         if ($this->session->userdata('rol') != 'administrador') {
-            redirect('publicaciones');
+            redirect('publicaciones/index', 'refresh');
         }
-
         $data = array(
-            'idUsuario' => $this->session->userdata('idUsuario'),
             'titulo' => $this->input->post('titulo'),
             'editorial' => $this->input->post('editorial'),
             'diaPublicacion' => $this->input->post('diaPublicacion'),
@@ -49,30 +47,30 @@ class Publicaciones extends CI_Controller {
             'añoPublicacion' => $this->input->post('añoPublicacion'),
             'tipo' => $this->input->post('tipo'),
             'descripcion' => $this->input->post('descripcion'),
+            'idUsuario' => $this->session->userdata('idUsuario'),
             'usuarioSesion' => $this->session->userdata('idUsuario')
         );
-
         $this->publicacion_model->agregar_publicacion($data);
-        redirect('publicaciones');
+        redirect('publicaciones/index', 'refresh');
     }
 
-    public function modificar($id) {
+    public function editar($idPublicacion) {
+        $this->_verificar_sesion();
         if ($this->session->userdata('rol') != 'administrador') {
-            redirect('publicaciones');
+            redirect('publicaciones/index', 'refresh');
         }
-
-        $data['publicacion'] = $this->publicacion_model->obtener_publicacion($id);
+        $data['publicacion'] = $this->publicacion_model->obtener_publicacion($idPublicacion);
         $this->load->view('inc/header');
-        $this->load->view('publicaciones/formulario_modificar', $data);
+        $this->load->view('publicaciones/editar', $data);
         $this->load->view('inc/footer');
     }
 
-    public function modificarbd() {
+    public function editarbd() {
+        $this->_verificar_sesion();
         if ($this->session->userdata('rol') != 'administrador') {
-            redirect('publicaciones');
+            redirect('publicaciones/index', 'refresh');
         }
-
-        $id = $this->input->post('idPublicacion');
+        $idPublicacion = $this->input->post('idPublicacion');
         $data = array(
             'titulo' => $this->input->post('titulo'),
             'editorial' => $this->input->post('editorial'),
@@ -83,37 +81,25 @@ class Publicaciones extends CI_Controller {
             'descripcion' => $this->input->post('descripcion'),
             'usuarioSesion' => $this->session->userdata('idUsuario')
         );
-
-        $this->publicacion_model->modificar_publicacion($id, $data);
-        redirect('publicaciones');
+        $this->publicacion_model->actualizar_publicacion($idPublicacion, $data);
+        redirect('publicaciones/index', 'refresh');
     }
 
-    public function eliminar($id) {
+    public function eliminar($idPublicacion) {
+        $this->_verificar_sesion();
         if ($this->session->userdata('rol') != 'administrador') {
-            redirect('publicaciones');
+            redirect('publicaciones/index', 'refresh');
         }
-
-        $this->publicacion_model->eliminar_publicacion($id);
-        redirect('publicaciones');
+        $this->publicacion_model->eliminar_publicacion($idPublicacion);
+        redirect('publicaciones/index', 'refresh');
     }
 
-    public function deshabilitarbd() {
-        if ($this->session->userdata('rol') != 'administrador') {
-            redirect('publicaciones');
-        }
-
-        $id = $this->input->post('idPublicacion');
-        $this->publicacion_model->deshabilitar_publicacion($id);
-        redirect('publicaciones');
-    }
-
-    public function habilitarbd() {
-        if ($this->session->userdata('rol') != 'administrador') {
-            redirect('publicaciones');
-        }
-
-        $id = $this->input->post('idPublicacion');
-        $this->publicacion_model->habilitar_publicacion($id);
-        redirect('publicaciones');
+    public function buscar() {
+        $this->_verificar_sesion();
+        $termino = $this->input->get('termino');
+        $data['publicaciones'] = $this->publicacion_model->buscar_publicaciones($termino);
+        $this->load->view('inc/header');
+        $this->load->view('publicaciones/resultados_busqueda', $data);
+        $this->load->view('inc/footer');
     }
 }

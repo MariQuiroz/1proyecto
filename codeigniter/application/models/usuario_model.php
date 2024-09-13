@@ -79,4 +79,13 @@ class Usuario_model extends CI_Model {
         $this->db->where('estado', 0);
         return $this->db->get();
     }
+    public function contar_usuarios() {
+        return $this->db->count_all('USUARIO');
+    }
+    public function obtener_usuarios_activos() {
+        $this->db->select('idUsuario, nombres, apellidoPaterno');
+        $this->db->from('USUARIO');
+        $this->db->where('estado', 1); // Asumiendo que 1 es el estado para usuarios activos
+        return $this->db->get()->result();
+    }
 }

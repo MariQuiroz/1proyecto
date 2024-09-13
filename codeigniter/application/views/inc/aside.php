@@ -1,408 +1,109 @@
-<!-- ========== Left Sidebar Start ========== -->
-<div class="left-side-menu">
+ <div class="left-side-menu">
+    <div class="slimscroll-menu">
+        <div id="sidebar-menu">
+            <ul class="metismenu" id="side-menu">
+                <li class="menu-title">Navegación</li>
 
-<div class="slimscroll-menu">
+                <li>
+                    <a href="<?php echo base_url('usuarios/panel'); ?>">
+                        <i class="la la-dashboard"></i>
+                        <span> Inicio </span>
+                    </a>
+                </li>
 
-    <!--- Sidemenu -->
-    <div id="sidebar-menu">
-
-        <ul class="metismenu" id="side-menu">
-
-            <li class="menu-title">Navigation</li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-diamond"></i>
-                    <span class="badge badge-danger float-right">New</span>
-                    <span> Inicio </span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="extras-profile.html">Profile</a>
-                    </li>
-                    <li>
-                        <a href="extras-timeline.html">Timeline</a>
-                    </li>
-                    <li>
-                        <a href="extras-invoice.html">Invoice</a>
-                    </li>
-                    <li>
-                        <a href="extras-faqs.html">FAQs</a>
-                    </li>
-                    <li>
-                        <a href="extras-pricing.html">Pricing</a>
-                    </li>
-                    <li>
-                        <a href="extras-maintenance.html">Maintenance</a>
-                    </li>
-                    <li>
-                        <a href="extras-coming-soon.html">Coming Soon</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-dashboard"></i>
-                    <span class="badge badge-info badge-pill float-right">2</span>
-                    <span> Reservas </span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="index.html">Dashboard 1</a>
-                    </li>
-                    <li>
-                        <a href="dashboard-2.html">Dashboard 2</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-cube"></i>
-                    <span> Préstamos </span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="apps-calendar.html">Calendar</a>
-                    </li>
-                    <li>
-                        <a href="apps-contacts.html">Contacts</a>
-                    </li>
-                    <li>
-                        <a href="apps-tickets.html">Tickets</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-clone"></i>
-                    <span> Publicaciones </span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="layouts-sidebar-sm.html">Periódicos</a>
-                    </li>
-                    <li>
-                        <a href="layouts-light-sidebar.html">Gacetas</a>
-                    </li>
-                    
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-envelope"></i>
-                    <span> Usuarios </span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="email-inbox.html">Habilitados</a>
-                    </li>
-                    <li>
-                        <a href="email-read.html">Deshabilitados</a>
-                    </li>
-                
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-file-text-o"></i>
-                    <span> Reportes </span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="pages-starter.html">Starter</a>
-                    </li>
-                    <li>
-                        <a href="pages-login.html">Log In</a>
-                    </li>
-                    <li>
-                        <a href="pages-register.html">Register</a>
-                    </li>
-                    <li>
-                        <a href="pages-recoverpw.html">Recover Password</a>
-                    </li>
-                    <li>
-                        <a href="pages-lock-screen.html">Lock Screen</a>
-                    </li>
-                    <li>
-                        <a href="pages-logout.html">Logout</a>
-                    </li>
-                    <li>
-                        <a href="pages-confirm-mail.html">Confirm Mail</a>
-                    </li>
-                    <li>
-                        <a href="pages-404.html">Error 404</a>
-                    </li>
-                    <li>
-                        <a href="pages-404-alt.html">Error 404-alt</a>
-                    </li>
-                    <li>
-                        <a href="pages-500.html">Error 500</a>
-                    </li>
-                </ul>
-            </li>
-
-            
-
-            <li class="menu-title mt-2">Components</li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-briefcase"></i>
-                    <span> Inicio</span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="ui-buttons.html">Registrar</a>
-                    </li>
-                    <li>
-                        <a href="ui-cards.html">Consultar</a>
-                    </li>
-                    <li>
-                        <a href="ui-tabs-accordions.html">Reportes</a>
-                    </li>
-                    <li>
-                        <a href="ui-modals.html">Modals</a>
-                    </li>
-                    <li>
-                        <a href="ui-progress.html">Progress</a>
-                    </li>
-                    <li>
-                        <a href="ui-notifications.html">Notifications</a>
-                    </li>
-                    <li>
-                        <a href="ui-general.html">General UI</a>
-                    </li>
-                    <li>
-                        <a href="ui-typography.html">Typography</a>
-                    </li>
-                    <li>
-                        <a href="ui-grid.html">Grid</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="widgets.html">
-                    <i class="la la-coffee"></i>
-                    <span> Usuarios </span>
-                </a>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-bullhorn"></i>
-                    <span class="badge badge-info float-right">Hot</span>
-                    <span> Usuarios </span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="admin-sweet-alert.html">Sweet Alert</a>
-                    </li>
-                    <li>
-                        <a href="admin-nestable.html">Nestable List</a>
-                    </li>
-                    <li>
-                        <a href="admin-range-slider.html">Range Slider</a>
-                    </li>
-                    <li>
-                        <a href="admin-tour.html">Tour Page</a>
-                    </li>
-                    <li>
-                        <a href="admin-lightbox.html">Lightbox</a>
-                    </li>
-                    <li>
-                        <a href="admin-treeview.html">Treeview</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-bullseye"></i>
-                    <span> Préstamos </span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="icons-feather.html">Feather Icons</a>
-                    </li>
-                    <li>
-                        <a href="icons-lineawesome.html">Line Awesome</a>
-                    </li>
-                    <li>
-                        <a href="icons-mdi.html">Material Design Icons</a>
-                    </li>
-                    <li>
-                        <a href="icons-font-awesome.html">Font Awesome</a>
-                    </li>
-                    <li>
-                        <a href="icons-simple-line.html">Simple Line</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-wrench"></i>
-                    <span> Reservas</span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="forms-elements.html">General Elements</a>
-                    </li>
-                    <li>
-                        <a href="forms-advanced.html">Advanced</a>
-                    </li>
-                    <li>
-                        <a href="forms-validation.html">Validation</a>
-                    </li>
-                    <li>
-                        <a href="forms-pickers.html">Pickers</a>
-                    </li>
-                    <li>
-                        <a href="forms-wizard.html">Wizard</a>
-                    </li>
-                    <li>
-                        <a href="forms-masks.html">Masks</a>
-                    </li>
-                    <li>
-                        <a href="forms-summernote.html">Summernote</a>
-                    </li>
-                    <li>
-                        <a href="forms-quilljs.html">Quilljs Editor</a>
-                    </li>
-                    <li>
-                        <a href="forms-file-uploads.html">File Uploads</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-table"></i>
-                    <span> Publicaciones</span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="tables-basic.html">Basic Tables</a>
-                    </li>
-                    <li>
-                        <a href="tables-datatables.html">Data Tables</a>
-                    </li>
-                    <li>
-                        <a href="tables-editable.html">Editable Tables</a>
-                    </li>
-                    <li>
-                        <a href="tables-responsive.html">Responsive Tables</a>
-                    </li>
-                    <li>
-                        <a href="tables-tablesaw.html">Tablesaw Tables</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-bar-chart"></i>
-                    <span> Reportes</span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="charts-apex.html">Apex Charts</a>
-                    </li>
-                    <li>
-                        <a href="charts-flot.html">Flot Charts</a>
-                    </li>
-                    <li>
-                        <a href="charts-morris.html">Morris Charts</a>
-                    </li>
-                    <li>
-                        <a href="charts-chartjs.html">Chartjs Charts</a>
-                    </li>
-                    <li>
-                        <a href="charts-bright.html">Bright Charts</a>
-                    </li>
-                    <li>
-                        <a href="charts-chartist.html">Chartist Charts</a>
-                    </li>
-                    <li>
-                        <a href="charts-peity.html">Peity Charts</a>
-                    </li>
-                    <li>
-                        <a href="charts-sparklines.html">Sparklines Charts</a>
-                    </li>
-                    <li>
-                        <a href="charts-knob.html">Jquery Knob Charts</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-map"></i>
-                    <span> Maps </span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level" aria-expanded="false">
-                    <li>
-                        <a href="maps-google.html">Google Maps</a>
-                    </li>
-                    <li>
-                        <a href="maps-vector.html">Vector Maps</a>
-                    </li>
-                    <li>
-                        <a href="maps-mapael.html">Mapael Maps</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript: void(0);">
-                    <i class="la la-plus-square-o"></i>
-                    <span> Multi Level </span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <ul class="nav-second-level nav" aria-expanded="false">
-                    <li>
-                        <a href="javascript: void(0);">Level 1.1</a>
-                    </li>
-                    <li>
-                        <a href="javascript: void(0);" aria-expanded="false">Level 1.2
+                <?php if ($this->session->userdata('rol') == 'administrador'): ?>
+                    <li>
+                        <a href="javascript: void(0);">
+                            <i class="la la-users"></i>
+                            <span> Usuarios </span>
                             <span class="menu-arrow"></span>
                         </a>
-                        <ul class="nav-third-level nav" aria-expanded="false">
-                            <li>
-                                <a href="javascript: void(0);">Level 2.1</a>
-                            </li>
-                            <li>
-                                <a href="javascript: void(0);">Level 2.2</a>
-                            </li>
+                        <ul class="nav-second-level" aria-expanded="false">
+                            <li><a href="<?php echo site_url('usuarios/mostrar'); ?>">Lista de Usuarios</a></li>
+    
                         </ul>
                     </li>
-                </ul>
-            </li>
-        </ul>
+                <?php endif; ?>
 
+                <li>
+                    <a href="javascript: void(0);">
+                        <i class="la la-book"></i>
+                        <span> Publicaciones </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul class="nav-second-level" aria-expanded="false">
+                        <li><a href="<?php echo site_url('publicaciones/index'); ?>">Lista de Publicaciones</a></li>
+                        <?php if ($this->session->userdata('rol') == 'administrador'): ?>
+                            <li><a href="<?php echo site_url('publicaciones/agregar'); ?>">Agregar Publicación</a></li>
+                        <?php endif; ?>
+                    </ul>
+                </li>
+
+                <li>
+                    <a href="javascript: void(0);">
+                        <i class="la la-calendar"></i>
+                        <span> Reservas </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul class="nav-second-level" aria-expanded="false">
+                        <?php if ($this->session->userdata('rol') == 'administrador'): ?>
+                            <li><a href="<?php echo site_url('reservas/pendientes'); ?>">Reservas Pendientes</a></li>
+                        <?php else: ?>
+                            <li><a href="<?php echo site_url('reservas/mis_reservas'); ?>">Mis Reservas</a></li>
+                            <li><a href="<?php echo site_url('reservas/nueva'); ?>">Nueva Reserva</a></li>
+                        <?php endif; ?>
+                    </ul>
+                </li>
+
+                <?php if ($this->session->userdata('rol') == 'administrador'): ?>
+                    <li>
+                        <a href="javascript: void(0);">
+                            <i class="la la-exchange"></i>
+                            <span> Préstamos </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <ul class="nav-second-level" aria-expanded="false">
+                            <li><a href="<?php echo site_url('prestamos/activos'); ?>">Préstamos Activos</a></li>
+                            <li><a href="<?php echo site_url('prestamos/nuevo'); ?>">Nuevo Préstamo</a></li>
+                            <li><a href="<?php echo site_url('prestamos/historial'); ?>">Historial de Préstamos</a></li>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <a href="javascript: void(0);">
+                            <i class="la la-file-text-o"></i>
+                            <span> Reportes </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <ul class="nav-second-level" aria-expanded="false">
+                            <li><a href="<?php echo site_url('reportes/prestamos'); ?>">Reporte de Préstamos</a></li>
+                            <li><a href="<?php echo site_url('reportes/publicaciones'); ?>">Publicaciones más Solicitadas</a></li>
+                            <li><a href="<?php echo site_url('reportes/usuarios'); ?>">Usuarios más Activos</a></li>
+                        </ul>
+                    </li>
+                <?php else: ?>
+                    <li>
+                        <a href="<?php echo site_url('prestamos/mis_prestamos'); ?>">
+                            <i class="la la-book"></i>
+                            <span> Mis Préstamos </span>
+                        </a>
+                    </li>
+                <?php endif; ?>
+
+                <li>
+                    <a href="<?php echo site_url('usuarios/perfil'); ?>">
+                        <i class="la la-user"></i>
+                        <span> Mi Perfil </span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="<?php echo site_url('usuarios/logout'); ?>">
+                        <i class="la la-sign-out"></i>
+                        <span> Cerrar Sesión </span>
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
-    <!-- End Sidebar -->
-
-    <div class="clearfix"></div>
-
 </div>
-<!-- Sidebar -left -->
-
-</div>
-<!-- Left Sidebar End -->

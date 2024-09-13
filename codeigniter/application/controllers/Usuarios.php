@@ -82,21 +82,53 @@ class Usuarios extends CI_Controller {
         }
     }
 
-    public function panel()
-    {
-        if($this->session->userdata('login'))
-        {
-            if($this->session->userdata('rol') == 'administrador')
-            {
-                redirect('usuarios/mostrar','refresh');
+    /*public function panel() {
+        if($this->session->userdata('login')) {
+            $data = array();
+            
+            if($this->session->userdata('rol') == 'administrador') {
+                $data['total_usuarios'] = $this->usuario_model->contar_usuarios();
+                $data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
+                $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
+                $data['prestamos_vencidos'] = $this->prestamo_model->obtener_prestamos_vencidos();
+            } else {
+                $idUsuario = $this->session->userdata('idUsuario');
+                $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
+                $data['mis_reservas_pendientes'] = $this->reserva_model->contar_reservas_pendientes_usuario($idUsuario);
+                $data['mis_proximas_devoluciones'] = $this->prestamo_model->obtener_proximas_devoluciones_usuario($idUsuario);
             }
-            else
-            {
-                redirect('usuarios/lector','refresh');
-            }
+
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('inc/menu', $data);
+            $this->load->view('inc/footer');
+        } else {
+            redirect('usuarios/index/3','refresh');
         }
-        else
-        {
+    }*/
+    public function panel() {
+        if($this->session->userdata('login')) {
+            $data = array();
+            
+            if($this->session->userdata('rol') == 'administrador') {
+                $data['total_usuarios'] = $this->usuario_model->contar_usuarios();
+                $data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
+                $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
+                $data['prestamos_vencidos'] = $this->prestamo_model->obtener_prestamos_vencidos();
+            } else {
+                $idUsuario = $this->session->userdata('idUsuario');
+                $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
+                $data['mis_reservas_pendientes'] = $this->reserva_model->contar_reservas_pendientes_usuario($idUsuario);
+                $data['mis_proximas_devoluciones'] = $this->prestamo_model->obtener_proximas_devoluciones_usuario($idUsuario);
+            }
+
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('inc/menu', $data);
+            $this->load->view('inc/footer');
+        } else {
             redirect('usuarios/index/3','refresh');
         }
     }
@@ -116,9 +148,9 @@ class Usuarios extends CI_Controller {
             
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('inc/menu',$data);
-            //$this->load->view('lista', $data);
+            //$this->load->view('inc/aside');
+            //$this->load->view('inc/menu',$data);
+            $this->load->view('admin/lista', $data);
             
             $this->load->view('inc/footer');
         }
@@ -390,5 +422,21 @@ public function listapdf()
     {
         redirect('usuarios/panel', 'refresh');
     }
+}
+public function historial() {
+    $this->_verificar_sesion();
+
+    $idUsuario = $this->session->userdata('idUsuario');
+
+    // Obtener historial de préstamos
+    $data['historial_prestamos'] = $this->prestamo_model->obtener_historial_prestamos($idUsuario);
+
+    // Obtener historial de reservas
+    $data['historial_reservas'] = $this->reserva_model->obtener_historial_reservas($idUsuario);
+
+    // Cargar la vista
+    $this->load->view('inc/header');
+    $this->load->view('admin/historial', $data);
+    $this->load->view('inc/footer');
 }
 }

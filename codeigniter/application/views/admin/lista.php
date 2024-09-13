@@ -1,7 +1,27 @@
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+                <div class="content">
+
+                    <!-- Start Content-->
+                    <div class="container-fluid">
+
+                        
+
+<!-- Botón para volver -->
+<button onclick="goBack()" class="btn btn-secondary mb-3">Volver</button>
+
 <?php echo form_open_multipart('usuarios/registrar'); ?>
         <button type="submit" name="buton2" class="btn btn-success">REGISTRAR USUARIO</button>
       <?php echo form_close(); ?>
 
+
+      
       <?php echo form_open_multipart('usuarios/listapdf'); ?>
         <button type="submit" name="buton2" class="btn btn-success">Lista usuarios PDF</button>
       <?php echo form_close(); ?>
@@ -21,11 +41,11 @@
         <button type="submit" name="buton1" class="btn btn-primary">AGREGAR USUARIO</button>
       <?php echo form_close(); ?>
 
+<br>
 
 
-    
 
-      <table id="scroll-horizontal-datatable" class="table w-100 nowrap">
+      <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
         
   
         <thead>
@@ -38,7 +58,6 @@
             <th>Carnet</th>
             <th>Rol</th>
             <th>Modificar</th>
-            <th>Eliminar</th>
             <th>Deshabilitar</th>
           </tr>
         </thead>
@@ -75,18 +94,14 @@
                         <input type="submit" name="buttony" value="Modificar" class="btn btn-success">
                         <?php echo form_close(); ?>
                     </td>
-                    <td>
-                        <?php echo form_open_multipart("usuarios/eliminarbd"); ?>
-                        <input type="hidden" name="idUsuario" value="<?php echo $row->idUsuario; ?>">
-                        <input type="submit" name="buttonx" value="Eliminar" class="btn btn-danger">
-                        <?php echo form_close(); ?>
-                    </td>
+                   
                     <td>
                         <?php echo form_open_multipart("usuarios/deshabilitarbd"); ?>
                         <input type="hidden" name="idUsuario" value="<?php echo $row->idUsuario; ?>">
                         <input type="submit" name="buttonz" value="Deshabilitar" class="btn btn-warning">
                         <?php echo form_close(); ?>
                     </td>
+                    
                 </tr>
             <?php
             $indice++;
@@ -94,3 +109,20 @@
             ?>
         </tbody>
     </table>
+ 
+    <script>
+function goBack() {
+    window.history.back();
+}
+</script>
+            <!-- ============================================================== -->
+            <!-- End Page content -->
+            <!-- ============================================================== -->
+
+
+
+                   
+                        
+                    </div> <!-- container -->
+
+                </div> <!-- content -->

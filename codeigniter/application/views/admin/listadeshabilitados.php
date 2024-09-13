@@ -55,3 +55,10 @@
     </div>
   </div>
 </div>
+<br>
+<button onclick="goBack()" class="btn btn-secondary mb-3">Volver</button>
+<script>
+function goBack() {
+    window.history.back();
+}
+</script>
