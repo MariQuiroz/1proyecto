@@ -1,18 +1,15 @@
 
-<br>
-<br>
-<br>
-<br>
-<br>
+                 <!-- ============================================================== -->
+            <!-- Start Page Content here -->
+            <!-- ============================================================== -->
 
-
+            <div class="content-page">
                 <div class="content">
 
                     <!-- Start Content-->
                     <div class="container-fluid">
 
                         
-
 <!-- Botón para volver -->
 <button onclick="goBack()" class="btn btn-secondary mb-3">Volver</button>
 
@@ -56,7 +53,7 @@
             <th>Apellido Paterno</th>
             <th>Apellido Materno</th>
             <th>Carnet</th>
-            <th>Rol</th>
+            <th>Tipo Usuario</th>
             <th>Modificar</th>
             <th>Deshabilitar</th>
           </tr>
@@ -115,14 +112,18 @@ function goBack() {
     window.history.back();
 }
 </script>
+                                      
+
             <!-- ============================================================== -->
             <!-- End Page content -->
             <!-- ============================================================== -->
 
 
 
-                   
+                        </div>
                         
                     </div> <!-- container -->
 
                 </div> <!-- content -->
+
+               

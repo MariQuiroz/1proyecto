@@ -20,6 +20,8 @@ class Publicaciones extends CI_Controller {
         $this->_verificar_sesion();
         $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
         $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
         $this->load->view('publicaciones/lista', $data);
         $this->load->view('inc/footer');
     }

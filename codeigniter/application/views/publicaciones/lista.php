@@ -1,4 +1,16 @@
 
+<!-- ============================================================== -->
+            <!-- Start Page Content here -->
+            <!-- ============================================================== -->
+
+            <div class="content-page">
+                <div class="content">
+
+                    <!-- Start Content-->
+                    <div class="container-fluid">
+
+                        
+
 
 <!-- application/views/publicaciones/lista.php -->
 <div class="container">
@@ -33,3 +45,19 @@
     </table>
     <a href="<?= site_url('publicaciones/agregar') ?>" class="btn btn-success">Agregar Nueva Publicación</a>
 </div>
+
+                                       
+
+            <!-- ============================================================== -->
+            <!-- End Page content -->
+            <!-- ============================================================== -->
+
+
+
+                        </div>
+                        
+                    </div> <!-- container -->
+
+                </div> <!-- content -->
+
+               

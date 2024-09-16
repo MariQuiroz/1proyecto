@@ -148,7 +148,7 @@ class Usuarios extends CI_Controller {
             
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
-            //$this->load->view('inc/aside');
+            $this->load->view('inc/aside');
             //$this->load->view('inc/menu',$data);
             $this->load->view('admin/lista', $data);
             

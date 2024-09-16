@@ -5,7 +5,7 @@
                 <li class="menu-title">Navegación</li>
 
                 <li>
-                    <a href="<?php echo base_url('usuarios/panel'); ?>">
+                    <a href="<?php echo site_url('usuarios/panel'); ?>">
                         <i class="la la-dashboard"></i>
                         <span> Inicio </span>
                     </a>
@@ -13,15 +13,16 @@
 
                 <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                     <li>
-                        <a href="javascript: void(0);">
+                        <a href="<?php echo site_url('usuarios/mostrar'); ?>">
                             <i class="la la-users"></i>
                             <span> Usuarios </span>
                             <span class="menu-arrow"></span>
                         </a>
                         <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="<?php echo site_url('usuarios/mostrar'); ?>">Lista de Usuarios</a></li>
-    
+                            <li><a href="<?php echo site_url('usuarios/mostrar'); ?>">Usuarios Habilitados</a></li>
+                            <li><a href="<?php echo site_url('usuarios/deshabilitados'); ?>">Usuarios Deshabilitados</a></li>
                         </ul>
+                       
                     </li>
                 <?php endif; ?>
 
