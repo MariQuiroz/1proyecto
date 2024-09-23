@@ -85,8 +85,8 @@
 
                         <div class="row mt-3">
                             <div class="col-12 text-center">
-                                <p> <a href="<?php echo base_url('lectores/recuperar_contrasena'); ?>" class="text-muted ml-1">¿Olvidó su contraseña?</a></p>
-                                <p class="text-muted">¿No tiene una cuenta? <a href="<?php echo site_url('auth/registro'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">Regístrese</b></a></p>
+                            <p> <a href="<?php echo site_url('recuperar_contrasena'); ?>" class="text-muted ml-1">¿Olvidó su contraseña?</a></p>
+                            <p class="text-muted">¿No tiene una cuenta? <a href="<?php echo site_url('registro'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">Regístrese</b></a></p>
                             </div> <!-- end col -->
                         </div>
                         <!-- end row -->

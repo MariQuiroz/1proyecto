@@ -91,19 +91,6 @@
                     </li>
                 <?php endif; ?>
 
-                <li>
-                    <a href="<?php echo site_url('usuarios/perfil'); ?>">
-                        <i class="la la-user"></i>
-                        <span> Mi Perfil </span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="<?php echo site_url('usuarios/logout'); ?>">
-                        <i class="la la-sign-out"></i>
-                        <span> Cerrar Sesión </span>
-                    </a>
-                </li>
             </ul>
         </div>
     </div>

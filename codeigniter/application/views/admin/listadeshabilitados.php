@@ -1,4 +1,17 @@
-<div class="container">
+
+<!-- ============================================================== -->
+            <!-- Start Page Content here -->
+            <!-- ============================================================== -->
+
+            <div class="content-page">
+                <div class="content">
+
+                    <!-- Start Content-->
+                    <div class="container-fluid">
+
+                        
+
+                    <div class="container">
   <div class="row">
     <div class="col-md-12">
 
@@ -18,7 +31,7 @@
             <th scope="col">Apellido Paterno</th>
             <th scope="col">Apellido Materno</th>
             <th scope="col">Carnet</th>
-            <th scope="col">Rol</th>
+            <th scope="col">Tipo Usuario</th>
             <th scope="col">Habilitar</th>
           </tr>
         </thead>
@@ -54,11 +67,18 @@
 
     </div>
   </div>
-</div>
-<br>
-<button onclick="goBack()" class="btn btn-secondary mb-3">Volver</button>
-<script>
-function goBack() {
-    window.history.back();
-}
-</script>
+</div>             
+
+            <!-- ============================================================== -->
+            <!-- End Page content -->
+            <!-- ============================================================== -->
+
+
+
+                        </div>
+                        
+                    </div> <!-- container -->
+
+                </div> <!-- content -->
+
+               

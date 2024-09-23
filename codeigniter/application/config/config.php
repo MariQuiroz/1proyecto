@@ -23,6 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
+        $config['force_https'] = TRUE;
 $config['base_url'] = "http://".$_SERVER['HTTP_HOST'];
 $config['base_url'] .= preg_replace('@/+$@','',dirname($_SERVER['SCRIPT_NAME'])).'/';
 
@@ -226,7 +227,7 @@ $config['allow_get_array'] = TRUE;
 | your log files will fill up very fast.
 |
 */
-$config['log_threshold'] = 0;
+$config['log_threshold'] = 4;
 
 /*
 |--------------------------------------------------------------------------
@@ -458,7 +459,7 @@ $config['global_xss_filtering'] = FALSE;
 | 'csrf_regenerate' = Regenerate token on every submission
 | 'csrf_exclude_uris' = Array of URIs which ignore CSRF checks
 */
-$config['csrf_protection'] = FALSE;
+$config['csrf_protection'] = TRUE;
 $config['csrf_token_name'] = 'csrf_test_name';
 $config['csrf_cookie_name'] = 'csrf_cookie_name';
 $config['csrf_expire'] = 7200;
@@ -531,3 +532,21 @@ $config['rewrite_short_tags'] = FALSE;
 | Array:		array('10.0.1.200', '192.168.5.0/24')
 */
 $config['proxy_ips'] = '';
+/*
+|--------------------------------------------------------------------------
+| Email Settings
+|--------------------------------------------------------------------------
+|
+| Configuración para el envío de correos electrónicos
+|
+*/
+
+if (!function_exists('force_https')) {
+    function force_https() {
+        if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != 'on') {
+            $redirect_url = "https://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+            header("Location: $redirect_url");
+            exit();
+        }
+    }
+}

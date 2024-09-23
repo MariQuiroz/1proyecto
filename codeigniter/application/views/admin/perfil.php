@@ -27,11 +27,7 @@
             <label for="telefono">Teléfono</label>
             <input type="tel" class="form-control" id="telefono" name="telefono" value="<?= $usuario->telefono ?>">
         </div>
-        <button type="submit" class="btn btn-primary">Actualizar Perfil</button>
     </form>
-    <?php echo form_open_multipart('usuarios/cambiar_contrasena'); ?>
-        <button type="submit" name="buton" class="btn btn-secondary mt-3">Cambiar Contraseña</button>
-      <?php echo form_close(); ?>
 
     <a href="<?= base_url('usuario/cambiar_contrasena') ?>" class="btn btn-secondary mt-3">Cambiar Contraseña</a>
 </div>

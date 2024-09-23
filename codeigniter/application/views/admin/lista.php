@@ -10,8 +10,6 @@
                     <div class="container-fluid">
 
                         
-<!-- Botón para volver -->
-<button onclick="goBack()" class="btn btn-secondary mb-3">Volver</button>
 
 <?php echo form_open_multipart('usuarios/registrar'); ?>
         <button type="submit" name="buton2" class="btn btn-success">REGISTRAR USUARIO</button>
@@ -107,13 +105,6 @@
         </tbody>
     </table>
  
-    <script>
-function goBack() {
-    window.history.back();
-}
-</script>
-                                      
-
             <!-- ============================================================== -->
             <!-- End Page content -->
             <!-- ============================================================== -->

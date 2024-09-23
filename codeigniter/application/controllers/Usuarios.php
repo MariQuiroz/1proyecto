@@ -2,6 +2,15 @@
 defined('BASEPATH') OR exit('No se permite acceso directo al script');
 
 class Usuarios extends CI_Controller {
+    public function __construct() {
+        parent::__construct();
+        if (ENVIRONMENT !== 'development') {
+            force_https();
+        }
+        $this->load->library('email');
+    }
+
+    
 
     private function _verificar_sesion()
     {
@@ -59,7 +68,7 @@ class Usuarios extends CI_Controller {
         }
     }
 
-    public function validar()
+   /* public function validar()
     {
         $username = $this->input->post('username');
         $password = $this->input->post('password');
@@ -80,7 +89,35 @@ class Usuarios extends CI_Controller {
             // Autenticación fallida
             redirect('usuarios/index/2','refresh');
         }
+    }*/
+    public function validar()
+{
+    $username = $this->input->post('username');
+    $password = $this->input->post('password');
+
+    $usuario = $this->usuario_model->obtener_por_username($username);
+
+    if ($usuario && password_verify($password, $usuario->password))
+    {
+        if ($usuario->verificado == 1) {
+            // Autenticación exitosa
+            $this->session->set_userdata('login', TRUE);
+            $this->session->set_userdata('idUsuario', $usuario->idUsuario);
+            $this->session->set_userdata('username', $usuario->username);
+            $this->session->set_userdata('rol', $usuario->rol);
+            redirect('usuarios/panel','refresh');
+        } else {
+            $this->session->set_flashdata('error', 'Por favor, verifica tu cuenta de correo electrónico antes de iniciar sesión.');
+            redirect('usuarios/index/4','refresh');
+        }
     }
+    else
+    {
+        // Autenticación fallida
+        redirect('usuarios/index/2','refresh');
+    }
+}
+
 
     /*public function panel() {
         if($this->session->userdata('login')) {
@@ -159,8 +196,53 @@ class Usuarios extends CI_Controller {
             redirect('usuarios/panel', 'refresh');
         }
     }
+    /*public function registro() {
+        $this->load->view('usuarios/registro');
+    }
+*/
+    public function procesar_registro() {
+        $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[USUARIO.email]');
+        $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[6]');
 
-public function registrar()
+        if ($this->form_validation->run() == FALSE) {
+            $this->load->view('admin/registrarform');
+        } else {
+            $datos = array(
+                'email' => $this->input->post('email'),
+                'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
+                'token_verificacion' => bin2hex(random_bytes(16))
+            );
+
+            if ($this->usuario_model->registrar($datos)) {
+                $this->enviar_email_verificacion($datos['email'], $datos['token_verificacion']);
+                $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu email.');
+                redirect('usuarios/validar');
+            } else {
+                $this->session->set_flashdata('error', 'Error en el registro. Inténtalo de nuevo.');
+                redirect('usuarios/registrar');
+            }
+        }
+    }
+
+    private function enviar_email_verificacion($email, $token) {
+        $this->email->from('tu_correo@gmail.com', 'Nombre de tu Aplicación');
+        $this->email->to($email);
+        $this->email->subject('Verifica tu cuenta');
+        $this->email->message('Haz clic en este enlace para verificar tu cuenta: ' . 
+                              site_url('usuarios/_verificar_sesion/' . $token));
+        $this->email->send();
+    }
+
+    /*public function verificar($token) {
+        if ($this->usuario_model->verificar_cuenta($token)) {
+            $this->session->set_flashdata('mensaje', 'Cuenta verificada con éxito. Ya puedes iniciar sesión.');
+        } else {
+            $this->session->set_flashdata('error', 'Token inválido o expirado.');
+        }
+        redirect('usuarios/validar');
+    }*/
+
+/*public function registrar()
 {
     if($this->session->userdata('rol') == 'administrador')
     { 
@@ -172,7 +254,7 @@ public function registrar()
     {
         redirect('usuarios/panel', 'refresh');
     }
-}
+}*/
 
 public function registrarbd()
 {
@@ -255,6 +337,7 @@ public function agregarbd()
     $this->usuario_model->agregarUsuario($data);
     redirect('usuarios/mostrar', 'refresh');
 }
+
 public function eliminarbd()
 {
     $this->_verificar_sesion();
@@ -349,6 +432,8 @@ public function deshabilitados()
     $data['usuarios'] = $lista;
     
     $this->load->view('inc/header');
+    $this->load->view('inc/nabvar');
+    $this->load->view('inc/aside');
     $this->load->view('admin/listadeshabilitados', $data);
     $this->load->view('inc/footer');
 }
@@ -423,6 +508,7 @@ public function listapdf()
         redirect('usuarios/panel', 'refresh');
     }
 }
+
 public function historial() {
     $this->_verificar_sesion();
 
@@ -438,5 +524,289 @@ public function historial() {
     $this->load->view('inc/header');
     $this->load->view('admin/historial', $data);
     $this->load->view('inc/footer');
+}
+/*public function cambiar_password() {
+    // Asegúrate de que el usuario esté logueado
+    if (!$this->session->userdata('login')) {
+        redirect('login');
+    }
+
+    $this->load->view('usuario/cambiar_password');
+}*/
+
+public function procesar_cambio_password() {
+    $nueva_password = $this->input->post('nueva_password');
+    $confirmar_password = $this->input->post('confirmar_password');
+
+    if ($nueva_password !== $confirmar_password) {
+        $this->session->set_flashdata('error', 'Las contraseñas no coinciden.');
+        redirect('usuario/cambiar_password');
+    }
+
+    $idUsuario = $this->session->userdata('idUsuario');
+    if ($this->usuario_model->actualizar_password($idUsuario, $nueva_password)) {
+        $this->session->set_flashdata('success', 'Contraseña actualizada con éxito.');
+        redirect('usuario/perfil');
+    } else {
+        $this->session->set_flashdata('error', 'Hubo un error al actualizar la contraseña.');
+        redirect('usuario/cambiar_password');
+    }
+}
+private function _validar_password($password) {
+    $uppercase = preg_match('@[A-Z]@', $password);
+    $lowercase = preg_match('@[a-z]@', $password);
+    $number    = preg_match('@[0-9]@', $password);
+    $specialChars = preg_match('@[^\w]@', $password);
+
+    if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($password) < 8) {
+        return false;
+    }
+    return true;
+}
+
+public function registrar() {
+    $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[USUARIO.email]');
+    $this->form_validation->set_rules('password', 'Contraseña', 'required|callback__validar_password');
+
+    if ($this->form_validation->run() == FALSE) {
+        $this->load->view('usuarios/registro');
+    } else {
+        $email = $this->input->post('email');
+        $password = $this->input->post('password');
+        $token = bin2hex(random_bytes(16));
+
+        $datos = [
+            'email' => $email,
+            'password' => password_hash($password, PASSWORD_DEFAULT),
+            'token_verificacion' => $token,
+            'fecha_token' => date('Y-m-d H:i:s'),
+            'verificado' => 0,
+            'rol' => 'lector'
+        ];
+
+        if ($this->usuario_model->registrar_usuario($datos)) {
+            $this->_enviar_email_verificacion($email, $token);
+            $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu email.');
+            redirect('usuarios/validar');
+        } else {
+            $this->session->set_flashdata('error', 'Error en el registro. Inténtalo de nuevo.');
+            redirect('usuarios/registrar');
+        }
+    }
+}
+
+private function _enviar_email_verificacion($email, $token)
+{
+    $this->load->library('email');
+
+    $config = array(
+        'protocol' => 'smtp',
+        'smtp_host' => 'smtp.gmail.com',
+        'smtp_port' => 587,
+        'smtp_user' => 'quirozmolinamaritza@gmail.com',
+        'smtp_pass' => 'zdmk qkfw wgdf lshq',
+        'smtp_crypto' => 'tls',
+        'mailtype' => 'html',
+        'charset' => 'utf-8',
+        'newline' => "\r\n"
+    );
+
+    $this->email->initialize($config);
+
+    $this->email->from('quirozmolinamaritza@gmail.com', 'hemeroteca');
+    $this->email->to($email);
+    $this->email->subject('Verifica tu cuenta');
+    $this->email->message('Por favor, haz clic en el siguiente enlace para verificar tu cuenta: ' . site_url('usuarios/verificar/' . $token));
+
+    if (!$this->email->send()) 
+    {
+        // Log del error
+        log_message('error', 'Error al enviar correo de verificación: ' . $this->email->print_debugger());
+        return false;
+    }
+    else 
+    {
+        log_message('info', 'Correo de verificación enviado a: ' . $email);
+        return true;
+    }
+}
+
+public function verificar($token) {
+    if ($this->usuario_model->verificar_cuenta($token)) {
+        $this->session->set_flashdata('mensaje', 'Cuenta verificada con éxito. Ya puedes iniciar sesión.');
+    } else {
+        $this->session->set_flashdata('error', 'Token inválido o expirado.');
+    }
+    redirect('usuarios/validar');
+}
+
+public function cambiar_password() {
+    if (!$this->session->userdata('login')) {
+        redirect('usuarios/validar');
+    }
+
+    $this->form_validation->set_rules('nueva_password', 'Nueva Contraseña', 'required|callback__validar_password');
+    $this->form_validation->set_rules('confirmar_password', 'Confirmar Contraseña', 'required|matches[nueva_password]');
+
+    if ($this->form_validation->run() == FALSE) {
+        $this->load->view('usuarios/cambiar_password');
+    } else {
+        $idUsuario = $this->session->userdata('idUsuario');
+        $nueva_password = $this->input->post('nueva_password');
+
+        if ($this->usuario_model->actualizar_password($idUsuario, $nueva_password)) {
+            $this->session->set_flashdata('mensaje', 'Contraseña actualizada con éxito.');
+            $this->_enviar_email_confirmacion_password($this->session->userdata('email'));
+            redirect('usuarios/perfil');
+        } else {
+            $this->session->set_flashdata('error', 'Error al actualizar la contraseña.');
+            redirect('usuarios/cambiar_password');
+        }
+    }
+}
+
+private function _enviar_email_confirmacion_password($email) {
+    $this->email->from('quirozmolinamaritza@gmail.com', 'hemeroteca');
+    $this->email->to($email);
+    $this->email->subject('Confirmación de cambio de contraseña');
+    $this->email->message('Tu contraseña ha sido cambiada exitosamente. Si no realizaste este cambio, por favor contacta con soporte inmediatamente.');
+    $this->email->send();
+}
+
+public function reenviar_verificacion()
+{
+    $email = $this->session->userdata('email_temp');
+    if (!$email) {
+        redirect('usuarios/index');
+    }
+
+    $usuario = $this->usuario_model->obtener_por_email($email);
+    if ($usuario && $usuario->verificado == 0) {
+        $token = bin2hex(random_bytes(16));
+        $this->usuario_model->actualizar_token_verificacion($usuario->idUsuario, $token);
+        $this->_enviar_email_verificacion($email, $token);
+        $this->session->set_flashdata('mensaje', 'Se ha reenviado el correo de verificación.');
+    } else {
+        $this->session->set_flashdata('error', 'No se pudo reenviar el correo de verificación.');
+    }
+    redirect('usuarios/index');
+}
+public function recuperar_contrasena()
+{
+    // Cargar la vista de recuperación de contraseña
+    $this->load->view('lector/recuperar_contrasena');
+}
+
+public function registro()
+{
+    $this->load->library('form_validation');
+
+    $this->form_validation->set_rules('nombres', 'Nombres', 'required');
+    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
+    $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
+    $this->form_validation->set_rules('profesion', 'Profesión', 'required');
+    $this->form_validation->set_rules('sexo', 'Sexo', 'required');
+    $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email|is_unique[USUARIO.email]');
+    $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|is_unique[USUARIO.username]');
+    $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[6]');
+
+    if ($this->form_validation->run() == FALSE) {
+        // Si la validación falla, volver a mostrar el formulario
+        $this->load->view('lector/registro');
+    } else {
+        // Si la validación es exitosa, registrar al usuario
+        $data = array(
+            'nombres' => $this->input->post('nombres'),
+            'apellidoPaterno' => $this->input->post('apellidoPaterno'),
+            'apellidoMaterno' => $this->input->post('apellidoMaterno'),
+            'carnet' => $this->input->post('carnet'),
+            'profesion' => $this->input->post('profesion'),
+            'fechaNacimiento' => $this->input->post('fechaNacimiento'),
+            'sexo' => $this->input->post('sexo'),
+            'email' => $this->input->post('email'),
+            'username' => $this->input->post('username'),
+            'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
+            'rol' => 'lector',
+            'verificado' => 0,
+            'token_verificacion' => bin2hex(random_bytes(16)),
+            'fecha_token' => date('Y-m-d H:i:s')
+        );
+
+        /*if ($this->usuario_model->registrar_usuario($data)) {
+            $this->_enviar_email_verificacion($data['email'], $data['token_verificacion']);
+            $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu correo electrónico.');
+            redirect('usuarios/index');
+        } else {
+            $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+            redirect('usuarios/registro');
+        }
+        */
+        if ($this->usuario_model->registrar_usuario($data)) {
+            if ($this->_enviar_email_verificacion($data['email'], $data['token_verificacion'])) {
+                $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu correo electrónico.');
+            } else {
+                $this->session->set_flashdata('error', 'Registro exitoso, pero hubo un problema al enviar el correo de verificación. Por favor, contacta al administrador.');
+            }
+            redirect('usuarios/index');
+        } else {
+            $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+            redirect('usuarios/registro');
+        }
+    }
+}
+
+
+/*private function _enviar_email_verificacion($email, $token)
+{
+    $this->load->library('email');
+
+    $this->email->from('tu_correo@tudominio.com', 'Nombre de tu aplicación');
+    $this->email->to($email);
+    $this->email->subject('Verifica tu cuenta');
+    $this->email->message('Por favor, haz clic en el siguiente enlace para verificar tu cuenta: ' . site_url('usuarios/verificar/' . $token));
+
+    $this->email->send();
+}*/
+public function test_email() {
+    $this->load->library('email');
+    
+    $config = array(
+        'protocol' => 'smtp',
+        'smtp_host' => 'smtp.gmail.com',
+        'smtp_port' => 587,
+        'smtp_user' => 'quirozmolinamaritza@gmail.com',
+        'smtp_pass' => 'zdmk qkfw wgdf lshq',
+        'smtp_crypto' => 'tls',
+        'mailtype' => 'html',
+        'charset' => 'utf-8',
+        'newline' => "\r\n",
+        'wordwrap' => TRUE,
+        'smtp_timeout' => 30,
+        'smtp_keepalive' => TRUE,
+        'smtp_debug' => 2,
+        'smtp_ssl_verify_peer' => FALSE,
+        'smtp_ssl_verify_peer_name' => FALSE,
+        'smtp_ssl_allow_self_signed' => TRUE
+    );
+
+    $this->email->initialize($config);
+
+    $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca "Jose Antonio Arze"');
+    $this->email->to('quiroz.maritza.871@gmail.com');
+    $this->email->subject('Prueba de Correo ' . date('Y-m-d H:i:s'));
+    $this->email->message('Este es un correo de prueba desde la aplicación. Hora: ' . date('Y-m-d H:i:s'));
+
+    echo "Configuración cargada:<br>";
+    echo "<pre>" . print_r($config, true) . "</pre>";
+
+    echo "Intentando enviar correo...<br>";
+
+    if ($this->email->send(false)) {
+        echo "Correo enviado correctamente<br>";
+        echo "<pre>" . $this->email->print_debugger() . "</pre>";
+    } else {
+        echo "Error al enviar el correo<br>";
+        echo "<pre>" . $this->email->print_debugger() . "</pre>";
+    }
 }
 }
