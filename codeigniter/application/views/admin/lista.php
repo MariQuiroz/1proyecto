@@ -1,120 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Lista de Usuarios - Hemeroteca</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="Lista de usuarios para administradores de la Hemeroteca" name="description" />
+    <meta content="Hemeroteca" name="author" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="<?php echo base_url('adminXeria/dist/assets/images/favicon.ico'); ?>">
 
-                 <!-- ============================================================== -->
-            <!-- Start Page Content here -->
-            <!-- ============================================================== -->
+    <!-- App css -->
+    <link href="<?php echo base_url('adminXeria/dist/assets/css/bootstrap.min.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?php echo base_url('adminXeria/dist/assets/css/icons.min.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?php echo base_url('adminXeria/dist/assets/css/app.min.css'); ?>" rel="stylesheet" type="text/css" />
+</head>
 
-            <div class="content-page">
-                <div class="content">
-
-                    <!-- Start Content-->
-                    <div class="container-fluid">
-
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="header-title">Lista de Usuarios</h4>
                         
+                        <?php if($this->session->flashdata('mensaje')): ?>
+                            <div class="alert alert-success" role="alert">
+                                <?php echo $this->session->flashdata('mensaje'); ?>
+                            </div>
+                        <?php endif; ?>
 
-<?php echo form_open_multipart('usuarios/registrar'); ?>
-        <button type="submit" name="buton2" class="btn btn-success">REGISTRAR USUARIO</button>
-      <?php echo form_close(); ?>
+                        <table id="basic-datatable" class="table dt-responsive nowrap">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($usuarios as $usuario): ?>
+                                <tr>
+                                    <td><?php echo $usuario->idUsuario; ?></td>
+                                    <td><?php echo $usuario->nombres . ' ' . $usuario->apellidoPaterno; ?></td>
+                                    <td><?php echo $usuario->email; ?></td>
+                                    <td><?php echo $usuario->rol; ?></td>
+                                    <td><?php echo $usuario->estado == 1 ? 'Activo' : 'Inactivo'; ?></td>
+                                    <td>
+                                        <a href="<?php echo site_url('usuarios/modificar/'.$usuario->idUsuario); ?>" class="btn btn-primary btn-sm">Editar</a>
+                                        <?php if($usuario->estado == 1): ?>
+                                            <a href="<?php echo site_url('usuarios/desactivar/'.$usuario->idUsuario); ?>" class="btn btn-warning btn-sm">Desactivar</a>
+                                        <?php else: ?>
+                                            <a href="<?php echo site_url('usuarios/activar/'.$usuario->idUsuario); ?>" class="btn btn-success btn-sm">Activar</a>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div> <!-- end card body-->
+                </div> <!-- end card -->
+            </div><!-- end col-->
+        </div>
+    </div>
 
+    <!-- Vendor js -->
+    <script src="<?php echo base_url('adminXeria/dist/assets/js/vendor.min.js'); ?>"></script>
 
-      
-      <?php echo form_open_multipart('usuarios/listapdf'); ?>
-        <button type="submit" name="buton2" class="btn btn-success">Lista usuarios PDF</button>
-      <?php echo form_close(); ?>
-
-      <h1>Lista de usuarios habilitados</h1>
-      <h1>Username: <?php echo $this->session->userdata('username'); ?></h1>
-      <h1>Rol: <?php echo $this->session->userdata('rol'); ?></h1>
-      <h1>ID: <?php echo $this->session->userdata('idUsuario'); ?></h1>
-
-      <?php echo form_open_multipart('usuarios/deshabilitados'); ?>
-        <button type="submit" name="buton2" class="btn btn-warning">VER USUARIOS DESHABILITADOS</button>
-      <?php echo form_close(); ?>
-
-      <br>
-
-      <?php echo form_open_multipart('usuarios/agregar'); ?>
-        <button type="submit" name="buton1" class="btn btn-primary">AGREGAR USUARIO</button>
-      <?php echo form_close(); ?>
-
-<br>
-
-
-
-      <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
-        
-  
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Foto</th>
-            <th>Nombres</th>
-            <th>Apellido Paterno</th>
-            <th>Apellido Materno</th>
-            <th>Carnet</th>
-            <th>Tipo Usuario</th>
-            <th>Modificar</th>
-            <th>Deshabilitar</th>
-          </tr>
-        </thead>
-        <tbody>
-            <?php
-            $indice=1;
-            foreach ($usuarios->result() as $row)
-            {
-            ?>
-                <tr>
-                    <td><?php echo $indice; ?></td>
-                    <td>
-                        <?php
-                        $foto=$row->foto;
-                        if($foto=="") {
-                            ?>
-                            <img src="<?php echo base_url(); ?>/uploads/user.jpg" width="50px">
-                            <?php
-                        } else {
-                            ?>
-                            <img src="<?php echo base_url(); ?>/uploads/<?php echo $foto; ?>" width="50px">
-                            <?php
-                        }
-                        ?>
-                    </td>
-                    <td><?php echo $row->nombres; ?></td>
-                    <td><?php echo $row->apellidoPaterno; ?></td>
-                    <td><?php echo $row->apellidoMaterno; ?></td>
-                    <td><?php echo $row->carnet; ?></td>
-                    <td><?php echo $row->rol; ?></td>
-                    <td>
-                        <?php echo form_open_multipart("usuarios/modificar"); ?>
-                        <input type="hidden" name="idUsuario" value="<?php echo $row->idUsuario; ?>">
-                        <input type="submit" name="buttony" value="Modificar" class="btn btn-success">
-                        <?php echo form_close(); ?>
-                    </td>
-                   
-                    <td>
-                        <?php echo form_open_multipart("usuarios/deshabilitarbd"); ?>
-                        <input type="hidden" name="idUsuario" value="<?php echo $row->idUsuario; ?>">
-                        <input type="submit" name="buttonz" value="Deshabilitar" class="btn btn-warning">
-                        <?php echo form_close(); ?>
-                    </td>
-                    
-                </tr>
-            <?php
-            $indice++;
-            }
-            ?>
-        </tbody>
-    </table>
- 
-            <!-- ============================================================== -->
-            <!-- End Page content -->
-            <!-- ============================================================== -->
-
-
-
-                        </div>
-                        
-                    </div> <!-- container -->
-
-                </div> <!-- content -->
-
-               
+    <!-- App js -->
+    <script src="<?php echo base_url('adminXeria/dist/assets/js/app.min.js'); ?>"></script>
+</body>
+</html>

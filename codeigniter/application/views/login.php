@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
     <head>
         <meta charset="utf-8" />
-        <title>Login - Mi Aplicación</title>
+        <title>Login - Hemeroteca</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta content="Panel de administración" name="description" />
-        <meta content="MiEmpresa" name="author" />
+        <meta content="Panel de administración de la Hemeroteca" name="description" />
+        <meta content="Hemeroteca" name="author" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <!-- App favicon -->
         <link rel="shortcut icon" href="<?php echo base_url('adminXeria/dist/assets/images/favicon.ico'); ?>">
@@ -28,13 +28,19 @@
                             <div class="card-body p-4">
                                 
                                 <div class="text-center w-75 m-auto">
-                                    <a href="<?php echo site_url('dashboard'); ?>">
+                                    <a href="<?php echo site_url('usuarios/index'); ?>">
                                         <span><img src="<?php echo base_url('assets/images/logo-light.png'); ?>" alt="" height="18"></span>
                                     </a>
-                                    <p class="text-muted mb-4 mt-3">Ingrese su nombre de usuario y contraseña para acceder al panel de administración.</p>
+                                    <p class="text-muted mb-4 mt-3">Ingrese su nombre de usuario y contraseña para acceder al sistema de la Hemeroteca.</p>
                                 </div>
 
                                 <h5 class="auth-title">Iniciar Sesión</h5>
+
+                                <?php if($this->session->flashdata('error')): ?>
+                                    <div class="alert alert-danger" role="alert">
+                                        <?php echo $this->session->flashdata('error'); ?>
+                                    </div>
+                                <?php endif; ?>
 
                                 <?php echo form_open('usuarios/validar'); ?>
 
@@ -61,32 +67,14 @@
 
                                 <?php echo form_close(); ?>
 
-                                <div class="text-center">
-                                    <h5 class="mt-3 text-muted">Iniciar sesión con</h5>
-                                    <ul class="social-list list-inline mt-3 mb-0">
-                                        <li class="list-inline-item">
-                                            <a href="javascript: void(0);" class="social-list-item border-primary text-primary"><i class="mdi mdi-facebook"></i></a>
-                                        </li>
-                                        <li class="list-inline-item">
-                                            <a href="javascript: void(0);" class="social-list-item border-danger text-danger"><i class="mdi mdi-google"></i></a>
-                                        </li>
-                                        <li class="list-inline-item">
-                                            <a href="javascript: void(0);" class="social-list-item border-info text-info"><i class="mdi mdi-twitter"></i></a>
-                                        </li>
-                                        <li class="list-inline-item">
-                                            <a href="javascript: void(0);" class="social-list-item border-secondary text-secondary"><i class="mdi mdi-github-circle"></i></a>
-                                        </li>
-                                    </ul>
-                                </div>
-
                             </div> <!-- end card-body -->
                         </div>
                         <!-- end card -->
 
                         <div class="row mt-3">
                             <div class="col-12 text-center">
-                            <p> <a href="<?php echo site_url('recuperar_contrasena'); ?>" class="text-muted ml-1">¿Olvidó su contraseña?</a></p>
-                            <p class="text-muted">¿No tiene una cuenta? <a href="<?php echo site_url('registro'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">Regístrese</b></a></p>
+                                <p><a href="<?php echo site_url('usuarios/recuperar_contrasena'); ?>" class="text-muted ml-1">¿Olvidó su contraseña?</a></p>
+                                <p class="text-muted">¿No tiene una cuenta? <a href="<?php echo site_url('usuarios/auto_registro'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">Regístrese</b></a></p>
                             </div> <!-- end col -->
                         </div>
                         <!-- end row -->
@@ -100,7 +88,7 @@
         <!-- end page -->
 
         <footer class="footer footer-alt">
-            <?php echo date('Y'); ?> &copy; Mi Aplicación por <a href="" class="text-muted">MiEmpresa</a> 
+            <?php echo date('Y'); ?> &copy; Hemeroteca
         </footer>
 
         <!-- Vendor js -->

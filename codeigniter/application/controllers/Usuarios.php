@@ -4,809 +4,476 @@ defined('BASEPATH') OR exit('No se permite acceso directo al script');
 class Usuarios extends CI_Controller {
     public function __construct() {
         parent::__construct();
+        $this->load->model('usuario_model');
+        $this->load->library('form_validation');
+        $this->load->library('email');
         if (ENVIRONMENT !== 'development') {
             force_https();
         }
-        $this->load->library('email');
+    }
+    private function _obtener_id_usuario_logueado() {
+        $idUsuario = $this->session->userdata('idUsuario');
+        if (!$idUsuario) {
+            // Si no hay un usuario logueado, redirigir al login
+            redirect('usuarios/login', 'refresh');
+        }
+        return $idUsuario;
     }
 
-    
-
-    private function _verificar_sesion()
-    {
-        // Verifica si el usuario está logueado
-        if (!$this->session->userdata('login'))
-        {
+    private function _verificar_sesion() {
+        if (!$this->session->userdata('login')) {
             redirect('usuarios/index/3', 'refresh');
         }
         
-        // Asegúrate de que el ID del usuario y el rol estén en la sesión
-        if (!$this->session->userdata('idUsuario') || !$this->session->userdata('rol'))
-        {
+        if (!$this->session->userdata('idUsuario') || !$this->session->userdata('rol')) {
             $username = $this->session->userdata('username');
             $usuario = $this->usuario_model->obtener_por_username($username);
-            if ($usuario)
-            {
+            if ($usuario) {
                 $this->session->set_userdata('idUsuario', $usuario->idUsuario);
                 $this->session->set_userdata('rol', $usuario->rol);
-            }
-            else
-            {
-                // Si no se puede obtener el ID o el rol, cierra la sesión y redirige al login
+            } else {
                 $this->session->sess_destroy();
                 redirect('usuarios/index/2', 'refresh');
             }
         }
         
-        // Verifica el rol y redirige si es necesario
         $rol = $this->session->userdata('rol');
         $metodo_actual = $this->router->fetch_method();
         
-        if ($rol == 'administrador' && $metodo_actual == 'lector')
-        {
+        if ($rol == 'administrador' && $metodo_actual == 'lector') {
             redirect('usuarios/mostrar', 'refresh');
-        }
-        elseif ($rol == 'lector' && !in_array($metodo_actual, ['lector', 'logout', 'modificarbd']))
-        {
+        } elseif ($rol == 'lector' && !in_array($metodo_actual, ['lector', 'logout', 'modificarbd'])) {
             redirect('usuarios/lector', 'refresh');
         }
     }
 
-    public function index()
-    {
-        $data['msg'] = $this->uri->segment(3);
-
-        if($this->session->userdata('login'))
-        {
-            redirect('usuarios/panel','refresh');
+   /* private function _verificar_admin() {
+        if (!$this->session->userdata('login') || $this->session->userdata('rol') !== 'administrador') {
+            $this->session->set_flashdata('error', 'No tienes permisos para realizar esta acción.');
+            redirect('usuarios/panel', 'refresh');
         }
-        else
-        {
-           //$this->load->view('inc/header');
+    }*/
+    private function _verificar_permisos_creacion() {
+        if (!$this->session->userdata('login')) {
+            redirect('usuarios/login', 'refresh');
+        }
+        $rol = $this->session->userdata('rol');
+        if ($rol !== 'administrador' && $rol !== 'encargado') {
+            $this->session->set_flashdata('error', 'No tienes permisos para realizar esta acción.');
+            redirect('usuarios/panel', 'refresh');
+        }
+    }
+    public function index() {
+        $data['msg'] = $this->uri->segment(3);
+        if ($this->session->userdata('login')) {
+            redirect('usuarios/panel','refresh');
+        } else {
             $this->load->view('login', $data);
-            //$this->load->view('inc/footer');
         }
     }
 
-   /* public function validar()
-    {
+    public function validar() {
         $username = $this->input->post('username');
         $password = $this->input->post('password');
 
         $usuario = $this->usuario_model->obtener_por_username($username);
 
-        if ($usuario && password_verify($password, $usuario->password))
-        {
-            // Autenticación exitosa
-            $this->session->set_userdata('login', TRUE);
-            $this->session->set_userdata('idUsuario', $usuario->idUsuario);
-            $this->session->set_userdata('username', $usuario->username);
-            $this->session->set_userdata('rol', $usuario->rol);
-            redirect('usuarios/panel','refresh');
-        }
-        else
-        {
-            // Autenticación fallida
+        if ($usuario && password_verify($password, $usuario->password)) {
+            if ($usuario->estado == ESTADO_USUARIO_ACTIVO) {
+                if ($usuario->cambio_password_requerido) {
+                    // Redirigir a la página de cambio de contraseña
+                    $this->session->set_userdata('id_cambio_password', $usuario->idUsuario);
+                    redirect('usuarios/cambiar_password_obligatorio');
+                } else {
+                    // Iniciar sesión normalmente
+                    $this->session->set_userdata('login', TRUE);
+                    $this->session->set_userdata('idUsuario', $usuario->idUsuario);
+                    $this->session->set_userdata('username', $usuario->username);
+                    $this->session->set_userdata('rol', $usuario->rol);
+                    redirect('usuarios/panel','refresh');
+                }
+            } else {
+                $this->session->set_flashdata('error', 'Tu cuenta está inactiva. Por favor, contacta al administrador.');
+                redirect('usuarios/index/5','refresh');
+            }
+        } else {
             redirect('usuarios/index/2','refresh');
         }
-    }*/
-    public function validar()
-{
-    $username = $this->input->post('username');
-    $password = $this->input->post('password');
-
-    $usuario = $this->usuario_model->obtener_por_username($username);
-
-    if ($usuario && password_verify($password, $usuario->password))
-    {
-        if ($usuario->verificado == 1) {
-            // Autenticación exitosa
-            $this->session->set_userdata('login', TRUE);
-            $this->session->set_userdata('idUsuario', $usuario->idUsuario);
-            $this->session->set_userdata('username', $usuario->username);
-            $this->session->set_userdata('rol', $usuario->rol);
-            redirect('usuarios/panel','refresh');
-        } else {
-            $this->session->set_flashdata('error', 'Por favor, verifica tu cuenta de correo electrónico antes de iniciar sesión.');
-            redirect('usuarios/index/4','refresh');
+    }
+    public function cambiar_password_obligatorio() {
+        $id_usuario = $this->session->userdata('id_cambio_password');
+        if (!$id_usuario) {
+            redirect('usuarios/index');
         }
-    }
-    else
-    {
-        // Autenticación fallida
-        redirect('usuarios/index/2','refresh');
-    }
-}
 
+        $this->form_validation->set_rules('nueva_password', 'Nueva Contraseña', 'required|min_length[6]');
+        $this->form_validation->set_rules('confirmar_password', 'Confirmar Contraseña', 'required|matches[nueva_password]');
 
-    /*public function panel() {
-        if($this->session->userdata('login')) {
-            $data = array();
-            
-            if($this->session->userdata('rol') == 'administrador') {
-                $data['total_usuarios'] = $this->usuario_model->contar_usuarios();
-                $data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
-                $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
-                $data['prestamos_vencidos'] = $this->prestamo_model->obtener_prestamos_vencidos();
+        if ($this->form_validation->run() == FALSE) {
+            $this->load->view('usuarios/cambiar_password_obligatorio');
+        } else {
+            $nueva_password = $this->input->post('nueva_password');
+
+            if ($this->usuario_model->actualizar_password($id_usuario, $nueva_password, false)) {
+                $this->session->set_flashdata('mensaje', 'Contraseña actualizada con éxito. Ahora puedes iniciar sesión.');
+                $this->session->unset_userdata('id_cambio_password');
+                redirect('usuarios/index');
             } else {
-                $idUsuario = $this->session->userdata('idUsuario');
-                $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
-                $data['mis_reservas_pendientes'] = $this->reserva_model->contar_reservas_pendientes_usuario($idUsuario);
-                $data['mis_proximas_devoluciones'] = $this->prestamo_model->obtener_proximas_devoluciones_usuario($idUsuario);
+                $this->session->set_flashdata('error', 'Error al actualizar la contraseña. Inténtalo de nuevo.');
+                redirect('usuarios/cambiar_password_obligatorio');
             }
-
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('inc/menu', $data);
-            $this->load->view('inc/footer');
-        } else {
-            redirect('usuarios/index/3','refresh');
         }
-    }*/
+    }
+
     public function panel() {
-        if($this->session->userdata('login')) {
-            $data = array();
-            
-            if($this->session->userdata('rol') == 'administrador') {
-                $data['total_usuarios'] = $this->usuario_model->contar_usuarios();
-                $data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
-                $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
-                $data['prestamos_vencidos'] = $this->prestamo_model->obtener_prestamos_vencidos();
-            } else {
-                $idUsuario = $this->session->userdata('idUsuario');
-                $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
-                $data['mis_reservas_pendientes'] = $this->reserva_model->contar_reservas_pendientes_usuario($idUsuario);
-                $data['mis_proximas_devoluciones'] = $this->prestamo_model->obtener_proximas_devoluciones_usuario($idUsuario);
-            }
-
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('inc/menu', $data);
-            $this->load->view('inc/footer');
+        $this->_verificar_sesion();
+        $data = array();
+        
+        if ($this->session->userdata('rol') == 'administrador') {
+            $data['total_usuarios'] = $this->usuario_model->contar_usuarios();
+            $data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
+            $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
+            $data['prestamos_vencidos'] = $this->prestamo_model->obtener_prestamos_vencidos();
         } else {
-            redirect('usuarios/index/3','refresh');
+            $idUsuario = $this->session->userdata('idUsuario');
+            $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
+            $data['mis_reservas_pendientes'] = $this->reserva_model->contar_reservas_pendientes_usuario($idUsuario);
+            $data['mis_proximas_devoluciones'] = $this->prestamo_model->obtener_proximas_devoluciones_usuario($idUsuario);
         }
+
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('inc/menu', $data);
+        $this->load->view('inc/footer');
     }
 
-    public function logout()
-    {
+    public function logout() {
         $this->session->sess_destroy();
         redirect('usuarios/index/1','refresh');
     }
 
-	public function mostrar()
-    {
-        if($this->session->userdata('rol') == 'administrador')
-        { 
+    public function mostrar() {
+        $this->_verificar_sesion();
+        if ($this->session->userdata('rol') == 'administrador') { 
             $lista = $this->usuario_model->listaUsuarios();
             $data['usuarios'] = $lista;
             
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
-            //$this->load->view('inc/menu',$data);
             $this->load->view('admin/lista', $data);
-            
             $this->load->view('inc/footer');
-        }
-        else
-        {
+        } else {
             redirect('usuarios/panel', 'refresh');
         }
     }
-    /*public function registro() {
-        $this->load->view('usuarios/registro');
+
+    public function registrar() {
+        $this->_verificar_permisos_creacion();
+
+        $rol_usuario_actual = $this->session->userdata('rol');
+
+        $this->form_validation->set_rules('nombres', 'Nombres', 'required');
+        $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
+        $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
+        $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email|is_unique[USUARIO.email]');
+        $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|is_unique[USUARIO.username]');
+
+        if ($this->form_validation->run() == FALSE) {
+            $data['es_admin'] = ($rol_usuario_actual === 'administrador');
+            $this->load->view('usuarios/registro_usuario', $data);
+        } else {
+            $idUsuarioCreador = $this->session->userdata('idUsuario');
+            $contrasena_temporal = random_string('alnum', 10);
+
+            $data = array(
+                'nombres' => $this->input->post('nombres'),
+                'apellidoPaterno' => $this->input->post('apellidoPaterno'),
+                'apellidoMaterno' => $this->input->post('apellidoMaterno'),
+                'carnet' => $this->input->post('carnet'),
+                'profesion' => $this->input->post('profesion'),
+                'fechaNacimiento' => $this->input->post('fechaNacimiento'),
+                'sexo' => $this->input->post('sexo'),
+                'email' => $this->input->post('email'),
+                'username' => $this->input->post('username'),
+                'password' => password_hash($contrasena_temporal, PASSWORD_DEFAULT),
+                'rol' => ($rol_usuario_actual === 'administrador') ? $this->input->post('rol') : 'lector',
+                'verificado' => 1,
+                'estado' => ESTADO_USUARIO_ACTIVO,
+                'cambio_password_requerido' => 1,
+                'fechaCreacion' => date('Y-m-d H:i:s'),
+                'idUsuarioCreador' => $idUsuarioCreador
+            );
+
+            if ($id_nuevo_usuario = $this->usuario_model->registrar_usuario($data)) {
+                if ($this->_enviar_email_bienvenida($data['email'], $data['username'], $contrasena_temporal)) {
+                    $this->session->set_flashdata('mensaje', 'Usuario registrado con éxito. Se ha enviado un correo con la contraseña temporal.');
+                } else {
+                    $this->session->set_flashdata('error', 'Usuario registrado, pero hubo un problema al enviar el correo. Por favor, contacte al nuevo usuario.');
+                }
+                redirect('usuarios/mostrar', 'refresh');
+            } else {
+                $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+                redirect('usuarios/registrar', 'refresh');
+            }
+        }
     }
-*/
-    public function procesar_registro() {
-        $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[USUARIO.email]');
+    private function _enviar_email_bienvenida($email, $username, $contrasena_temporal) {
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'smtp.gmail.com',
+            'smtp_port' => 587,
+            'smtp_user' => 'quirozmolinamaritza@gmail.com',
+            'smtp_pass' => 'zdmk qkfw wgdf lshq',
+            'smtp_crypto' => 'tls',
+            'mailtype' => 'html',
+            'charset' => 'utf-8',
+            'newline' => "\r\n"
+        );
+
+        $this->email->initialize($config);
+
+        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca');
+        $this->email->to($email);
+        $this->email->subject('Bienvenido a la Hemeroteca - Información de tu cuenta');
+        $mensaje = "Hola $username,<br><br>";
+        $mensaje .= "Tu cuenta ha sido creada en el sistema de la Hemeroteca. Tus credenciales de acceso son:<br>";
+        $mensaje .= "Usuario: $username<br>";
+        $mensaje .= "Contraseña temporal: $contrasena_temporal<br><br>";
+        $mensaje .= "Por razones de seguridad, te pedimos que cambies tu contraseña en tu primer inicio de sesión.<br><br>";
+        $mensaje .= "Saludos,<br>El equipo de la Hemeroteca";
+        $this->email->message($mensaje);
+
+        if (!$this->email->send()) {
+            log_message('error', 'Error al enviar correo de bienvenida: ' . $this->email->print_debugger());
+            return false;
+        } else {
+            log_message('info', 'Correo de bienvenida enviado a: ' . $email);
+            return true;
+        }
+    }
+
+    public function auto_registro() {
+        $this->form_validation->set_rules('nombres', 'Nombres', 'required');
+        $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
+        $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
+        $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email|is_unique[USUARIO.email]');
+        $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|is_unique[USUARIO.username]');
         $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[6]');
 
         if ($this->form_validation->run() == FALSE) {
-            $this->load->view('admin/registrarform');
+            $this->load->view('lector/registro');
         } else {
-            $datos = array(
+            $this->db->trans_start();
+
+            $data = array(
+                'nombres' => $this->input->post('nombres'),
+                'apellidoPaterno' => $this->input->post('apellidoPaterno'),
+                'apellidoMaterno' => $this->input->post('apellidoMaterno'),
+                'carnet' => $this->input->post('carnet'),
+                'profesion' => $this->input->post('profesion'),
+                'fechaNacimiento' => $this->input->post('fechaNacimiento'),
+                'sexo' => $this->input->post('sexo'),
                 'email' => $this->input->post('email'),
+                'username' => $this->input->post('username'),
                 'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
-                'token_verificacion' => bin2hex(random_bytes(16))
+                'rol' => 'lector', // Asignamos el rol de lector por defecto
+                'verificado' => 0,
+                'tokenVerificacion' => bin2hex(random_bytes(16)),
+                'fechaToken' => date('Y-m-d H:i:s'),
+                'intentosVerificacion' => 0,
+                'estado' => ESTADO_USUARIO_ACTIVO,
+                'fechaCreacion' => date('Y-m-d H:i:s')
             );
 
-            if ($this->usuario_model->registrar($datos)) {
-                $this->enviar_email_verificacion($datos['email'], $datos['token_verificacion']);
-                $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu email.');
-                redirect('usuarios/validar');
+            $idUsuarioCreado = $this->usuario_model->insertar_usuario($data);
+
+            if ($idUsuarioCreado) {
+                $this->usuario_model->actualizar_usuario($idUsuarioCreado, ['idUsuarioCreador' => $idUsuarioCreado]);
+
+                $this->db->trans_complete();
+
+                if ($this->db->trans_status() === FALSE) {
+                    $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+                    redirect('usuarios/auto_registro');
+                } else {
+                    if ($this->_enviar_email_verificacion($data['email'], $data['tokenVerificacion'])) {
+                        $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu correo electrónico.');
+                    } else {
+                        $this->session->set_flashdata('error', 'Registro exitoso, pero hubo un problema al enviar el correo de verificación. Por favor, contacta al administrador.');
+                    }
+                    redirect('usuarios/index');
+                }
             } else {
-                $this->session->set_flashdata('error', 'Error en el registro. Inténtalo de nuevo.');
-                redirect('usuarios/registrar');
+                $this->db->trans_rollback();
+                $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+                redirect('usuarios/auto_registro');
             }
         }
     }
 
-    private function enviar_email_verificacion($email, $token) {
-        $this->email->from('tu_correo@gmail.com', 'Nombre de tu Aplicación');
+    private function _enviar_email_verificacion($email, $token) {
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'smtp.gmail.com',
+            'smtp_port' => 587,
+            'smtp_user' => 'quirozmolinamaritza@gmail.com',
+            'smtp_pass' => 'zdmk qkfw wgdf lshq',
+            'smtp_crypto' => 'tls',
+            'mailtype' => 'html',
+            'charset' => 'utf-8',
+            'newline' => "\r\n"
+        );
+
+        $this->email->initialize($config);
+
+        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca');
         $this->email->to($email);
         $this->email->subject('Verifica tu cuenta');
-        $this->email->message('Haz clic en este enlace para verificar tu cuenta: ' . 
-                              site_url('usuarios/_verificar_sesion/' . $token));
-        $this->email->send();
+        $this->email->message('Por favor, haz clic en el siguiente enlace para verificar tu cuenta: ' . site_url('usuarios/verificar/' . $token));
+
+        if (!$this->email->send()) {
+            log_message('error', 'Error al enviar correo de verificación: ' . $this->email->print_debugger());
+            return false;
+        } else {
+            log_message('info', 'Correo de verificación enviado a: ' . $email);
+            return true;
+        }
     }
 
-    /*public function verificar($token) {
+    public function modificar($idUsuario) {
+        $this->_verificar_admin(); // Solo administradores pueden modificar usuarios
+
+        $usuario = $this->usuario_model->obtener_usuario($idUsuario);
+        if (!$usuario) {
+            $this->session->set_flashdata('error', 'Usuario no encontrado.');
+            redirect('usuarios/mostrar', 'refresh');
+        }
+
+        $this->form_validation->set_rules('nombres', 'Nombres', 'required');
+        $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
+        $this->form_validation->set_rules('rol', 'Rol', 'required|in_list[administrador,encargado,lector]');
+
+        if ($this->form_validation->run() == FALSE) {
+            $data['usuario'] = $usuario;
+            $this->load->view('admin/modificar_usuario', $data);
+        } else {
+            $idUsuarioModificador = $this->session->userdata('idUsuario');
+            $datos_actualizados = array(
+                'nombres' => $this->input->post('nombres'),
+                'apellidoPaterno' => $this->input->post('apellidoPaterno'),
+                'apellidoMaterno' => $this->input->post('apellidoMaterno'),
+                'rol' => $this->input->post('rol'),
+                'fechaActualizacion' => date('Y-m-d H:i:s'),
+                'idUsuarioCreador' => $idUsuarioModificador // Usamos idUsuarioCreador para registrar quién modificó
+            );
+
+            if ($this->usuario_model->actualizar_usuario($idUsuario, $datos_actualizados)) {
+                $this->session->set_flashdata('mensaje', 'Usuario actualizado con éxito.');
+                redirect('usuarios/mostrar', 'refresh');
+            } else {
+                $this->session->set_flashdata('error', 'Error al actualizar el usuario.');
+                redirect('usuarios/modificar/' . $idUsuario, 'refresh');
+            }
+        }
+    }
+
+    public function verificar($token) {
         if ($this->usuario_model->verificar_cuenta($token)) {
             $this->session->set_flashdata('mensaje', 'Cuenta verificada con éxito. Ya puedes iniciar sesión.');
         } else {
             $this->session->set_flashdata('error', 'Token inválido o expirado.');
         }
-        redirect('usuarios/validar');
-    }*/
-
-/*public function registrar()
-{
-    if($this->session->userdata('rol') == 'administrador')
-    { 
-        $this->load->view('inc/header');
-        $this->load->view('admin/registrarform');
-        $this->load->view('inc/footer');
-    }
-    else
-    {
-        redirect('usuarios/panel', 'refresh');
-    }
-}*/
-
-public function registrarbd()
-{
-    $this->_verificar_sesion();
-
-    $data['nombres'] = $_POST['nombres'];
-    $data['apellidoPaterno'] = $_POST['apellidoPaterno'];
-    $data['apellidoMaterno'] = $_POST['apellidoMaterno'];
-    $data['carnet'] = $_POST['carnet'];
-    $data['profesion'] = $_POST['profesion'];
-    $data['fechaNacimiento'] = $_POST['fechaNacimiento'];
-    $data['sexo'] = $_POST['sexo'];
-    $data['email'] = $_POST['email'];
-    $data['username'] = $_POST['username'];
-    $data['password'] = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $data['rol'] = $_POST['rol'];
-
-    $this->usuario_model->registrarUsuario($data);
-    redirect('usuarios/mostrar', 'refresh');
-}
-
-public function lector()
-{
-    $this->_verificar_sesion();
-
-    if($this->session->userdata('rol') == 'lector')
-    { 
-        // Cargar el modelo de publicaciones
-        $this->load->model('publicacion_model');
-        
-        // Obtener la lista de publicaciones
-        $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
-        
-        // Cargar las vistas
-        $this->load->view('inc/header');
-        $this->load->view('lector/panelguest', $data);
-        $this->load->view('inc/footer');
-    }
-    else
-    {
-        redirect('usuarios/panel', 'refresh');
-    }
-}
-
-public function agregar()
-{
-    $this->_verificar_sesion();
-    
-    $this->load->view('inc/header');
-    $this->load->view('admin/formulario');
-    $this->load->view('inc/footer');
-}
-
-public function agregarbd()
-{
-    $this->_verificar_sesion();
-
-    $idUsuarioSesion = $this->session->userdata('idUsuario');
-    if (!$idUsuarioSesion) {
-        log_message('error', 'ID de usuario no encontrado en la sesión');
-        $this->session->set_flashdata('error', 'Error de sesión. Por favor, inicie sesión nuevamente.');
-        redirect('usuarios/logout', 'refresh');
-    }
-
-    $data = array(
-        'nombres' => strtoupper($this->input->post('nombres')),
-        'apellidoPaterno' => strtoupper($this->input->post('apellidoPaterno')),
-        'apellidoMaterno' => strtoupper($this->input->post('apellidoMaterno')),
-        'carnet' => strtoupper($this->input->post('carnet')),
-        'profesion' => strtoupper($this->input->post('profesion')),
-        'fechaNacimiento' => $this->input->post('fechaNacimiento'),
-        'sexo' => strtoupper($this->input->post('sexo')),
-        'email' => $this->input->post('email'),
-        'username' => strtolower($this->input->post('username')),
-        'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
-        'rol' => strtoupper($this->input->post('rol')),
-        'usuarioSesion' => $idUsuarioSesion  // Añadimos el ID del usuario que está creando el nuevo usuario
-    );
-
-    $this->usuario_model->agregarUsuario($data);
-    redirect('usuarios/mostrar', 'refresh');
-}
-
-public function eliminarbd()
-{
-    $this->_verificar_sesion();
-
-    $idUsuario = $_POST['idUsuario'];
-    $this->usuario_model->eliminarUsuario($idUsuario);
-    redirect('usuarios/mostrar', 'refresh');
-}
-
-public function modificar()
-{
-    $idUsuario = $_POST['idUsuario'];
-    $data['infoUsuario'] = $this->usuario_model->recuperarUsuario($idUsuario);
-
-    $this->load->view('inc/header');
-    $this->load->view('admin/formulariomodificar', $data);
-    $this->load->view('inc/footer');
-}
-
-public function modificarbd()
-{
-    $this->_verificar_sesion();
-
-    // Verificar si el ID del usuario está en la sesión
-    $idUsuarioSesion = $this->session->userdata('idUsuario');
-    if (!$idUsuarioSesion) {
-        log_message('error', 'ID de usuario no encontrado en la sesión');
-        $this->session->set_flashdata('error', 'Error de sesión. Por favor, inicie sesión nuevamente.');
-        redirect('usuarios/logout', 'refresh');
-    }
-
-    $idUsuario = $this->input->post('idUsuario');
-    $data = array(
-        'nombres' => strtoupper($this->input->post('nombres')),
-        'apellidoPaterno' => strtoupper($this->input->post('apellidoPaterno')),
-        'apellidoMaterno' => strtoupper($this->input->post('apellidoMaterno')),
-        'carnet' => strtoupper($this->input->post('carnet')),
-        'profesion' => strtoupper($this->input->post('profesion')),
-        'fechaNacimiento' => $this->input->post('fechaNacimiento'),
-        'sexo' => strtoupper($this->input->post('sexo')),
-        'email' => $this->input->post('email'),
-        'rol' => strtoupper($this->input->post('rol')),
-        'usuarioSesion' => $idUsuarioSesion 
-    );
-
-    // Para depuración
-    log_message('debug', 'Datos a actualizar: ' . print_r($data, true));
-    // Actualiza el usuario con campos restringidos
-    $result = $this->usuario_model->modificarUsuarioRestringido($idUsuario, $data);
-
-    if($result) {
-        $this->session->set_flashdata('success', 'Usuario actualizado correctamente.');
-    } else {
-        $this->session->set_flashdata('error', 'No se pudo actualizar el usuario.');
-    }
-
-    // Redirecciona
-    redirect('usuarios/mostrar', 'refresh');
-}
-
-public function deshabilitarbd()
-{
-    $this->_verificar_sesion();
-
-    $idUsuarioSesion = $this->session->userdata('idUsuario');
-    if (!$idUsuarioSesion) {
-        log_message('error', 'ID de usuario no encontrado en la sesión');
-        $this->session->set_flashdata('error', 'Error de sesión. Por favor, inicie sesión nuevamente.');
-        redirect('usuarios/logout', 'refresh');
-    }
-
-    $idUsuario = $this->input->post('idUsuario');
-    $data = array(
-        'estado' => 0,  // 0 representa el estado deshabilitado
-        'usuarioSesion' => $idUsuarioSesion
-    );
-
-    $result = $this->usuario_model->modificarUsuario($idUsuario, $data);
-
-    if ($result) {
-        $this->session->set_flashdata('success', 'Usuario deshabilitado correctamente.');
-    } else {
-        $this->session->set_flashdata('error', 'No se pudo deshabilitar el usuario.');
-    }
-
-    redirect('usuarios/mostrar', 'refresh');
-}
-
-public function deshabilitados()
-{
-    $lista = $this->usuario_model->listaUsuariosDeshabilitados();
-    $data['usuarios'] = $lista;
-    
-    $this->load->view('inc/header');
-    $this->load->view('inc/nabvar');
-    $this->load->view('inc/aside');
-    $this->load->view('admin/listadeshabilitados', $data);
-    $this->load->view('inc/footer');
-}
-
-public function habilitarbd()
-{
-    $this->_verificar_sesion();
-
-    $idUsuarioSesion = $this->session->userdata('idUsuario');
-    if (!$idUsuarioSesion) {
-        log_message('error', 'ID de usuario no encontrado en la sesión');
-        $this->session->set_flashdata('error', 'Error de sesión. Por favor, inicie sesión nuevamente.');
-        redirect('usuarios/logout', 'refresh');
-    }
-
-    $idUsuario = $this->input->post('idUsuario');
-    $data = array(
-        'estado' => 1,  // 0 representa el estado deshabilitado
-        'usuarioSesion' => $idUsuarioSesion
-    );
-
-    $result = $this->usuario_model->modificarUsuario($idUsuario, $data);
-
-    if ($result) {
-        $this->session->set_flashdata('success', 'Usuario deshabilitado correctamente.');
-    } else {
-        $this->session->set_flashdata('error', 'No se pudo deshabilitar el usuario.');
-    }
-
-    redirect('usuarios/mostrar', 'refresh');
-}
-
-public function listapdf()
-{
-    if($this->session->userdata('rol') == '1')
-    { 
-        $lista = $this->usuario_model->listaUsuarios();
-        $lista = $lista->result();
-
-        $this->pdf = new Pdf();
-        $this->pdf->AddPage();
-        $this->pdf->AliasNbPages();
-        $this->pdf->SetTitle("Lista de usuarios");
-        $this->pdf->SetLeftMargin(15);
-        $this->pdf->SetRightMargin(15);
-        $this->pdf->SetFillColor(210,210,210);
-        $this->pdf->SetFont('Arial','B',11);
-        $this->pdf->Cell(30);
-        $this->pdf->Cell(120,10,'LISTA DE USUARIOS',0,0,'C',1);
-
-        $this->pdf->Ln(10);
-        $this->pdf->SetFont('Arial','',9);
-        $num = 1;
-        foreach ($lista as $row) {
-            $nombres = $row->nombres;
-            $apellidoPaterno = $row->apellidoPaterno;
-            $apellidoMaterno = $row->apellidoMaterno;
-            $rol = $row->rol;
-            $this->pdf->Cell(7,5,$num,'TBLR',0,'L',0);
-            $this->pdf->Cell(50,5,$nombres,'TBLR',0,'L',0);
-            $this->pdf->Cell(30,5,$apellidoPaterno,'TBLR',0,'L',0);
-            $this->pdf->Cell(30,5,$apellidoMaterno,'TBLR',0,'L',0);
-            $this->pdf->Cell(30,5,$rol,'TBLR',0,'L',0);
-            $this->pdf->Ln(5);
-            $num++;
-        }
-
-        $this->pdf->Output("listausuarios.pdf","I");
-    }
-    else
-    {
-        redirect('usuarios/panel', 'refresh');
-    }
-}
-
-public function historial() {
-    $this->_verificar_sesion();
-
-    $idUsuario = $this->session->userdata('idUsuario');
-
-    // Obtener historial de préstamos
-    $data['historial_prestamos'] = $this->prestamo_model->obtener_historial_prestamos($idUsuario);
-
-    // Obtener historial de reservas
-    $data['historial_reservas'] = $this->reserva_model->obtener_historial_reservas($idUsuario);
-
-    // Cargar la vista
-    $this->load->view('inc/header');
-    $this->load->view('admin/historial', $data);
-    $this->load->view('inc/footer');
-}
-/*public function cambiar_password() {
-    // Asegúrate de que el usuario esté logueado
-    if (!$this->session->userdata('login')) {
-        redirect('login');
-    }
-
-    $this->load->view('usuario/cambiar_password');
-}*/
-
-public function procesar_cambio_password() {
-    $nueva_password = $this->input->post('nueva_password');
-    $confirmar_password = $this->input->post('confirmar_password');
-
-    if ($nueva_password !== $confirmar_password) {
-        $this->session->set_flashdata('error', 'Las contraseñas no coinciden.');
-        redirect('usuario/cambiar_password');
-    }
-
-    $idUsuario = $this->session->userdata('idUsuario');
-    if ($this->usuario_model->actualizar_password($idUsuario, $nueva_password)) {
-        $this->session->set_flashdata('success', 'Contraseña actualizada con éxito.');
-        redirect('usuario/perfil');
-    } else {
-        $this->session->set_flashdata('error', 'Hubo un error al actualizar la contraseña.');
-        redirect('usuario/cambiar_password');
-    }
-}
-private function _validar_password($password) {
-    $uppercase = preg_match('@[A-Z]@', $password);
-    $lowercase = preg_match('@[a-z]@', $password);
-    $number    = preg_match('@[0-9]@', $password);
-    $specialChars = preg_match('@[^\w]@', $password);
-
-    if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($password) < 8) {
-        return false;
-    }
-    return true;
-}
-
-public function registrar() {
-    $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[USUARIO.email]');
-    $this->form_validation->set_rules('password', 'Contraseña', 'required|callback__validar_password');
-
-    if ($this->form_validation->run() == FALSE) {
-        $this->load->view('usuarios/registro');
-    } else {
-        $email = $this->input->post('email');
-        $password = $this->input->post('password');
-        $token = bin2hex(random_bytes(16));
-
-        $datos = [
-            'email' => $email,
-            'password' => password_hash($password, PASSWORD_DEFAULT),
-            'token_verificacion' => $token,
-            'fecha_token' => date('Y-m-d H:i:s'),
-            'verificado' => 0,
-            'rol' => 'lector'
-        ];
-
-        if ($this->usuario_model->registrar_usuario($datos)) {
-            $this->_enviar_email_verificacion($email, $token);
-            $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu email.');
-            redirect('usuarios/validar');
-        } else {
-            $this->session->set_flashdata('error', 'Error en el registro. Inténtalo de nuevo.');
-            redirect('usuarios/registrar');
-        }
-    }
-}
-
-private function _enviar_email_verificacion($email, $token)
-{
-    $this->load->library('email');
-
-    $config = array(
-        'protocol' => 'smtp',
-        'smtp_host' => 'smtp.gmail.com',
-        'smtp_port' => 587,
-        'smtp_user' => 'quirozmolinamaritza@gmail.com',
-        'smtp_pass' => 'zdmk qkfw wgdf lshq',
-        'smtp_crypto' => 'tls',
-        'mailtype' => 'html',
-        'charset' => 'utf-8',
-        'newline' => "\r\n"
-    );
-
-    $this->email->initialize($config);
-
-    $this->email->from('quirozmolinamaritza@gmail.com', 'hemeroteca');
-    $this->email->to($email);
-    $this->email->subject('Verifica tu cuenta');
-    $this->email->message('Por favor, haz clic en el siguiente enlace para verificar tu cuenta: ' . site_url('usuarios/verificar/' . $token));
-
-    if (!$this->email->send()) 
-    {
-        // Log del error
-        log_message('error', 'Error al enviar correo de verificación: ' . $this->email->print_debugger());
-        return false;
-    }
-    else 
-    {
-        log_message('info', 'Correo de verificación enviado a: ' . $email);
-        return true;
-    }
-}
-
-public function verificar($token) {
-    if ($this->usuario_model->verificar_cuenta($token)) {
-        $this->session->set_flashdata('mensaje', 'Cuenta verificada con éxito. Ya puedes iniciar sesión.');
-    } else {
-        $this->session->set_flashdata('error', 'Token inválido o expirado.');
-    }
-    redirect('usuarios/validar');
-}
-
-public function cambiar_password() {
-    if (!$this->session->userdata('login')) {
-        redirect('usuarios/validar');
-    }
-
-    $this->form_validation->set_rules('nueva_password', 'Nueva Contraseña', 'required|callback__validar_password');
-    $this->form_validation->set_rules('confirmar_password', 'Confirmar Contraseña', 'required|matches[nueva_password]');
-
-    if ($this->form_validation->run() == FALSE) {
-        $this->load->view('usuarios/cambiar_password');
-    } else {
-        $idUsuario = $this->session->userdata('idUsuario');
-        $nueva_password = $this->input->post('nueva_password');
-
-        if ($this->usuario_model->actualizar_password($idUsuario, $nueva_password)) {
-            $this->session->set_flashdata('mensaje', 'Contraseña actualizada con éxito.');
-            $this->_enviar_email_confirmacion_password($this->session->userdata('email'));
-            redirect('usuarios/perfil');
-        } else {
-            $this->session->set_flashdata('error', 'Error al actualizar la contraseña.');
-            redirect('usuarios/cambiar_password');
-        }
-    }
-}
-
-private function _enviar_email_confirmacion_password($email) {
-    $this->email->from('quirozmolinamaritza@gmail.com', 'hemeroteca');
-    $this->email->to($email);
-    $this->email->subject('Confirmación de cambio de contraseña');
-    $this->email->message('Tu contraseña ha sido cambiada exitosamente. Si no realizaste este cambio, por favor contacta con soporte inmediatamente.');
-    $this->email->send();
-}
-
-public function reenviar_verificacion()
-{
-    $email = $this->session->userdata('email_temp');
-    if (!$email) {
         redirect('usuarios/index');
     }
 
-    $usuario = $this->usuario_model->obtener_por_email($email);
-    if ($usuario && $usuario->verificado == 0) {
-        $token = bin2hex(random_bytes(16));
-        $this->usuario_model->actualizar_token_verificacion($usuario->idUsuario, $token);
-        $this->_enviar_email_verificacion($email, $token);
-        $this->session->set_flashdata('mensaje', 'Se ha reenviado el correo de verificación.');
-    } else {
-        $this->session->set_flashdata('error', 'No se pudo reenviar el correo de verificación.');
-    }
-    redirect('usuarios/index');
-}
-public function recuperar_contrasena()
-{
-    // Cargar la vista de recuperación de contraseña
-    $this->load->view('lector/recuperar_contrasena');
-}
+    public function cambiar_password() {
+        $this->_verificar_sesion();
 
-public function registro()
-{
-    $this->load->library('form_validation');
+        $this->form_validation->set_rules('nueva_password', 'Nueva Contraseña', 'required|min_length[6]');
+        $this->form_validation->set_rules('confirmar_password', 'Confirmar Contraseña', 'required|matches[nueva_password]');
 
-    $this->form_validation->set_rules('nombres', 'Nombres', 'required');
-    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
-    $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
-    $this->form_validation->set_rules('profesion', 'Profesión', 'required');
-    $this->form_validation->set_rules('sexo', 'Sexo', 'required');
-    $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email|is_unique[USUARIO.email]');
-    $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|is_unique[USUARIO.username]');
-    $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[6]');
-
-    if ($this->form_validation->run() == FALSE) {
-        // Si la validación falla, volver a mostrar el formulario
-        $this->load->view('lector/registro');
-    } else {
-        // Si la validación es exitosa, registrar al usuario
-        $data = array(
-            'nombres' => $this->input->post('nombres'),
-            'apellidoPaterno' => $this->input->post('apellidoPaterno'),
-            'apellidoMaterno' => $this->input->post('apellidoMaterno'),
-            'carnet' => $this->input->post('carnet'),
-            'profesion' => $this->input->post('profesion'),
-            'fechaNacimiento' => $this->input->post('fechaNacimiento'),
-            'sexo' => $this->input->post('sexo'),
-            'email' => $this->input->post('email'),
-            'username' => $this->input->post('username'),
-            'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
-            'rol' => 'lector',
-            'verificado' => 0,
-            'token_verificacion' => bin2hex(random_bytes(16)),
-            'fecha_token' => date('Y-m-d H:i:s')
-        );
-
-        /*if ($this->usuario_model->registrar_usuario($data)) {
-            $this->_enviar_email_verificacion($data['email'], $data['token_verificacion']);
-            $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu correo electrónico.');
-            redirect('usuarios/index');
+        if ($this->form_validation->run() == FALSE) {
+            $this->load->view('usuarios/cambiar_password');
         } else {
-            $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
-            redirect('usuarios/registro');
-        }
-        */
-        if ($this->usuario_model->registrar_usuario($data)) {
-            if ($this->_enviar_email_verificacion($data['email'], $data['token_verificacion'])) {
-                $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu correo electrónico.');
+            $idUsuario = $this->session->userdata('idUsuario');
+            $nueva_password = $this->input->post('nueva_password');
+
+            if ($this->usuario_model->actualizar_password($idUsuario, $nueva_password)) {
+                $this->session->set_flashdata('mensaje', 'Contraseña actualizada con éxito.');
+                $this->_enviar_email_confirmacion_password($this->session->userdata('email'));
+                redirect('usuarios/perfil');
             } else {
-                $this->session->set_flashdata('error', 'Registro exitoso, pero hubo un problema al enviar el correo de verificación. Por favor, contacta al administrador.');
+                $this->session->set_flashdata('error', 'Error al actualizar la contraseña.');
+                redirect('usuarios/cambiar_password');
             }
-            redirect('usuarios/index');
-        } else {
-            $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
-            redirect('usuarios/registro');
         }
     }
-}
 
-
-/*private function _enviar_email_verificacion($email, $token)
-{
-    $this->load->library('email');
-
-    $this->email->from('tu_correo@tudominio.com', 'Nombre de tu aplicación');
-    $this->email->to($email);
-    $this->email->subject('Verifica tu cuenta');
-    $this->email->message('Por favor, haz clic en el siguiente enlace para verificar tu cuenta: ' . site_url('usuarios/verificar/' . $token));
-
-    $this->email->send();
-}*/
-public function test_email() {
-    $this->load->library('email');
-    
-    $config = array(
-        'protocol' => 'smtp',
-        'smtp_host' => 'smtp.gmail.com',
-        'smtp_port' => 587,
-        'smtp_user' => 'quirozmolinamaritza@gmail.com',
-        'smtp_pass' => 'zdmk qkfw wgdf lshq',
-        'smtp_crypto' => 'tls',
-        'mailtype' => 'html',
-        'charset' => 'utf-8',
-        'newline' => "\r\n",
-        'wordwrap' => TRUE,
-        'smtp_timeout' => 30,
-        'smtp_keepalive' => TRUE,
-        'smtp_debug' => 2,
-        'smtp_ssl_verify_peer' => FALSE,
-        'smtp_ssl_verify_peer_name' => FALSE,
-        'smtp_ssl_allow_self_signed' => TRUE
-    );
-
-    $this->email->initialize($config);
-
-    $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca "Jose Antonio Arze"');
-    $this->email->to('quiroz.maritza.871@gmail.com');
-    $this->email->subject('Prueba de Correo ' . date('Y-m-d H:i:s'));
-    $this->email->message('Este es un correo de prueba desde la aplicación. Hora: ' . date('Y-m-d H:i:s'));
-
-    echo "Configuración cargada:<br>";
-    echo "<pre>" . print_r($config, true) . "</pre>";
-
-    echo "Intentando enviar correo...<br>";
-
-    if ($this->email->send(false)) {
-        echo "Correo enviado correctamente<br>";
-        echo "<pre>" . $this->email->print_debugger() . "</pre>";
-    } else {
-        echo "Error al enviar el correo<br>";
-        echo "<pre>" . $this->email->print_debugger() . "</pre>";
+    private function _enviar_email_confirmacion_password($email) {
+        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca');
+        $this->email->to($email);
+        $this->email->subject('Confirmación de cambio de contraseña');
+        $this->email->message('Tu contraseña ha sido cambiada exitosamente. Si no realizaste este cambio, por favor contacta con soporte inmediatamente.');
+        $this->email->send();
     }
-}
+
+    public function desactivar_usuario($idUsuario) {
+        $this->_verificar_sesion();
+        if ($this->session->userdata('rol') != 'administrador') {
+            redirect('usuarios/panel', 'refresh');
+        }
+
+        if ($this->usuario_model->cambiar_estado_usuario($idUsuario, ESTADO_USUARIO_INACTIVO)) {
+            $this->session->set_flashdata('mensaje', 'Usuario desactivado con éxito.');
+        } else {
+            $this->session->set_flashdata('error', 'Error al desactivar el usuario.');
+        }
+        redirect('usuarios/mostrar', 'refresh');
+    }
+
+    public function activar_usuario($idUsuario) {
+        $this->_verificar_sesion();
+        if ($this->session->userdata('rol') != 'administrador') {
+            redirect('usuarios/panel', 'refresh');
+        }
+
+        if ($this->usuario_model->cambiar_estado_usuario($idUsuario, ESTADO_USUARIO_ACTIVO)) {
+            $this->session->set_flashdata('mensaje', 'Usuario activado con éxito.');
+        } else {
+            $this->session->set_flashdata('error', 'Error al activar el usuario.');
+        }
+        redirect('usuarios/mostrar', 'refresh');
+    }
+    public function actualizar_preferencias_notificacion()
+    {
+        $this->_verificar_sesion();
+
+        $idUsuario = $this->session->userdata('idUsuario');
+        
+        $preferencias = [
+            'email' => $this->input->post('notificar_email') ? true : false,
+            'sistema' => $this->input->post('notificar_sistema') ? true : false,
+            // Puedes añadir más tipos de notificaciones según sea necesario
+        ];
+
+        if ($this->usuario_model->actualizar_preferencias_notificacion($idUsuario, $preferencias)) {
+            $this->session->set_flashdata('mensaje', 'Preferencias de notificación actualizadas con éxito.');
+        } else {
+            $this->session->set_flashdata('error', 'Error al actualizar las preferencias de notificación.');
+        }
+
+        redirect('usuarios/perfil');
+    }
+
+    public function mostrar_preferencias_notificacion()
+    {
+        $this->_verificar_sesion();
+
+        $idUsuario = $this->session->userdata('idUsuario');
+        $data['preferencias'] = $this->usuario_model->obtener_preferencias_notificacion($idUsuario);
+
+        $this->load->view('usuarios/preferencias_notificacion', $data);
+    }
 }
