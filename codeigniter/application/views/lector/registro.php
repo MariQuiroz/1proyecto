@@ -72,7 +72,10 @@
                         <div class="form-group">
                             <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
                         </div>
-
+                        
+                            <input type="password" name="confirm_password"sword" class="form-control" placeholder="Repite tu Contraseña"  required>
+                        </div>
+                        
                         <div class="form-group text-center">
                             <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
                         </div>

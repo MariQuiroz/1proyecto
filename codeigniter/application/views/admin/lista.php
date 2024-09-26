@@ -37,7 +37,14 @@
                             </div>
                         <?php endif; ?>
 
+
                         <div class="mb-3">
+                            <a href="<?php echo site_url('usuarios/deshabilitados'); ?>" class="btn btn-info">Ver Usuarios Deshabilitados</a>
+                        </div>
+                        <div class="mb-3">
+                            <?php if($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+                                <a href="<?php echo site_url('usuarios/agregar'); ?>" class="btn btn-success mr-2">Agregar Nuevo Usuario</a>
+                            <?php endif; ?>
                             <a href="<?php echo site_url('usuarios/deshabilitados'); ?>" class="btn btn-info">Ver Usuarios Deshabilitados</a>
                         </div>
 

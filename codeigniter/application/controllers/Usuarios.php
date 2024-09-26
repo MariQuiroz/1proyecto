@@ -155,7 +155,7 @@ class Usuarios extends CI_Controller {
         }
     }
 
-    public function registrar() {
+    /*public function registrar() {
         $this->_verificar_permisos_creacion();
 
         $rol_usuario_actual = $this->session->userdata('rol');
@@ -205,8 +205,138 @@ class Usuarios extends CI_Controller {
             }
         }
     }
+*/
+public function agregar() {
+    $this->_verificar_permisos_creacion();
 
-    private function _enviar_email_bienvenida($email, $username, $contrasena_temporal) {
+    $rol_usuario_actual = $this->session->userdata('rol');
+    $data['es_admin'] = ($rol_usuario_actual === 'administrador');
+    
+    $this->load->view('inc/header');
+    //$this->load->view('inc/nabvar');
+    $this->load->view('inc/aside');
+    $this->load->view('admin/formulario', $data);
+    $this->load->view('inc/footer');
+}
+
+/*public function agregarbd() {
+    $this->_verificar_permisos_creacion();
+
+    $rol_usuario_actual = $this->session->userdata('rol');
+
+    $this->form_validation->set_rules('nombres', 'Nombres', 'required');
+    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
+    $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
+    $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email|is_unique[USUARIO.email]');
+    $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|is_unique[USUARIO.username]');
+
+    if ($this->form_validation->run() == FALSE) {
+        $data['es_admin'] = ($rol_usuario_actual === 'administrador');
+        $this->load->view('admin/registrarform', $data);
+    } else {
+        $idUsuarioCreador = $this->session->userdata('idUsuario');
+        $contrasena_temporal = random_string('alnum', 10);
+
+        $data = array(
+            'nombres' => $this->input->post('nombres'),
+            'apellidoPaterno' => $this->input->post('apellidoPaterno'),
+            'apellidoMaterno' => $this->input->post('apellidoMaterno'),
+            'carnet' => $this->input->post('carnet'),
+            'profesion' => $this->input->post('profesion'),
+            'fechaNacimiento' => $this->input->post('fechaNacimiento'),
+            'sexo' => $this->input->post('sexo'),
+            'email' => $this->input->post('email'),
+            'username' => $this->input->post('username'),
+            'password' => password_hash($contrasena_temporal, PASSWORD_DEFAULT),
+            'rol' => ($rol_usuario_actual === 'administrador') ? $this->input->post('rol') : 'lector',
+            'verificado' => 1,
+            'estado' => 1,
+            'cambioPasswordRequerido' => 1,
+            'fechaCreacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $idUsuarioCreador
+        );
+
+        // Verificar si el encargado intenta crear un usuario que no sea lector
+        if ($rol_usuario_actual !== 'administrador' && $data['rol'] !== 'lector') {
+            $this->session->set_flashdata('error', 'No tienes permisos para crear usuarios con este rol.');
+            redirect('usuarios/agregar', 'refresh');
+        }
+
+        if ($id_nuevo_usuario = $this->usuario_model->registrarUsuario($data)) {
+            if ($this->_enviar_email_bienvenida($data['email'], $data['username'], $contrasena_temporal)) {
+                $this->session->set_flashdata('mensaje', 'Usuario registrado con éxito. Se ha enviado un correo con la contraseña temporal.');
+            } else {
+                $this->session->set_flashdata('error', 'Usuario registrado, pero hubo un problema al enviar el correo. Por favor, contacte al nuevo usuario.');
+            }
+            redirect('usuarios/mostrar', 'refresh');
+        } 
+        
+        if ($id_nuevo_usuario = $this->usuario_model->registrarUsuario($data)) {
+            if ($this->_enviar_email_bienvenida($data['email'], $data['username'], $contrasena_temporal)) {
+                $this->session->set_flashdata('mensaje', 'Usuario registrado con éxito. Se ha enviado un correo con la contraseña temporal.');
+            } else {
+                $this->session->set_flashdata('error', 'Usuario registrado, pero hubo un problema al enviar el correo. Por favor, contacte al nuevo usuario.');
+            }
+            redirect('usuarios/mostrar', 'refresh');
+        } else {
+        
+            $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+            redirect('usuarios/agregar', 'refresh');
+        }
+    }
+}*/
+public function agregarbd() {
+    $this->_verificar_permisos_creacion();
+
+    $rol_usuario_actual = $this->session->userdata('rol');
+
+    $this->form_validation->set_rules('nombres', 'Nombres', 'required');
+    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
+    $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
+    $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email|is_unique[USUARIO.email]');
+    $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|is_unique[USUARIO.username]');
+
+    if ($this->form_validation->run() == FALSE) {
+        $data['es_admin'] = ($rol_usuario_actual === 'administrador');
+        $this->load->view('admin/registrarform', $data);
+    } else {
+        $idUsuarioCreador = $this->session->userdata('idUsuario');
+        $contrasena_temporal = random_string('alnum', 10);
+
+        $data = array(
+            'nombres' => $this->input->post('nombres'),
+            'apellidoPaterno' => $this->input->post('apellidoPaterno'),
+            'apellidoMaterno' => $this->input->post('apellidoMaterno'),
+            'carnet' => $this->input->post('carnet'),
+            'profesion' => $this->input->post('profesion'),
+            'fechaNacimiento' => $this->input->post('fechaNacimiento'),
+            'sexo' => $this->input->post('sexo'),
+            'email' => $this->input->post('email'),
+            'username' => $this->input->post('username'),
+            'password' => password_hash($contrasena_temporal, PASSWORD_DEFAULT),
+            'rol' => ($rol_usuario_actual === 'administrador') ? $this->input->post('rol') : 'lector',
+            'verificado' => 1,
+            'estado' => 1,
+            'cambioPasswordRequerido' => 1,
+            'fechaCreacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $idUsuarioCreador
+        );
+
+        if ($id_nuevo_usuario = $this->usuario_model->registrarUsuario($data)) {
+            if ($this->_enviar_email_bienvenida($data['email'], $data['username'], $contrasena_temporal)) {
+                $this->session->set_flashdata('mensaje', 'Usuario registrado con éxito. Se ha enviado un correo con la contraseña temporal.');
+            } else {
+                $this->session->set_flashdata('error', 'Usuario registrado, pero hubo un problema al enviar el correo. Por favor, contacte al nuevo usuario.');
+            }
+            redirect('usuarios/mostrar', 'refresh');
+        } else {
+            $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+            redirect('usuarios/agregar', 'refresh');
+        }
+    }
+}
+
+   /* private function _enviar_email_bienvenida($email, $username, $contrasena_temporal) {
         $config = array(
             'protocol' => 'smtp',
             'smtp_host' => 'smtp.gmail.com',
@@ -240,8 +370,56 @@ class Usuarios extends CI_Controller {
             return true;
         }
     }
+*/
+private function _enviar_email_bienvenida($email, $username, $contrasena_temporal) {
+    $this->load->library('email');
 
-    public function auto_registro() {
+    $config = array(
+        'protocol' => 'smtp',
+        'smtp_host' => 'smtp.gmail.com',
+        'smtp_port' => 587,
+        'smtp_user' => 'quirozmolinamaritza@gmail.com', // Reemplaza con tu correo
+        'smtp_pass' => 'zdmk qkfw wgdf lshq', // Reemplaza con tu contraseña
+        'smtp_crypto' => 'tls',
+        'mailtype' => 'html',
+        'charset' => 'utf-8',
+        'newline' => "\r\n"
+    );
+
+    $this->email->initialize($config);
+
+    $this->email->from('quirozmolinamaritza@gmail.com', 'hemeroteca'); // Reemplaza con tu correo y el nombre de tu sistema
+    $this->email->to($email);
+    $this->email->subject('Bienvenido a la Hemeroteca "José Antonio Arze"- Información de tu cuenta');
+
+    $mensaje = "
+    <html>
+    <head>
+        <title>Bienvenido a la Hemeroteca</title>
+    </head>
+    <body>
+        <h2>Bienvenido a la Hemeroteca, $username</h2>
+        <p>Tu cuenta ha sido creada exitosamente. Aquí están tus credenciales de acceso:</p>
+        <p><strong>Usuario:</strong> $username</p>
+        <p><strong>Contraseña temporal:</strong> $contrasena_temporal</p>
+        <p>Por razones de seguridad, te recomendamos cambiar tu contraseña después de tu primer inicio de sesión.</p>
+        <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+        <p>¡Gracias por unirte a nosotros!</p>
+    </body>
+    </html>
+    ";
+
+    $this->email->message($mensaje);
+
+    if ($this->email->send()) {
+        return true;
+    } else {
+        log_message('error', 'Error al enviar correo de bienvenida: ' . $this->email->print_debugger());
+        return false;
+    }
+}
+
+    /*public function auto_registro() {
         $this->form_validation->set_rules('nombres', 'Nombres', 'required');
         $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
         $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
@@ -298,9 +476,70 @@ class Usuarios extends CI_Controller {
                 redirect('usuarios/auto_registro');
             }
         }
+        
+    }*/
+    public function auto_registro() {
+        $this->form_validation->set_rules('nombres', 'Nombres', 'required');
+        $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
+        $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
+        $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email|is_unique[USUARIO.email]');
+        $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|is_unique[USUARIO.username]');
+        $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[6]');
+        $this->form_validation->set_rules('confirm_password', 'Confirmar Contraseña', 'required|matches[password]');
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->load->view('lector/registro');
+        } else {
+            $this->db->trans_start();
+
+            $data = array(
+                'nombres' => $this->input->post('nombres'),
+                'apellidoPaterno' => $this->input->post('apellidoPaterno'),
+                'apellidoMaterno' => $this->input->post('apellidoMaterno'),
+                'carnet' => $this->input->post('carnet'),
+                'profesion' => $this->input->post('profesion'),
+                'fechaNacimiento' => $this->input->post('fechaNacimiento'),
+                'sexo' => $this->input->post('sexo'),
+                'email' => $this->input->post('email'),
+                'username' => $this->input->post('username'),
+                'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
+                'rol' => 'lector',
+                'verificado' => 0,
+                'tokenVerificacion' => bin2hex(random_bytes(16)),
+                'fechaToken' => date('Y-m-d H:i:s'),
+                'intentosVerificacion' => 0,
+                'estado' => 1,
+                'cambioPasswordRequerido' => 0,
+                'fechaCreacion' => date('Y-m-d H:i:s')
+            );
+
+            $idUsuarioCreado = $this->usuario_model->registrarUsuario($data);
+
+            if ($idUsuarioCreado) {
+                $this->usuario_model->actualizar_usuario($idUsuarioCreado, ['idUsuarioCreador' => $idUsuarioCreado]);
+
+                $this->db->trans_complete();
+
+                if ($this->db->trans_status() === FALSE) {
+                    $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+                    redirect('usuarios/auto_registro');
+                } else {
+                    if ($this->_enviar_email_verificacion($data['email'], $data['tokenVerificacion'])) {
+                        $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu correo electrónico para activar tu cuenta.');
+                    } else {
+                        $this->session->set_flashdata('error', 'Registro exitoso, pero hubo un problema al enviar el correo de verificación. Por favor, contacta al administrador.');
+                    }
+                    redirect('usuarios/index');
+                }
+            } else {
+                $this->db->trans_rollback();
+                $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+                redirect('usuarios/auto_registro');
+            }
+        }
     }
     
-        private function _enviar_email_verificacion($email, $token) {
+       /* private function _enviar_email_verificacion($email, $token) {
             $config = array(
                 'protocol' => 'smtp',
                 'smtp_host' => 'smtp.gmail.com',
@@ -327,6 +566,48 @@ class Usuarios extends CI_Controller {
                 log_message('info', 'Correo de verificación enviado a: ' . $email);
                 return true;
             }
+        }*/
+        private function _enviar_email_verificacion($email, $token) {
+            $this->load->library('email');
+    
+            $config = array(
+                'protocol' => 'smtp',
+                'smtp_host' => 'smtp.gmail.com',
+                'smtp_port' => 587,
+                'smtp_user' => 'quirozmolinamaritza@gmail.com',
+                'smtp_pass' => 'zdmk qkfw wgdf lshq',
+                'smtp_crypto' => 'tls',
+                'mailtype' => 'html',
+                'charset' => 'utf-8',
+                'newline' => "\r\n"
+            );
+    
+            $this->email->initialize($config);
+    
+            $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca "José Antonio arze"');
+            $this->email->to($email);
+            $this->email->subject('Verifica tu cuenta en la Hemeroteca');
+    
+            $mensaje = '
+            <html>
+            <head>
+                <title>Verificación de cuenta</title>
+            </head>
+            <body>
+                <h2>Bienvenido a la Hemeroteca</h2>
+                <p>Gracias por registrarte. Para completar tu registro y activar tu cuenta, por favor haz clic en el siguiente botón:</p>
+                <p style="text-align: center;">
+                    <a href="' . site_url('usuarios/verificar/' . $token) . '" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer;">Verificar mi cuenta</a>
+                </p>
+                <p>Si el botón no funciona, copia y pega el siguiente enlace en tu navegador:</p>
+                <p>' . site_url('usuarios/verificar/' . $token) . '</p>
+                <p>Si no has solicitado esta verificación, por favor ignora este mensaje.</p>
+            </body>
+            </html>';
+    
+            $this->email->message($mensaje);
+    
+            return $this->email->send();
         }
     
         public function modificar($idUsuario) {
@@ -549,9 +830,9 @@ class Usuarios extends CI_Controller {
                 $this->load->model('publicacion_model');
                 $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
                 
-                $this->load->view('inc/header');
+                //$this->load->view('inc/header');
                 $this->load->view('lector/panelguest', $data);
-                $this->load->view('inc/footer');
+                //$this->load->view('inc/footer');
             } else {
                 redirect('usuarios/panel', 'refresh');
             }
@@ -618,4 +899,105 @@ class Usuarios extends CI_Controller {
     $this->load->view('admin/listadeshabilitados', $data);
     $this->load->view('inc/footer');
 }*/
+public function lista_usuarios() {
+    $this->_verificar_sesion();
+    if ($this->session->userdata('rol') == 'administrador') {
+        $lista = $this->usuario_model->listaUsuarios();
+        $data['usuarios'] = $lista;
+        
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('admin/lista', $data);
+        $this->load->view('inc/footer');
+    } else {
+        redirect('usuarios/panel', 'refresh');
     }
+}
+public function contar_usuarios() {
+    $this->_verificar_sesion();
+    if ($this->session->userdata('rol') == 'administrador') {
+        $total_usuarios = $this->usuario_model->contar_usuarios();
+        // Procesar el resultado según sea necesario
+    } else {
+        redirect('usuarios/panel', 'refresh');
+    }
+}
+public function cambiar_estado_usuario() {
+    $this->_verificar_sesion();
+    if ($this->session->userdata('rol') == 'administrador') {
+        $idUsuario = $this->input->post('idUsuario');
+        $estado = $this->input->post('estado');
+        if ($this->usuario_model->cambiar_estado_usuario($idUsuario, $estado)) {
+            $this->session->set_flashdata('mensaje', 'Estado del usuario actualizado con éxito.');
+        } else {
+            $this->session->set_flashdata('error', 'Error al actualizar el estado del usuario.');
+        }
+        redirect('usuarios/mostrar', 'refresh');
+    } else {
+        redirect('usuarios/panel', 'refresh');
+    }
+}
+public function actualizar_token_verificacion() {
+    $idUsuario = $this->input->post('idUsuario');
+    $token = bin2hex(random_bytes(16));
+    if ($this->usuario_model->actualizar_token_verificacion($idUsuario, $token)) {
+        // Enviar email con el nuevo token
+        $this->_enviar_email_verificacion($usuario->email, $token);
+    } else {
+        $this->session->set_flashdata('error', 'Error al actualizar el token de verificación.');
+    }
+}
+public function recuperar_usuario($idUsuario) {
+    $this->_verificar_sesion();
+    if ($this->session->userdata('rol') == 'administrador') {
+        $usuario = $this->usuario_model->recuperarUsuario($idUsuario);
+        if ($usuario) {
+            // Procesar o mostrar la información del usuario
+        } else {
+            $this->session->set_flashdata('error', 'Usuario no encontrado.');
+            redirect('usuarios/mostrar', 'refresh');
+        }
+    } else {
+        redirect('usuarios/panel', 'refresh');
+    }
+}
+public function obtener_usuario($idUsuario) {
+    $this->_verificar_sesion();
+    $usuario = $this->usuario_model->obtener_usuario($idUsuario);
+    // Procesar el resultado según sea necesario
+}
+public function reenviar_verificacion()
+    {
+        $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email');
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->load->view('usuarios/reenviar_verificacion');
+        } else {
+            $email = $this->input->post('email');
+            $usuario = $this->usuario_model->obtener_usuario_no_verificado($email);
+
+            if ($usuario) {
+                if ($usuario->intentosVerificacion < 3) {
+                    $nuevoToken = bin2hex(random_bytes(16));
+                    if ($this->usuario_model->actualizar_token_verificacion1($usuario->idUsuario, $nuevoToken)) {
+                        if ($this->_enviar_email_verificacion($email, $nuevoToken)) {
+                            $this->usuario_model->incrementar_intentos_verificacion($usuario->idUsuario);
+                            $this->session->set_flashdata('mensaje', 'Se ha enviado un nuevo correo de verificación. Por favor, revisa tu bandeja de entrada.');
+                        } else {
+                            $this->session->set_flashdata('error', 'Hubo un problema al enviar el correo de verificación. Por favor, inténtalo de nuevo más tarde.');
+                        }
+                    } else {
+                        $this->session->set_flashdata('error', 'Hubo un problema al generar un nuevo token de verificación. Por favor, inténtalo de nuevo más tarde.');
+                    }
+                } else {
+                    $this->session->set_flashdata('error', 'Has excedido el número máximo de intentos de verificación. Por favor, contacta al administrador.');
+                }
+            } else {
+                $this->session->set_flashdata('error', 'No se encontró una cuenta no verificada con ese correo electrónico.');
+            }
+            redirect('usuarios/reenviar_verificacion');
+        }
+    }
+}
+    

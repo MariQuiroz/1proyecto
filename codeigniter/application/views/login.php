@@ -34,6 +34,8 @@
                                     <p class="text-muted mb-4 mt-3">Ingrese su nombre de usuario y contraseña para acceder al sistema de la Hemeroteca.</p>
                                 </div>
 
+                                <p>¿No recibiste el correo de verificación? <a href="<?= site_url('usuarios/reenviar_verificacion') ?>">Solicitar reenvío</a></p>
+
                                 <h5 class="auth-title">Iniciar Sesión</h5>
 
                                 <?php if($this->session->flashdata('error')): ?>
@@ -70,7 +72,7 @@
                             </div> <!-- end card-body -->
                         </div>
                         <!-- end card -->
-
+                        
                         <div class="row mt-3">
                             <div class="col-12 text-center">
                                 <p><a href="<?php echo site_url('usuarios/recuperar_contrasena'); ?>" class="text-muted ml-1">¿Olvidó su contraseña?</a></p>

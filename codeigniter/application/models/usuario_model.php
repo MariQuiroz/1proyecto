@@ -113,6 +113,15 @@ class Usuario_model extends CI_Model {
         
         return $this->db->affected_rows() > 0;
     }
+    public function actualizar_token_verificacion1($idUsuario, $nuevoToken)
+    {
+        $data = [
+            'tokenVerificacion' => $nuevoToken,
+            'fechaToken' => date('Y-m-d H:i:s')
+        ];
+        $this->db->where('idUsuario', $idUsuario);
+        return $this->db->update('USUARIO', $data);
+    }
 
     public function actualizar_preferencias_notificacion($idUsuario, $preferencias)
     {
@@ -143,4 +152,69 @@ class Usuario_model extends CI_Model {
     return $query->row();
 }
 
+
+    // Nuevas funciones basadas en el controlador...
+
+    public function contar_usuarios_activos()
+    {
+        $this->db->where('estado', 1);
+        return $this->db->count_all_results('USUARIO');
+    }
+
+    public function obtener_usuario_por_id_cambio_password($id_cambio_password)
+    {
+        return $this->db->get_where('USUARIO', ['idUsuario' => $id_cambio_password])->row();
+    }
+
+    public function obtener_prestamos_activos_usuario($idUsuario)
+    {
+        $this->db->select('PRESTAMO.*');
+        $this->db->from('PRESTAMO');
+        $this->db->join('SOLICITUD_PRESTAMO', 'PRESTAMO.idSolicitud = SOLICITUD_PRESTAMO.idSolicitud');
+        $this->db->where('SOLICITUD_PRESTAMO.idUsuario', $idUsuario);
+        $this->db->where('PRESTAMO.estadoPrestamo', 'activo');
+        return $this->db->count_all_results();
+    }
+
+
+    public function obtener_proximas_devoluciones_usuario($idUsuario)
+    {
+        // Asumiendo que tienes una tabla PRESTAMO
+        $this->db->where('idUsuario', $idUsuario);
+        $this->db->where('estadoPrestamo', 'activo');
+        $this->db->where('fechaDevolucion <=', date('Y-m-d', strtotime('+7 days')));
+        $this->db->order_by('fechaDevolucion', 'ASC');
+        return $this->db->get('PRESTAMO')->result();
+    }
+
+
+    public function obtener_historial_prestamos($idUsuario)
+    {
+        $this->db->select('PRESTAMO.*, PUBLICACION.titulo');
+        $this->db->from('PRESTAMO');
+        $this->db->join('SOLICITUD_PRESTAMO', 'PRESTAMO.idSolicitud = SOLICITUD_PRESTAMO.idSolicitud');
+        $this->db->join('DETALLE_PRESTAMO', 'SOLICITUD_PRESTAMO.idSolicitud = DETALLE_PRESTAMO.idSolicitud');
+        $this->db->join('PUBLICACION', 'DETALLE_PRESTAMO.idPublicacion = PUBLICACION.idPublicacion');
+        $this->db->where('SOLICITUD_PRESTAMO.idUsuario', $idUsuario);
+        $this->db->order_by('PRESTAMO.fechaCreacion', 'DESC');
+        return $this->db->get()->result();
+    }
+    public function actualizar_usuario($idUsuario, $datos)
+    {
+        $this->db->where('idUsuario', $idUsuario);
+        return $this->db->update('USUARIO', $datos);
+    }
+    public function obtener_usuario_no_verificado($email)
+    {
+        return $this->db->get_where('USUARIO', ['email' => $email, 'verificado' => 0])->row();
+    }
+
+    public function incrementar_intentos_verificacion($idUsuario)
+    {
+        $this->db->set('intentosVerificacion', 'intentosVerificacion + 1', FALSE);
+        $this->db->where('idUsuario', $idUsuario);
+        $this->db->update('USUARIO');
+    }
+
+   
 }
