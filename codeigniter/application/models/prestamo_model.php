@@ -60,7 +60,7 @@ class Prestamo_model extends CI_Model {
         return $this->db->count_all_results('PRESTAMO');
     }
 
-    public function obtener_prestamos_vencidos() {
+    /*public function obtener_prestamos_vencidos() {
         $this->db->select('p.*, u.nombres, u.apellidoPaterno, pub.titulo');
         $this->db->from('PRESTAMO p');
         $this->db->join('USUARIO u', 'p.idUsuario = u.idUsuario');
@@ -68,7 +68,7 @@ class Prestamo_model extends CI_Model {
         $this->db->where('p.fechaDevolucionEsperada <', date('Y-m-d'));
         $this->db->where('p.estado', 1);
         return $this->db->get()->result();
-    }
+    */
 
     public function contar_prestamos_activos_usuario($idUsuario) {
         $this->db->where('idUsuario', $idUsuario);
@@ -76,7 +76,7 @@ class Prestamo_model extends CI_Model {
         return $this->db->count_all_results('PRESTAMO');
     }
 
-    public function obtener_proximas_devoluciones_usuario($idUsuario) {
+    /*public function obtener_proximas_devoluciones_usuario($idUsuario) {
         $this->db->select('p.*, pub.titulo');
         $this->db->from('PRESTAMO p');
         $this->db->join('PUBLICACION pub', 'p.idPublicacion = pub.idPublicacion');
@@ -132,5 +132,5 @@ class Prestamo_model extends CI_Model {
         }
 
         return true;
-    }
+    }*/
 }

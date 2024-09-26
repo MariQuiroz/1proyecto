@@ -8,7 +8,7 @@ class Usuario_model extends CI_Model {
         return $this->db->get_where('USUARIO', ['username' => $username])->row();
     }
 
-    public function registrar_usuario($data)
+    public function registrarUsuario($data)
     {
         // Asegurarse de que la contraseña esté hasheada
         if (isset($data['password']) && !password_get_info($data['password'])['algo']) {
@@ -26,21 +26,19 @@ class Usuario_model extends CI_Model {
     }
 
     public function listaUsuarios()
-    {
-        return $this->db->get_where('USUARIO', ['estado' => 1])->result();
-    }
+{
+    $this->db->select('idUsuario, nombres, apellidoPaterno, email, rol, profesion, estado');
+    $this->db->where('estado', 1);
+    return $this->db->get('USUARIO')->result();
+}
 
-    public function eliminarUsuario($idUsuario)
-    {
-        return $this->db->delete('USUARIO', ['idUsuario' => $idUsuario]);
-    }
 
     public function obtener_usuario($idUsuario)
     {
         return $this->db->get_where('USUARIO', ['idUsuario' => $idUsuario])->row();
     }
 
-    public function actualizar_usuario($idUsuario, $data)
+    public function modificarUsuario($idUsuario, $data)
     {
         $data['fechaActualizacion'] = date('Y-m-d H:i:s');
         $this->db->where('idUsuario', $idUsuario);
@@ -48,10 +46,10 @@ class Usuario_model extends CI_Model {
     }
 
     public function listaUsuariosDeshabilitados()
-    {
-        return $this->db->get_where('USUARIO', ['estado' => 0])->result();
-    }
-
+{
+    $this->db->where('estado', 0);
+    return $this->db->get('USUARIO')->result();
+}
     public function contar_usuarios()
     {
         return $this->db->count_all('USUARIO');
@@ -68,7 +66,8 @@ class Usuario_model extends CI_Model {
             $this->db->update('USUARIO', [
                 'verificado' => 1,
                 'tokenVerificacion' => null,
-                'fechaToken' => null
+                'fechaToken' => null,
+                'fechaActualizacion' => date('Y-m-d H:i:s')
             ]);
             return true;
         }
@@ -115,14 +114,6 @@ class Usuario_model extends CI_Model {
         return $this->db->affected_rows() > 0;
     }
 
-    public function incrementar_intentos_verificacion($idUsuario)
-    {
-        $this->db->set('intentosVerificacion', 'intentosVerificacion + 1', FALSE);
-        $this->db->where('idUsuario', $idUsuario);
-        return $this->db->update('USUARIO');
-    }
-
-   
     public function actualizar_preferencias_notificacion($idUsuario, $preferencias)
     {
         $data = [
@@ -145,5 +136,11 @@ class Usuario_model extends CI_Model {
         
         return []; // Retorna un array vacío si no hay preferencias
     }
+    public function recuperarUsuario($idUsuario)
+{
+    $this->db->where('idUsuario', $idUsuario);
+    $query = $this->db->get('USUARIO');
+    return $query->row();
 }
 
+}
