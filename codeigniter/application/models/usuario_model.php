@@ -215,6 +215,29 @@ class Usuario_model extends CI_Model {
         $this->db->where('idUsuario', $idUsuario);
         $this->db->update('USUARIO');
     }
+    public function guardar_token_recuperacion($idUsuario, $token) {
+        $data = array(
+            'tokenRecuperacion' => $token,
+            'fechaTokenRecuperacion' => date('Y-m-d H:i:s')
+        );
+        $this->db->where('idUsuario', $idUsuario);
+        return $this->db->update('USUARIO', $data);
+    }
+
+    public function obtener_por_token_recuperacion($token) {
+        $this->db->where('tokenRecuperacion', $token);
+        $this->db->where('fechaTokenRecuperacion >', date('Y-m-d H:i:s', strtotime('-24 hours')));
+        return $this->db->get('USUARIO')->row();
+    }
+
+    public function eliminar_token_recuperacion($idUsuario) {
+        $data = array(
+            'tokenRecuperacion' => NULL,
+            'fechaTokenRecuperacion' => NULL
+        );
+        $this->db->where('idUsuario', $idUsuario);
+        return $this->db->update('USUARIO', $data);
+    }
 
    
 }

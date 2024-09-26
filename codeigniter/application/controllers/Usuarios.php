@@ -121,10 +121,10 @@ class Usuarios extends CI_Controller {
             //$data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
            // $data['prestamos_vencidos'] = $this->prestamo_model->obtener_prestamos_vencidos();
         } else {
-            $idUsuario = $this->session->userdata('idUsuario');
-            $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
-            $data['mis_reservas_pendientes'] = $this->reserva_model->contar_reservas_pendientes_usuario($idUsuario);
-            $data['mis_proximas_devoluciones'] = $this->prestamo_model->obtener_proximas_devoluciones_usuario($idUsuario);
+           // $idUsuario = $this->session->userdata('idUsuario');
+            //$data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
+            //$data['mis_reservas_pendientes'] = $this->reserva_model->contar_reservas_pendientes_usuario($idUsuario);
+           // $data['mis_proximas_devoluciones'] = $this->prestamo_model->obtener_proximas_devoluciones_usuario($idUsuario);
         }
 
         $this->load->view('inc/header');
@@ -145,11 +145,11 @@ class Usuarios extends CI_Controller {
             $lista = $this->usuario_model->listaUsuarios();
             $data['usuarios'] = $lista;
             
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
+            $this->load->view('admin/inc/header');
+            $this->load->view('admin/inc/nabvar');
+            $this->load->view('admin/inc/aside');
             $this->load->view('admin/lista', $data);
-            $this->load->view('inc/footer');
+            $this->load->view('admin/inc/footer');
         } else {
             redirect('usuarios/panel', 'refresh');
         }
@@ -212,11 +212,11 @@ public function agregar() {
     $rol_usuario_actual = $this->session->userdata('rol');
     $data['es_admin'] = ($rol_usuario_actual === 'administrador');
     
-    $this->load->view('inc/header');
-    //$this->load->view('inc/nabvar');
-    $this->load->view('inc/aside');
+    $this->load->view('admin/inc/header');
+    $this->load->view('admin/inc/nabvar');
+    $this->load->view('admin/inc/aside');
     $this->load->view('admin/formulario', $data);
-    $this->load->view('inc/footer');
+    $this->load->view('admin/inc/footer');
 }
 
 /*public function agregarbd() {
@@ -998,6 +998,101 @@ public function reenviar_verificacion()
             }
             redirect('usuarios/reenviar_verificacion');
         }
+    }
+    public function recuperar_contrasena() {
+        $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email');
+
+        if ($this->form_validation->run() == FALSE) {
+            $data['error'] = validation_errors();
+            $this->load->view('usuarios/recuperar_contrasena', $data);
+        } else {
+            $email = $this->input->post('email');
+            $usuario = $this->usuario_model->obtener_por_email($email);
+
+            if ($usuario) {
+                $token = bin2hex(random_bytes(50));
+                if ($this->usuario_model->guardar_token_recuperacion($usuario->idUsuario, $token)) {
+                    if ($this->_enviar_email_recuperacion($email, $token)) {
+                        $this->session->set_flashdata('mensaje', 'Se ha enviado un correo con instrucciones para recuperar tu contraseña. Por favor, revisa tu bandeja de entrada.');
+                    } else {
+                        $this->session->set_flashdata('error', 'Hubo un problema al enviar el correo. Por favor, intenta de nuevo más tarde.');
+                    }
+                } else {
+                    $this->session->set_flashdata('error', 'Ocurrió un error al procesar tu solicitud. Por favor, intenta de nuevo.');
+                }
+                redirect('usuarios/login');
+            } else {
+                $this->session->set_flashdata('error', 'No se encontró ninguna cuenta con ese correo electrónico.');
+                redirect('usuarios/recuperar_contrasena');
+            }
+        }
+    }
+
+    public function reset_contrasena($token) {
+        $usuario = $this->usuario_model->obtener_por_token_recuperacion($token);
+
+        if (!$usuario) {
+            $this->session->set_flashdata('error', 'El enlace de recuperación es inválido o ha expirado. Por favor, solicita uno nuevo.');
+            redirect('usuarios/recuperar_contrasena');
+        }
+
+        $this->form_validation->set_rules('password', 'Nueva contraseña', 'required|min_length[6]');
+        $this->form_validation->set_rules('confirm_password', 'Confirmar contraseña', 'required|matches[password]');
+
+        if ($this->form_validation->run() == FALSE) {
+            $data['token'] = $token;
+            $data['error'] = validation_errors();
+            $this->load->view('usuarios/reset_contrasena', $data);
+        } else {
+            $new_password = $this->input->post('password');
+            if ($this->usuario_model->actualizar_password($usuario->idUsuario, $new_password)) {
+                if ($this->usuario_model->eliminar_token_recuperacion($usuario->idUsuario)) {
+                    $this->session->set_flashdata('mensaje', 'Tu contraseña ha sido actualizada correctamente. Ahora puedes iniciar sesión con tu nueva contraseña.');
+                } else {
+                    $this->session->set_flashdata('error', 'Tu contraseña ha sido actualizada, pero hubo un problema al finalizar el proceso. Por seguridad, contacta al administrador.');
+                }
+            } else {
+                $this->session->set_flashdata('error', 'Hubo un problema al actualizar tu contraseña. Por favor, intenta de nuevo.');
+            }
+            redirect('usuarios/login');
+        }
+    }
+
+    private function _enviar_email_recuperacion($email, $token) {
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'smtp.gmail.com',
+            'smtp_port' => 587,
+            'smtp_user' => 'quirozmolinamaritza@gmail.com',
+            'smtp_pass' => 'zdmk qkfw wgdf lshq',
+            'smtp_crypto' => 'tls',
+            'mailtype' => 'html',
+            'charset' => 'utf-8',
+            'newline' => "\r\n"
+        );
+
+        $this->email->initialize($config);
+
+        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca');
+        $this->email->to($email);
+        $this->email->subject('Recuperación de contraseña');
+
+        $mensaje = '
+        <html>
+        <head>
+            <title>Recuperación de contraseña</title>
+        </head>
+        <body>
+            <h2>Recuperación de contraseña</h2>
+            <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+            <p><a href="' . site_url('usuarios/reset_contrasena/' . $token) . '">Restablecer contraseña</a></p>
+            <p>Si no has solicitado este cambio, puedes ignorar este correo. Este enlace expirará en 24 horas por seguridad.</p>
+        </body>
+        </html>';
+
+        $this->email->message($mensaje);
+
+        return $this->email->send();
     }
 }
     
