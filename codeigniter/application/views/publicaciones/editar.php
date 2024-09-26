@@ -1,39 +1,71 @@
-<div class="container mt-4">
-    <h2>Editar Publicación</h2>
+	    <!-- ============================================================== -->
+            <!-- Start Page Content here -->
+            <!-- ============================================================== -->
 
-    <form action="<?= site_url('publicaciones/editarbd') ?>" method="post">
-        <input type="hidden" name="idPublicacion" value="<?= $publicacion->idPublicacion ?>">
-        <div class="form-group">
-            <label for="titulo">Título</label>
-            <input type="text" class="form-control" id="titulo" name="titulo" value="<?= $publicacion->titulo ?>" required>
+            <div class="content-page">
+              <div class="content">
+                <!-- Start Content-->
+                  <div class="container-fluid">
+                  <div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="header-title">Editar Publicación</h4>
+                <p class="text-muted font-13 mb-4">
+                    Modifique los campos necesarios para actualizar la información de la publicación.
+                </p>
+
+                <?php echo form_open('publicaciones/editarbd'); ?>
+                    <input type="hidden" name="idPublicacion" value="<?php echo $publicacion->idPublicacion; ?>">
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" value="<?php echo $publicacion->titulo; ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="idEditorial" class="form-label">Editorial</label>
+                        <select class="form-control" id="idEditorial" name="idEditorial" required>
+                            <option value="">Seleccione una editorial</option>
+                            <?php foreach ($editoriales as $editorial): ?>
+                                <option value="<?php echo $editorial->idEditorial; ?>" <?php echo ($publicacion->idEditorial == $editorial->idEditorial) ? 'selected' : ''; ?>><?php echo $editorial->nombreEditorial; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="idTipo" class="form-label">Tipo</label>
+                        <select class="form-control" id="idTipo" name="idTipo" required>
+                            <option value="">Seleccione un tipo</option>
+                            <?php foreach ($tipos as $tipo): ?>
+                                <option value="<?php echo $tipo->idTipo; ?>" <?php echo ($publicacion->idTipo == $tipo->idTipo) ? 'selected' : ''; ?>><?php echo $tipo->nombreTipo; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fechaPublicacion" class="form-label">Fecha de Publicación</label>
+                        <input type="date" class="form-control" id="fechaPublicacion" name="fechaPublicacion" value="<?php echo $publicacion->fechaPublicacion; ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="numeroPaginas" class="form-label">Número de Páginas</label>
+                        <input type="number" class="form-control" id="numeroPaginas" name="numeroPaginas" value="<?php echo $publicacion->numeroPaginas; ?>">
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3"><?php echo $publicacion->descripcion; ?></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ubicacionFisica" class="form-label">Ubicación Física</label>
+                        <input type="text" class="form-control" id="ubicacionFisica" name="ubicacionFisica" value="<?php echo $publicacion->ubicacionFisica; ?>">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Actualizar Publicación</button>
+                <?php echo form_close(); ?>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="editorial">Editorial</label>
-            <input type="text" class="form-control" id="editorial" name="editorial" value="<?= $publicacion->editorial ?>" required>
-        </div>
-        <div class="form-group">
-            <label for="diaPublicacion">Día de Publicación</label>
-            <input type="number" class="form-control" id="diaPublicacion" name="diaPublicacion" min="1" max="31" value="<?= $publicacion->diaPublicacion ?>">
-        </div>
-        <div class="form-group">
-            <label for="mesPublicacion">Mes de Publicación</label>
-            <input type="number" class="form-control" id="mesPublicacion" name="mesPublicacion" min="1" max="12" value="<?= $publicacion->mesPublicacion ?>">
-        </div>
-        <div class="form-group">
-            <label for="añoPublicacion">Año de Publicación</label>
-            <input type="number" class="form-control" id="añoPublicacion" name="añoPublicacion" value="<?= $publicacion->añoPublicacion ?>" required>
-        </div>
-        <div class="form-group">
-            <label for="tipo">Tipo</label>
-            <select class="form-control" id="tipo" name="tipo" required>
-                <option value="periodico" <?= $publicacion->tipo == 'periodico' ? 'selected' : '' ?>>Periódico</option>
-                <option value="gaceta" <?= $publicacion->tipo == 'gaceta' ? 'selected' : '' ?>>Gaceta</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="descripcion">Descripción</label>
-            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"><?= $publicacion->descripcion ?></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Actualizar Publicación</button>
-    </form>
+    </div>
 </div>
+            <!-- ============================================================== -->
+            <!-- End Page content -->
+            <!-- ============================================================== -->
+                    </div>   
+                </div> <!-- container -->
+             </div> <!-- content -->
+
+   

@@ -1,38 +1,69 @@
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <h2>Agregar Publicación</h2>
-            <?php echo form_open_multipart('publicaciones/agregarbd'); ?>
-                <div class="form-group">
-                    <input type="text" name="titulo" class="form-control" placeholder="Título de la publicación" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" name="editorial" class="form-control" placeholder="Editorial" required>
-                </div>
-                <div class="form-group">
-                    <input type="number" name="diaPublicacion" class="form-control" placeholder="Día de publicación" min="1" max="31">
-                </div>
-                <div class="form-group">
-                    <input type="number" name="mesPublicacion" class="form-control" placeholder="Mes de publicación" min="1" max="12">
-                </div>
-                <div class="form-group">
-                    <input type="number" name="añoPublicacion" class="form-control" placeholder="Año de publicación" required>
-                </div>
-                <div class="form-group">
-                    <select name="tipo" class="form-control" required>
-                        <option value="">Seleccione el tipo</option>
-                        <option value="periodico">Periódico</option>
-                        <option value="gaceta">Gaceta</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <textarea name="descripcion" class="form-control" placeholder="Descripción" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <input type="file" name="portada" class="form-control-file">
-                </div>
-                <button type="submit" class="btn btn-primary">AGREGAR PUBLICACIÓN</button>
-            <?php echo form_close(); ?>
+   <!-- ============================================================== -->
+            <!-- Start Page Content here -->
+            <!-- ============================================================== -->
+
+            <div class="content-page">
+              <div class="content">
+                <!-- Start Content-->
+                  <div class="container-fluid">
+
+                  <div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="header-title">Agregar Nueva Publicación</h4>
+                <p class="text-muted font-13 mb-4">
+                    Complete el formulario para agregar una nueva publicación a la hemeroteca.
+                </p>
+
+                <?php echo form_open('publicaciones/agregarbd'); ?>
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="idEditorial" class="form-label">Editorial</label>
+                        <select class="form-control" id="idEditorial" name="idEditorial" required>
+                            <option value="">Seleccione una editorial</option>
+                            <?php foreach ($editoriales as $editorial): ?>
+                                <option value="<?php echo $editorial->idEditorial; ?>"><?php echo $editorial->nombreEditorial; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="idTipo" class="form-label">Tipo</label>
+                        <select class="form-control" id="idTipo" name="idTipo" required>
+                            <option value="">Seleccione un tipo</option>
+                            <?php foreach ($tipos as $tipo): ?>
+                                <option value="<?php echo $tipo->idTipo; ?>"><?php echo $tipo->nombreTipo; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fechaPublicacion" class="form-label">Fecha de Publicación</label>
+                        <input type="date" class="form-control" id="fechaPublicacion" name="fechaPublicacion" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="numeroPaginas" class="form-label">Número de Páginas</label>
+                        <input type="number" class="form-control" id="numeroPaginas" name="numeroPaginas">
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ubicacionFisica" class="form-label">Ubicación Física</label>
+                        <input type="text" class="form-control" id="ubicacionFisica" name="ubicacionFisica">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Agregar Publicación</button>
+                <?php echo form_close(); ?>
+            </div>
         </div>
     </div>
 </div>
+  <!-- ============================================================== -->
+            <!-- End Page content -->
+            <!-- ============================================================== -->
+                    </div>   
+                </div> <!-- container -->
+             </div> <!-- content -->

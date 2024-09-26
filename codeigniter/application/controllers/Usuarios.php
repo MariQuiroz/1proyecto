@@ -111,7 +111,7 @@ class Usuarios extends CI_Controller {
         }
     }
 
-    public function panel() {
+    /*public function panel() {
         $this->_verificar_sesion();
         $data = array();
         
@@ -132,12 +132,53 @@ class Usuarios extends CI_Controller {
         $this->load->view('inc/aside');
         $this->load->view('inc/menu', $data);
         $this->load->view('inc/footer');
-    }
+    }*/
 
     public function logout() {
         $this->session->sess_destroy();
         redirect('usuarios/index/1','refresh');
     }
+    public function panel() {
+        $this->_verificar_sesion();
+        $data = array();
+        $rol = $this->session->userdata('rol');
+
+        switch ($rol) {
+            case 'administrador':
+                $data['total_usuarios'] = $this->usuario_model->contar_usuarios();
+                /*$data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
+                $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
+                $data['prestamos_vencidos'] = $this->prestamo_model->contar_prestamos_vencidos();
+                $data['solicitudes_pendientes'] = $this->solicitud_model->contar_solicitudes_pendientes();
+                */break;
+
+            case 'encargado':
+                /*$data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
+                $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
+                $data['solicitudes_pendientes'] = $this->solicitud_model->contar_solicitudes_pendientes();
+                */break;
+
+            case 'lector':
+                $idUsuario = $this->session->userdata('idUsuario');
+               /* $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
+                $data['mis_solicitudes_pendientes'] = $this->solicitud_model->contar_solicitudes_pendientes_usuario($idUsuario);
+                $data['mis_proximas_devoluciones'] = $this->prestamo_model->obtener_proximas_devoluciones_usuario($idUsuario);
+                */break;
+
+            default:
+                redirect('usuarios/logout', 'refresh');
+                break;
+        }
+
+        $data['rol'] = $rol;
+
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('panel/' . $rol, $data); // Carga una vista específica para cada rol
+        $this->load->view('inc/footer');
+    }
+  
 
     public function mostrar() {
         $this->_verificar_sesion();
@@ -145,11 +186,11 @@ class Usuarios extends CI_Controller {
             $lista = $this->usuario_model->listaUsuarios();
             $data['usuarios'] = $lista;
             
-            $this->load->view('admin/inc/header');
-            $this->load->view('admin/inc/nabvar');
-            $this->load->view('admin/inc/aside');
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
             $this->load->view('admin/lista', $data);
-            $this->load->view('admin/inc/footer');
+            $this->load->view('inc/footer');
         } else {
             redirect('usuarios/panel', 'refresh');
         }
@@ -212,11 +253,11 @@ public function agregar() {
     $rol_usuario_actual = $this->session->userdata('rol');
     $data['es_admin'] = ($rol_usuario_actual === 'administrador');
     
-    $this->load->view('admin/inc/header');
-    $this->load->view('admin/inc/nabvar');
-    $this->load->view('admin/inc/aside');
+    $this->load->view('inc/header');
+    $this->load->view('inc/nabvar');
+    $this->load->view('inc/aside');
     $this->load->view('admin/formulario', $data);
-    $this->load->view('admin/inc/footer');
+    $this->load->view('inc/footer');
 }
 
 /*public function agregarbd() {
@@ -830,9 +871,11 @@ private function _enviar_email_bienvenida($email, $username, $contrasena_tempora
                 $this->load->model('publicacion_model');
                 $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
                 
-                //$this->load->view('inc/header');
+                $this->load->view('inc/header');
+                $this->load->view('inc/nabvar');
+                $this->load->view('inc/aside');
                 $this->load->view('lector/panelguest', $data);
-                //$this->load->view('inc/footer');
+                $this->load->view('inc/footer');
             } else {
                 redirect('usuarios/panel', 'refresh');
             }

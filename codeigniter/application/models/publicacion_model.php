@@ -3,16 +3,24 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Publicacion_model extends CI_Model {
 
+    public function __construct() {
+        parent::__construct();
+        $this->load->database();
+    }
 
-    public function listar_publicaciones($limite = NULL, $offset = NULL) {
-        $this->db->select('*');
-        $this->db->from('PUBLICACION');
-        $this->db->where('estado', 1);
-        if ($limite && $offset) {
-            $this->db->limit($limite, $offset);
-        }
+    public function listar_publicaciones() {
+        $this->db->select('p.*, t.nombreTipo, e.nombreEditorial, u.nombres, u.apellidoPaterno');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
+        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
+        $this->db->join('USUARIO u', 'p.idUsuario = u.idUsuario');
+        $this->db->where('p.estado !=', 0);
         $query = $this->db->get();
         return $query->result();
+    }
+
+    public function agregar_publicacion($data) {
+        return $this->db->insert('PUBLICACION', $data);
     }
 
     public function obtener_publicacion($idPublicacion) {
@@ -21,8 +29,15 @@ class Publicacion_model extends CI_Model {
         return $query->row();
     }
 
-    public function agregar_publicacion($data) {
-        return $this->db->insert('PUBLICACION', $data);
+    public function obtener_publicacion_detallada($idPublicacion) {
+        $this->db->select('p.*, t.nombreTipo, e.nombreEditorial, u.nombres, u.apellidoPaterno');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
+        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
+        $this->db->join('USUARIO u', 'p.idUsuario = u.idUsuario');
+        $this->db->where('p.idPublicacion', $idPublicacion);
+        $query = $this->db->get();
+        return $query->row();
     }
 
     public function actualizar_publicacion($idPublicacion, $data) {
@@ -30,44 +45,51 @@ class Publicacion_model extends CI_Model {
         return $this->db->update('PUBLICACION', $data);
     }
 
-    public function eliminar_publicacion($idPublicacion) {
+    public function eliminar_publicacion($idPublicacion, $data) {
         $this->db->where('idPublicacion', $idPublicacion);
-        return $this->db->delete('PUBLICACION');
+        return $this->db->update('PUBLICACION', $data);
     }
 
     public function buscar_publicaciones($termino) {
-        // Asegurarse de que $termino no sea nulo
-        $termino = $termino ?? '';
+        $this->db->select('p.*, t.nombreTipo, e.nombreEditorial');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
+        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
+        $this->db->like('p.titulo', $termino);
+        $this->db->or_like('p.descripcion', $termino);
+        $this->db->or_like('t.nombreTipo', $termino);
+        $this->db->or_like('e.nombreEditorial', $termino);
+        $this->db->where('p.estado !=', 0);
+        $query = $this->db->get();
+        return $query->result();
+    }
 
-        // Trim y sanitizar el término de búsqueda
-        $termino = $this->db->escape_like_str(trim($termino));
+    public function contar_publicaciones() {
+        $this->db->where('estado !=', 0);
+        return $this->db->count_all_results('PUBLICACION');
+    }
 
-        $this->db->like('titulo', $termino);
-        $this->db->or_like('editorial', $termino);
-        $this->db->or_like('añoPublicacion', $termino);
-        
+    public function obtener_publicaciones_por_estado($estado) {
+        $this->db->where('estado', $estado);
         $query = $this->db->get('PUBLICACION');
         return $query->result();
     }
-    public function contar_publicaciones() {
-        return $this->db->count_all('PUBLICACION');
+
+    public function cambiar_estado_publicacion($idPublicacion, $data) {
+        $this->db->where('idPublicacion', $idPublicacion);
+        return $this->db->update('PUBLICACION', $data);
     }
 
-    public function obtener_publicaciones_disponibles() {
-        $this->db->select('idPublicacion, titulo');
-        $this->db->from('PUBLICACION');
-        $this->db->where('estado', 1); // Asumiendo que 1 es el estado para publicaciones disponibles
-        return $this->db->get()->result();
-    }
-    public function actualizar_estado_publicacion($idPublicacion, $estado) {
-        return $this->db->update('PUBLICACION', ['estado' => $estado], ['idPublicacion' => $idPublicacion]);
-    }
-
-    /*public function listar_publicaciones($estado = null) {
-        if ($estado) {
-            $this->db->where('estado', $estado);
+    public function obtener_nombre_estado($estado) {
+        switch ($estado) {
+            case ESTADO_PUBLICACION_DISPONIBLE:
+                return 'Disponible';
+            case ESTADO_PUBLICACION_EN_CONSULTA:
+                return 'En Consulta';
+            case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
+                return 'En Mantenimiento';
+            default:
+                return 'Desconocido';
         }
-        return $this->db->get('PUBLICACION')->result();
-    }*/
-
+    }
 }

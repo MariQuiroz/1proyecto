@@ -69,37 +69,7 @@
                     </div>     
                     <!-- end page title --> 
 
-                    <div class="row">
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card-box">
-                                <h4 class="header-title mt-0 mb-2">Préstamos Activos</h4>
-                                <div class="mt-1">
-                                    <h2 class="font-weight-light"><?php echo $mis_prestamos_activos; ?></h2>
-                                    <p class="text-muted mb-0">Publicaciones en préstamo</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card-box">
-                                <h4 class="header-title mt-0 mb-2">Reservas Pendientes</h4>
-                                <div class="mt-1">
-                                    <h2 class="font-weight-light"><?php echo $mis_reservas_pendientes; ?></h2>
-                                    <p class="text-muted mb-0">Publicaciones reservadas</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card-box">
-                                <h4 class="header-title mt-0 mb-2">Próximas Devoluciones</h4>
-                                <div class="mt-1">
-                                    <h2 class="font-weight-light"><?php echo count($mis_proximas_devoluciones); ?></h2>
-                                    <p class="text-muted mb-0">Devoluciones pendientes</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    
 
                     <div class="row">
                         <div class="col-xl-12">
