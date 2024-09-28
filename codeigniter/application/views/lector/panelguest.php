@@ -1,4 +1,3 @@
-
 <body>
     <div id="wrapper">
         <!-- Topbar Start -->
@@ -24,14 +23,10 @@
                         </span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-right profile-dropdown ">
-                        <!-- item-->
                         <div class="dropdown-item noti-title">
-                            <h6 class="m-0">
-                                ¡Bienvenido!
-                            </h6>
+                            <h6 class="m-0">¡Bienvenido!</h6>
                         </div>
 
-                        <!-- item-->
                         <a href="<?php echo site_url('usuarios/perfil'); ?>" class="dropdown-item notify-item">
                             <i class="fe-user"></i>
                             <span>Mi Perfil</span>
@@ -39,12 +34,10 @@
 
                         <div class="dropdown-divider"></div>
 
-                        <!-- item-->
                         <a href="<?php echo site_url('usuarios/logout'); ?>" class="dropdown-item notify-item">
                             <i class="fe-log-out"></i>
                             <span>Cerrar Sesión</span>
                         </a>
-
                     </div>
                 </li>
             </ul>
@@ -55,33 +48,30 @@
 
         <div class="content-page">
             <div class="content">
-                
                 <!-- Start Content-->
                 <div class="container-fluid">
-                    
                     <!-- start page title -->
                     <div class="row">
                         <div class="col-12">
                             <div class="page-title-box">
-                                <h4 class="page-title">Panel de Lectorrrrrrrrrrr</h4>
+                                <h4 class="page-title">Panel de Lector</h4>
                             </div>
                         </div>
                     </div>     
                     <!-- end page title --> 
 
-                    
-
+                    <!-- Sección para mostrar las publicaciones disponibles para solicitar -->
                     <div class="row">
                         <div class="col-xl-12">
                             <div class="card-box">
-                                <h4 class="header-title mb-3">Publicaciones Disponibles</h4>
+                                <h4 class="header-title mb-3">Seleccionar Publicación para Solicitar</h4>
 
                                 <div class="table-responsive">
                                     <table class="table table-hover table-centered m-0">
                                         <thead>
                                             <tr>
                                                 <th>Título</th>
-                                                <th>Autor</th>
+                                                <th>Editorial</th>
                                                 <th>Tipo</th>
                                                 <th>Acción</th>
                                             </tr>
@@ -90,11 +80,11 @@
                                             <?php foreach ($publicaciones as $publicacion): ?>
                                             <tr>
                                                 <td><?php echo $publicacion->titulo; ?></td>
-                                                <td><?php echo $publicacion->autor; ?></td>
-                                                <td><?php echo $publicacion->tipo; ?></td>
+                                                <td><?php echo $publicacion->nombreEditorial; ?></td>
+                                                <td><?php echo $publicacion->nombreTipo; ?></td>
                                                 <td>
-                                                    <a href="<?php echo site_url('publicaciones/ver/'.$publicacion->idPublicacion); ?>" class="btn btn-xs btn-info">Ver</a>
-                                                    <a href="<?php echo site_url('prestamos/solicitar/'.$publicacion->idPublicacion); ?>" class="btn btn-xs btn-primary">Solicitar</a>
+                                                    <!-- Enlace para solicitar la publicación -->
+                                                    <a href="<?php echo site_url('solicitudes/crear/' . $publicacion->idPublicacion); ?>" class="btn btn-xs btn-primary">Solicitar</a>
                                                 </td>
                                             </tr>
                                             <?php endforeach; ?>
@@ -105,6 +95,7 @@
                         </div>
                     </div>
 
+                    <!-- Mis Préstamos Activos -->
                     <div class="row">
                         <div class="col-xl-6">
                             <div class="card-box">
@@ -115,8 +106,8 @@
                                         <thead>
                                             <tr>
                                                 <th>Título</th>
-                                                <th>Fecha de Préstamo</th>
-                                                <th>Fecha de Devolución</th>
+                                                <th>Hora de Préstamo</th>
+                                                <th>Hora de Devolución</th>
                                                 <th>Estado</th>
                                             </tr>
                                         </thead>
@@ -124,8 +115,8 @@
                                             <?php foreach ($prestamos_activos as $prestamo): ?>
                                             <tr>
                                                 <td><?php echo $prestamo->titulo; ?></td>
-                                                <td><?php echo $prestamo->fechaInicio; ?></td>
-                                                <td><?php echo $prestamo->fechaDevolucion; ?></td>
+                                                <td><?php echo $prestamo->horaInicio; ?></td>
+                                                <td><?php echo $prestamo->horaDevolucion; ?></td>
                                                 <td><span class="badge badge-success">Activo</span></td>
                                             </tr>
                                             <?php endforeach; ?>
@@ -135,29 +126,26 @@
                             </div>
                         </div>
 
+                        <!-- Mis Solicitudes Pendientes -->
                         <div class="col-xl-6">
                             <div class="card-box">
-                                <h4 class="header-title mb-3">Mis Reservas Pendientes</h4>
+                                <h4 class="header-title mb-3">Mis Solicitudes Pendientes</h4>
 
                                 <div class="table-responsive">
                                     <table class="table table-hover table-centered m-0">
                                         <thead>
                                             <tr>
                                                 <th>Título</th>
-                                                <th>Fecha de Reserva</th>
+                                                <th>Fecha de Solicitud</th>
                                                 <th>Estado</th>
-                                                <th>Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php foreach ($reservas_pendientes as $reserva): ?>
+                                            <?php foreach ($solicitudes_pendientes as $solicitud): ?>
                                             <tr>
-                                                <td><?php echo $reserva->titulo; ?></td>
-                                                <td><?php echo $reserva->fechaReserva; ?></td>
+                                                <td><?php echo $solicitud->titulo; ?></td>
+                                                <td><?php echo $solicitud->fechaSolicitud; ?></td>
                                                 <td><span class="badge badge-warning">Pendiente</span></td>
-                                                <td>
-                                                    <a href="<?php echo site_url('reservas/cancelar/'.$reserva->idReserva); ?>" class="btn btn-xs btn-danger">Cancelar</a>
-                                                </td>
                                             </tr>
                                             <?php endforeach; ?>
                                         </tbody>
@@ -170,5 +158,6 @@
                 </div> <!-- container -->
 
             </div> <!-- content -->
-
-            
+        </div>
+    </div>
+</body>

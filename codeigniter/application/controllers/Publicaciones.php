@@ -43,17 +43,44 @@ class Publicaciones extends CI_Controller {
         $this->load->view('inc/footer');
     }
 
+    public function solicitar($idPublicacion) {
+        $this->_verificar_sesion();
+        if (!$this->_es_lector()) {
+            $this->session->set_flashdata('error', 'Solo los lectores pueden solicitar publicaciones.');
+            redirect('publicaciones');
+        }
+        
+        $publicacion = $this->publicacion_model->obtener_publicacion($idPublicacion);
+        if ($publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+            $this->session->set_flashdata('error', 'Esta publicación no está disponible para préstamo.');
+            redirect('publicaciones');
+        }
+    
+        $data['publicacion'] = $publicacion;
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('publicaciones/solicitar', $data);
+        $this->load->view('inc/footer');
+    }
+    
     public function agregar() {
         $this->_verificar_permisos_admin_encargado();
         $data['tipos'] = $this->tipo_model->obtener_tipos();
         $data['editoriales'] = $this->editorial_model->obtener_editoriales();
-        $data['es_lector'] = false; // Agregamos esta línea
+        $data['ubicaciones'] = array(
+            'Estante A' => 'Estante A',
+            'Estante B' => 'Estante B',
+            'Archivo' => 'Archivo',
+            'Hemeroteca' => 'Hemeroteca'
+        );
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
         $this->load->view('inc/aside');
         $this->load->view('publicaciones/agregar', $data);
         $this->load->view('inc/footer');
     }
+
     public function agregarbd() {
         $this->_verificar_permisos_admin_encargado();
         $this->form_validation->set_rules('titulo', 'Título', 'required');
@@ -61,6 +88,7 @@ class Publicaciones extends CI_Controller {
         $this->form_validation->set_rules('idTipo', 'Tipo', 'required|numeric');
         $this->form_validation->set_rules('fechaPublicacion', 'Fecha de Publicación', 'required');
         $this->form_validation->set_rules('numeroPaginas', 'Número de Páginas', 'numeric');
+        $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required');
 
         if ($this->form_validation->run() == FALSE) {
             $this->agregar();
@@ -78,6 +106,24 @@ class Publicaciones extends CI_Controller {
                 'fechaCreacion' => date('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
             );
+
+            // Manejo de la portada
+            if (!empty($_FILES['portada']['name'])) {
+                $config['upload_path'] = './uploads/portadas/';
+                $config['allowed_types'] = 'gif|jpg|png';
+                $config['max_size'] = 2048; // 2MB
+                $config['file_name'] = uniqid('portada_');
+
+                $this->load->library('upload', $config);
+
+                if ($this->upload->do_upload('portada')) {
+                    $upload_data = $this->upload->data();
+                    $data['portada'] = $upload_data['file_name'];
+                } else {
+                    $this->session->set_flashdata('error', $this->upload->display_errors());
+                    redirect('publicaciones/agregar');
+                }
+            }
             
             if ($this->publicacion_model->agregar_publicacion($data)) {
                 $this->session->set_flashdata('mensaje', 'Publicación agregada correctamente.');
@@ -88,13 +134,17 @@ class Publicaciones extends CI_Controller {
         }
     }
 
- 
-
     public function editar($idPublicacion) {
         $this->_verificar_permisos_admin_encargado();
         $data['publicacion'] = $this->publicacion_model->obtener_publicacion($idPublicacion);
         $data['tipos'] = $this->tipo_model->obtener_tipos();
         $data['editoriales'] = $this->editorial_model->obtener_editoriales();
+        $data['ubicaciones'] = array(
+            'Estante A' => 'Estante A',
+            'Estante B' => 'Estante B',
+            'Archivo' => 'Archivo',
+            'Hemeroteca' => 'Hemeroteca'
+        );
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
         $this->load->view('inc/aside');
@@ -110,6 +160,7 @@ class Publicaciones extends CI_Controller {
         $this->form_validation->set_rules('idTipo', 'Tipo', 'required|numeric');
         $this->form_validation->set_rules('fechaPublicacion', 'Fecha de Publicación', 'required');
         $this->form_validation->set_rules('numeroPaginas', 'Número de Páginas', 'numeric');
+        $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required');
 
         if ($this->form_validation->run() == FALSE) {
             $this->editar($idPublicacion);
@@ -125,6 +176,30 @@ class Publicaciones extends CI_Controller {
                 'fechaActualizacion' => date('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
             );
+
+            // Manejo de la portada
+            if (!empty($_FILES['portada']['name'])) {
+                $config['upload_path'] = './uploads/portadas/';
+                $config['allowed_types'] = 'gif|jpg|png';
+                $config['max_size'] = 2048; // 2MB
+                $config['file_name'] = uniqid('portada_');
+
+                $this->load->library('upload', $config);
+
+                if ($this->upload->do_upload('portada')) {
+                    $upload_data = $this->upload->data();
+                    $data['portada'] = $upload_data['file_name'];
+
+                    // Eliminar la portada anterior si existe
+                    $publicacion_anterior = $this->publicacion_model->obtener_publicacion($idPublicacion);
+                    if ($publicacion_anterior->portada) {
+                        unlink('./uploads/portadas/' . $publicacion_anterior->portada);
+                    }
+                } else {
+                    $this->session->set_flashdata('error', $this->upload->display_errors());
+                    redirect('publicaciones/editar/' . $idPublicacion);
+                }
+            }
             
             if ($this->publicacion_model->actualizar_publicacion($idPublicacion, $data)) {
                 $this->session->set_flashdata('mensaje', 'Publicación actualizada correctamente.');
@@ -138,14 +213,14 @@ class Publicaciones extends CI_Controller {
     public function eliminar($idPublicacion) {
         $this->_verificar_permisos_admin_encargado();
         $data = array(
-            'estado' => 0,
+            'estado' => ESTADO_PUBLICACION_EN_MANTENIMIENTO,
             'fechaActualizacion' => date('Y-m-d H:i:s'),
             'idUsuarioCreador' => $this->session->userdata('idUsuario')
         );
-        if ($this->publicacion_model->eliminar_publicacion($idPublicacion, $data)) {
-            $this->session->set_flashdata('mensaje', 'Publicación eliminada correctamente.');
+        if ($this->publicacion_model->cambiar_estado_publicacion($idPublicacion, $data)) {
+            $this->session->set_flashdata('mensaje', 'Publicación marcada como en mantenimiento correctamente.');
         } else {
-            $this->session->set_flashdata('error', 'No se pudo eliminar la publicación.');
+            $this->session->set_flashdata('error', 'No se pudo marcar la publicación como en mantenimiento.');
         }
         redirect('publicaciones/index', 'refresh');
     }
@@ -186,5 +261,10 @@ class Publicaciones extends CI_Controller {
         $this->load->view('inc/aside');
         $this->load->view('publicaciones/ver', $data);
         $this->load->view('inc/footer');
+    }
+
+    public function obtener_publicaciones_disponibles() {
+        $this->_verificar_sesion();
+        return $this->publicacion_model->obtener_publicaciones_disponibles();
     }
 }

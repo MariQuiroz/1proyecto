@@ -11,10 +11,9 @@
                     </a>
                 </li>
 
-                <!-- Opciones para el Administrador -->
                 <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                     <li>
-                        <a href="<?php echo site_url('usuarios/mostrar'); ?>">
+                        <a href="javascript: void(0);">
                             <i class="la la-users"></i>
                             <span> Usuarios </span>
                             <span class="menu-arrow"></span>
@@ -25,45 +24,71 @@
                             <li><a href="<?php echo site_url('usuarios/agregar'); ?>">Agregar Usuario</a></li>
                         </ul>
                     </li>
+                <?php endif; ?>
 
-                    <li>
-                        <a href="javascript: void(0);">
-                            <i class="la la-book"></i>
-                            <span> Publicaciones </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="<?php echo site_url('publicaciones/index'); ?>">Lista de Publicaciones</a></li>
+                <li>
+                    <a href="javascript: void(0);">
+                        <i class="la la-book"></i>
+                        <span> Publicaciones </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul class="nav-second-level" aria-expanded="false">
+                        <li><a href="<?php echo site_url('publicaciones/index'); ?>">Lista de Publicaciones</a></li>
+                        <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
                             <li><a href="<?php echo site_url('publicaciones/agregar'); ?>">Agregar Publicación</a></li>
-                            <li><a href="<?php echo site_url('editoriales/agregar'); ?>">Agregar Editorial</a></li>
-                            <li><a href="<?php echo site_url('tipos/agregar'); ?>">Agregar Tipo</a></li>
-                        </ul>
-                    </li>
+                        <?php endif; ?>
+                    </ul>
+                </li>
 
+                <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
                     <li>
                         <a href="javascript: void(0);">
-                            <i class="la la-calendar"></i>
-                            <span> Reservas </span>
+                            <i class="la la-list"></i>
+                            <span> Tipos y Editoriales </span>
                             <span class="menu-arrow"></span>
                         </a>
                         <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="<?php echo site_url('reservas/pendientes'); ?>">Reservas Pendientes</a></li>
+                            <li><a href="<?php echo site_url('tipos/index'); ?>">Gestionar Tipos</a></li>
+                            <li><a href="<?php echo site_url('editoriales/index'); ?>">Gestionar Editoriales</a></li>
                         </ul>
                     </li>
+                <?php endif; ?>
 
-                    <li>
-                        <a href="javascript: void(0);">
-                            <i class="la la-exchange"></i>
-                            <span> Préstamos </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="<?php echo site_url('prestamos/activos'); ?>">Préstamos Activos</a></li>
-                            <li><a href="<?php echo site_url('prestamos/nuevo'); ?>">Nuevo Préstamo</a></li>
+                <li>
+                    <a href="javascript: void(0);">
+                        <i class="la la-file-text"></i>
+                        <span> Solicitudes de Préstamo </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul class="nav-second-level" aria-expanded="false">
+                        <?php if ($this->session->userdata('rol') == 'lector'): ?>
+                            <li><a href="<?php echo site_url('publicaciones/seleccionar'); ?>">Seleccionar Publicación</a></li>
+                            <li><a href="<?php echo site_url('solicitudes/mis_solicitudes'); ?>">Mis Solicitudes</a></li>
+                        <?php endif; ?>
+                        <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+                            <li><a href="<?php echo site_url('solicitudes/listar_pendientes'); ?>">Solicitudes Pendientes</a></li>
+                        <?php endif; ?>
+                    </ul>
+                </li>
+
+                <li>
+                    <a href="javascript: void(0);">
+                        <i class="la la-exchange"></i>
+                        <span> Préstamos </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul class="nav-second-level" aria-expanded="false">
+                        <?php if ($this->session->userdata('rol') == 'lector'): ?>
+                            <li><a href="<?php echo site_url('prestamos/mis_prestamos'); ?>">Mis Préstamos</a></li>
+                        <?php endif; ?>
+                        <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+                            <li><a href="<?php echo site_url('prestamos/index'); ?>">Préstamos Activos</a></li>
                             <li><a href="<?php echo site_url('prestamos/historial'); ?>">Historial de Préstamos</a></li>
-                        </ul>
-                    </li>
+                        <?php endif; ?>
+                    </ul>
+                </li>
 
+                <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                     <li>
                         <a href="javascript: void(0);">
                             <i class="la la-file-text-o"></i>
@@ -78,97 +103,12 @@
                     </li>
                 <?php endif; ?>
 
-                <!-- Opciones para el Encargado -->
-                <?php if ($this->session->userdata('rol') == 'encargado'): ?>
-                    <li>
-                        <a href="<?php echo site_url('usuarios/agregar'); ?>">
-                            <i class="la la-user-plus"></i>
-                            <span> Agregar Lector </span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="javascript: void(0);">
-                            <i class="la la-book"></i>
-                            <span> Publicaciones </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="<?php echo site_url('publicaciones/index'); ?>">Lista de Publicaciones</a></li>
-                            <li><a href="<?php echo site_url('publicaciones/agregar'); ?>">Agregar Publicación</a></li>
-                            <li><a href="<?php echo site_url('editoriales/agregar'); ?>">Agregar Editorial</a></li>
-                            <li><a href="<?php echo site_url('tipos/agregar'); ?>">Agregar Tipo</a></li>
-                        </ul>
-                    </li>
-
-                    <li>
-                        <a href="javascript: void(0);">
-                            <i class="la la-calendar"></i>
-                            <span> Reservas </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="<?php echo site_url('reservas/pendientes'); ?>">Reservas Pendientes</a></li>
-                        </ul>
-                    </li>
-
-                    <li>
-                        <a href="javascript: void(0);">
-                            <i class="la la-exchange"></i>
-                            <span> Préstamos </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="<?php echo site_url('prestamos/activos'); ?>">Préstamos Activos</a></li>
-                            <li><a href="<?php echo site_url('prestamos/nuevo'); ?>">Nuevo Préstamo</a></li>
-                            <li><a href="<?php echo site_url('prestamos/historial'); ?>">Historial de Préstamos</a></li>
-                        </ul>
-                    </li>
-
-                    <li>
-                        <a href="javascript: void(0);">
-                            <i class="la la-file-text-o"></i>
-                            <span> Reportes </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="<?php echo site_url('reportes/prestamos'); ?>">Reporte de Préstamos</a></li>
-                            <li><a href="<?php echo site_url('reportes/publicaciones'); ?>">Publicaciones más Solicitadas</a></li>
-                            <li><a href="<?php echo site_url('reportes/usuarios'); ?>">Usuarios más Activos</a></li>
-                        </ul>
-                    </li>
-                <?php endif; ?>
-
-                <!-- Opciones para el Lector -->
-                <?php if ($this->session->userdata('rol') == 'lector'): ?>
-                    <li>
-                        <a href="<?php echo site_url('publicaciones/index'); ?>">
-                            <i class="la la-book"></i>
-                            <span> Publicaciones </span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="<?php echo site_url('reservas/mis_reservas'); ?>">
-                            <i class="la la-calendar"></i>
-                            <span> Mis Reservas </span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="<?php echo site_url('prestamos/mis_prestamos'); ?>">
-                            <i class="la la-exchange"></i>
-                            <span> Mis Préstamos </span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="<?php echo site_url('solicitudes/nueva'); ?>">
-                            <i class="la la-plus"></i>
-                            <span> Realizar Solicitud </span>
-                        </a>
-                    </li>
-                <?php endif; ?>
+                <li>
+                    <a href="<?php echo site_url('notificaciones/index'); ?>">
+                        <i class="la la-bell"></i>
+                        <span> Notificaciones </span>
+                    </a>
+                </li>
 
             </ul>
         </div>

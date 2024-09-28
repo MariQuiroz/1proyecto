@@ -3,134 +3,89 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Prestamo_model extends CI_Model {
 
+    public function __construct() {
+        parent::__construct();
+        $this->load->database();
+    }
 
-    public function listar_prestamos($limite = NULL, $offset = NULL) {
-        $this->db->select('p.*, u.nombres, u.apellidoPaterno, pub.titulo');
+    public function crear_prestamo($data) {
+        $this->db->insert('PRESTAMO', $data);
+        return $this->db->insert_id();
+    }
+
+    public function get_prestamos_activos() {
+        $this->db->select('p.*, u.nombres, u.apellidos, pub.titulo');
         $this->db->from('PRESTAMO p');
-        $this->db->join('USUARIO u', 'p.idUsuario = u.idUsuario');
-        $this->db->join('PUBLICACION pub', 'p.idPublicacion = pub.idPublicacion');
-        $this->db->where('p.estado', 1);
-        if ($limite && $offset) {
-            $this->db->limit($limite, $offset);
-        }
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = p.idSolicitud');
+        $this->db->join('USUARIO u', 'u.idUsuario = sp.idUsuario');
+        $this->db->join('PUBLICACION pub', 'pub.idPublicacion = sp.idPublicacion');
+        $this->db->where('p.estado', 'activo');
+        return $this->db->get()->result();
+    }
+
+    public function get_prestamo($idPrestamo) {
+        return $this->db->get_where('PRESTAMO', ['idPrestamo' => $idPrestamo])->row();
+    }
+
+    public function actualizar_estado_prestamo($idPrestamo, $estado) {
+        $this->db->where('idPrestamo', $idPrestamo);
+        return $this->db->update('PRESTAMO', ['estado' => $estado]);
+    }
+
+    public function set_fecha_devolucion_real($idPrestamo, $fecha) {
+        $this->db->where('idPrestamo', $idPrestamo);
+        return $this->db->update('PRESTAMO', ['fechaDevolucionReal' => $fecha]);
+    }
+
+    public function get_prestamos_usuario($idUsuario) {
+        $this->db->select('p.*, pub.titulo');
+        $this->db->from('PRESTAMO p');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = p.idSolicitud');
+        $this->db->join('PUBLICACION pub', 'pub.idPublicacion = sp.idPublicacion');
+        $this->db->where('sp.idUsuario', $idUsuario);
+        return $this->db->get()->result();
+    }
+    public function obtener_prestamos_activos() {
+        $this->db->select('*');
+        $this->db->from('PRESTAMOS');
+        $this->db->where('estado', 'activo');  // Suponiendo que 'estado' es la columna que indica si el préstamo está activo
         $query = $this->db->get();
         return $query->result();
     }
+    public function obtener_prestamos_activos_usuario($idUsuario) {
+        $this->db->select('PRESTAMO.*, PUBLICACION.titulo');
+        $this->db->from('PRESTAMO');
+        $this->db->join('PUBLICACION', 'PUBLICACION.idPublicacion = PRESTAMO.idPublicacion');
+        $this->db->where('PRESTAMO.idUsuario', $idUsuario);
+        $this->db->where('PRESTAMO.estado', 'activo'); // Asegúrate de que el estado "activo" esté correcto
+        $query = $this->db->get();
 
-    public function obtener_prestamo($idPrestamo) {
-        $this->db->where('idPrestamo', $idPrestamo);
-        $query = $this->db->get('PRESTAMO');
-        return $query->row();
-    }
-
-    public function agregar_prestamo($data) {
-        return $this->db->insert('PRESTAMO', $data);
-    }
-
-    public function actualizar_prestamo($idPrestamo, $data) {
-        $this->db->where('idPrestamo', $idPrestamo);
-        return $this->db->update('PRESTAMO', $data);
-    }
-
-    public function prestamos_por_usuario($idUsuario) {
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where('estado', 1);
-        $query = $this->db->get('PRESTAMO');
         return $query->result();
-    }
-
-    public function prestamos_vencidos() {
-        $this->db->where('fechaDevolucionEsperada <', date('Y-m-d'));
-        $this->db->where('fechaDevolucionReal IS NULL');
-        $this->db->where('estado', 1);
-        $query = $this->db->get('PRESTAMO');
-        return $query->result();
-    }
-
-    public function registrar_devolucion($idPrestamo) {
-        $data = array(
-            'fechaDevolucionReal' => date('Y-m-d H:i:s'),
-            'estado' => 2 // 2 = devuelto
-        );
-        $this->db->where('idPrestamo', $idPrestamo);
-        return $this->db->update('PRESTAMO', $data);
     }
     public function contar_prestamos_activos() {
-        $this->db->where('estado', 1);
+        $this->db->where('DATE(fechaCreacion)', date('Y-m-d'));
+        $this->db->where('estadoPrestamo', 'activo');
+        $this->db->where('horaDevolucion IS NULL');
         return $this->db->count_all_results('PRESTAMO');
     }
-
-    /*public function obtener_prestamos_vencidos() {
-        $this->db->select('p.*, u.nombres, u.apellidoPaterno, pub.titulo');
-        $this->db->from('PRESTAMO p');
-        $this->db->join('USUARIO u', 'p.idUsuario = u.idUsuario');
-        $this->db->join('PUBLICACION pub', 'p.idPublicacion = pub.idPublicacion');
-        $this->db->where('p.fechaDevolucionEsperada <', date('Y-m-d'));
-        $this->db->where('p.estado', 1);
-        return $this->db->get()->result();
-    */
 
     public function contar_prestamos_activos_usuario($idUsuario) {
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where('estado', 1);
+        $this->db->join('SOLICITUD_PRESTAMO', 'PRESTAMO.idSolicitud = SOLICITUD_PRESTAMO.idSolicitud');
+        $this->db->where('SOLICITUD_PRESTAMO.idUsuario', $idUsuario);
+        $this->db->where('PRESTAMO.estadoPrestamo', 'activo');
+        $this->db->where('PRESTAMO.horaDevolucion IS NULL');
+        return $this->db->count_all_results('PRESTAMO');
+    }
+    
+    public function contar_prestamos_no_devueltos() {
+        $this->db->where('estadoPrestamo', 'activo');
+        $this->db->where('horaDevolucion IS NULL');
         return $this->db->count_all_results('PRESTAMO');
     }
 
-    /*public function obtener_proximas_devoluciones_usuario($idUsuario) {
-        $this->db->select('p.*, pub.titulo');
-        $this->db->from('PRESTAMO p');
-        $this->db->join('PUBLICACION pub', 'p.idPublicacion = pub.idPublicacion');
-        $this->db->where('p.idUsuario', $idUsuario);
-        $this->db->where('p.estado', 1);
-        $this->db->order_by('p.fechaDevolucionEsperada', 'ASC');
-        $this->db->limit(5);
-        return $this->db->get()->result();
-    }
-    public function obtener_historial_prestamos($idUsuario) {
-        $this->db->select('p.*, pub.titulo');
-        $this->db->from('PRESTAMO p');
-        $this->db->join('PUBLICACION pub', 'p.idPublicacion = pub.idPublicacion');
-        $this->db->where('p.idUsuario', $idUsuario);
-        $this->db->order_by('p.fechaPrestamo', 'DESC');
-        return $this->db->get()->result();
-    }
+    
 
-    public function crear_prestamo_desde_reserva($idReserva, $fechaDevolucionEsperada) {
-        $this->db->trans_start(); // Inicio de la transacción
+    
+   
 
-        // Obtener datos de la reserva
-        $reserva = $this->db->get_where('RESERVA', ['idReserva' => $idReserva])->row();
-
-        if (!$reserva) {
-            $this->db->trans_rollback();
-            return false;
-        }
-
-        // Actualizar estado de la reserva
-        $this->db->where('idReserva', $idReserva);
-        $this->db->update('RESERVA', ['estado' => 2]); // 2 = Finalizada
-
-        // Crear nuevo préstamo
-        $data_prestamo = [
-            'idUsuario' => $reserva->idUsuario,
-            'idPublicacion' => $reserva->idPublicacion,
-            'fechaPrestamo' => date('Y-m-d H:i:s'),
-            'fechaDevolucionEsperada' => $fechaDevolucionEsperada,
-            'estado' => 1 // 1 = Activo
-        ];
-        $this->db->insert('PRESTAMO', $data_prestamo);
-
-        // Actualizar estado de la publicación
-        $this->db->where('idPublicacion', $reserva->idPublicacion);
-        $this->db->update('PUBLICACION', ['estado' => 2]); // 2 = Prestado
-
-        $this->db->trans_complete(); // Fin de la transacción
-
-        if ($this->db->trans_status() === FALSE) {
-            // Si algo salió mal, se hace rollback automáticamente
-            return false;
-        }
-
-        return true;
-    }*/
 }

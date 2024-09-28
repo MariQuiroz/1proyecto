@@ -45,7 +45,7 @@ class Publicacion_model extends CI_Model {
         return $this->db->update('PUBLICACION', $data);
     }
 
-    public function eliminar_publicacion($idPublicacion, $data) {
+    public function cambiar_estado_publicacion($idPublicacion, $data) {
         $this->db->where('idPublicacion', $idPublicacion);
         return $this->db->update('PUBLICACION', $data);
     }
@@ -75,11 +75,6 @@ class Publicacion_model extends CI_Model {
         return $query->result();
     }
 
-    public function cambiar_estado_publicacion($idPublicacion, $data) {
-        $this->db->where('idPublicacion', $idPublicacion);
-        return $this->db->update('PUBLICACION', $data);
-    }
-
     public function obtener_nombre_estado($estado) {
         switch ($estado) {
             case ESTADO_PUBLICACION_DISPONIBLE:
@@ -91,5 +86,24 @@ class Publicacion_model extends CI_Model {
             default:
                 return 'Desconocido';
         }
+    }
+
+    public function obtener_publicaciones_disponibles() {
+        $this->db->select('p.idPublicacion, p.titulo, p.portada, e.nombreEditorial, t.nombreTipo');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
+        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
+        $this->db->where('p.estado', ESTADO_PUBLICACION_DISPONIBLE);
+        return $this->db->get()->result();
+    }
+
+    public function get_publicacion($idPublicacion) {
+        $this->db->select('p.*, e.nombreEditorial, t.nombreTipo');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
+        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
+        $this->db->where('p.idPublicacion', $idPublicacion);
+        $query = $this->db->get();
+        return $query->row();
     }
 }

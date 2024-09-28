@@ -138,48 +138,46 @@ class Usuarios extends CI_Controller {
         $this->session->sess_destroy();
         redirect('usuarios/index/1','refresh');
     }
+
     public function panel() {
         $this->_verificar_sesion();
         $data = array();
         $rol = $this->session->userdata('rol');
-
+        
         switch ($rol) {
             case 'administrador':
                 $data['total_usuarios'] = $this->usuario_model->contar_usuarios();
-                /*$data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
+                $data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
                 $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
-                $data['prestamos_vencidos'] = $this->prestamo_model->contar_prestamos_vencidos();
-                $data['solicitudes_pendientes'] = $this->solicitud_model->contar_solicitudes_pendientes();
-                */break;
-
+                $data['solicitudes_pendientes'] = $this->solicitud_prestamo_model->contar_solicitudes_pendientes();
+                $data['prestamos_no_devueltos'] = $this->prestamo_model->contar_prestamos_no_devueltos();
+                break;
+            
             case 'encargado':
-                /*$data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
+                $data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
                 $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
-                $data['solicitudes_pendientes'] = $this->solicitud_model->contar_solicitudes_pendientes();
-                */break;
-
+                $data['solicitudes_pendientes'] = $this->solicitud_prestamo_model->contar_solicitudes_pendientes();
+                break;
+            
             case 'lector':
                 $idUsuario = $this->session->userdata('idUsuario');
-               /* $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
-                $data['mis_solicitudes_pendientes'] = $this->solicitud_model->contar_solicitudes_pendientes_usuario($idUsuario);
-                $data['mis_proximas_devoluciones'] = $this->prestamo_model->obtener_proximas_devoluciones_usuario($idUsuario);
-                */break;
-
+                $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
+                $data['mis_solicitudes_pendientes'] = $this->solicitud_prestamo_model->contar_solicitudes_pendientes_usuario($idUsuario);
+                break;
+            
             default:
                 redirect('usuarios/logout', 'refresh');
                 break;
         }
-
+        
         $data['rol'] = $rol;
-
+        
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
         $this->load->view('inc/aside');
-        $this->load->view('panel/' . $rol, $data); // Carga una vista específica para cada rol
+        $this->load->view('panel/' . $rol, $data);
         $this->load->view('inc/footer');
     }
-  
-
     public function mostrar() {
         $this->_verificar_sesion();
         if ($this->session->userdata('rol') == 'administrador') { 
@@ -864,22 +862,31 @@ private function _enviar_email_bienvenida($email, $username, $contrasena_tempora
     
             redirect('usuarios/deshabilitados', 'refresh');
         }
+
         public function lector() {
-            $this->_verificar_sesion();
-    
-            if($this->session->userdata('rol') == 'lector') { 
-                $this->load->model('publicacion_model');
-                $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
-                
-                $this->load->view('inc/header');
-                $this->load->view('inc/nabvar');
-                $this->load->view('inc/aside');
-                $this->load->view('lector/panelguest', $data);
-                $this->load->view('inc/footer');
-            } else {
-                redirect('usuarios/panel', 'refresh');
-            }
-        }
+    $this->_verificar_sesion();
+
+    if ($this->session->userdata('rol') == 'lector') {
+        $this->load->model('publicacion_model');
+        $this->load->model('prestamo_model'); 
+        $this->load->model('solicitud_prestamo_model');  // Cargar el modelo de solicitudes de préstamo
+
+        $idUsuario = $this->session->userdata('idUsuario');
+
+        // Obtener publicaciones, préstamos activos y solicitudes pendientes del usuario
+        $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
+        $data['prestamos_activos'] = $this->prestamo_model->obtener_prestamos_activos_usuario($idUsuario);
+        $data['solicitudes_pendientes'] = $this->solicitud_prestamo_model->obtener_solicitudes_pendientes_usuario($idUsuario); // Obtener solicitudes pendientes
+
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('lector/panelguest', $data); // Pasar el array $data a la vista
+        $this->load->view('inc/footer');
+    } else {
+        redirect('usuarios/panel', 'refresh');
+    }
+}
     
         public function historial() {
             $this->_verificar_sesion();
