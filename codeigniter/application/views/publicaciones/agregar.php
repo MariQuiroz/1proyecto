@@ -61,7 +61,8 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="portada" class="form-label">Portada</label>
-                                    <input type="file" class="form-control" id="portada" name="portada">
+                                    <input type="file" class="form-control" id="portada" name="portada" accept="image/jpeg,image/png,image/gif">
+                                    <small class="form-text text-muted">Formatos permitidos: JPG, JPEG, PNG, GIF. Tamaño máximo: 2MB.</small>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Agregar Publicación</button>
                             <?php echo form_close(); ?>

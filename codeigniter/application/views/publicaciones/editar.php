@@ -15,7 +15,7 @@
                                 Modifique los campos necesarios para actualizar la información de la publicación.
                             </p>
 
-                            <?php echo form_open_multipart('publicaciones/editarbd'); ?>
+                            <?php echo form_open_multipart('publicaciones/modificarbd'); ?>
                                 <input type="hidden" name="idPublicacion" value="<?php echo $publicacion->idPublicacion; ?>">
                                 <div class="mb-3">
                                     <label for="titulo" class="form-label">Título</label>
@@ -66,8 +66,8 @@
                                         <img src="<?php echo base_url('uploads/portadas/' . $publicacion->portada); ?>" alt="Portada actual" class="img-thumbnail mb-2" style="max-width: 200px;">
                                         <p>Portada actual: <?php echo $publicacion->portada; ?></p>
                                     <?php endif; ?>
-                                    <input type="file" class="form-control" id="portada" name="portada">
-                                    <small class="form-text text-muted">Deje este campo vacío si no desea cambiar la portada.</small>
+                                    <input type="file" class="form-control" id="portada" name="portada" accept="image/jpeg,image/png,image/gif">
+                                    <small class="form-text text-muted">Formatos permitidos: JPG, JPEG, PNG, GIF. Tamaño máximo: 2MB. Deje este campo vacío si no desea cambiar la portada.</small>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Actualizar Publicación</button>
                             <?php echo form_close(); ?>

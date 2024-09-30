@@ -80,8 +80,9 @@ class Publicaciones extends CI_Controller {
         $this->load->view('publicaciones/agregar', $data);
         $this->load->view('inc/footer');
     }
-
-    public function agregarbd() {
+    
+    public function agregarbd()
+    {
         $this->_verificar_permisos_admin_encargado();
         $this->form_validation->set_rules('titulo', 'Título', 'required');
         $this->form_validation->set_rules('idEditorial', 'Editorial', 'required|numeric');
@@ -107,34 +108,49 @@ class Publicaciones extends CI_Controller {
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
             );
 
-            // Manejo de la portada
-            if (!empty($_FILES['portada']['name'])) {
-                $config['upload_path'] = './uploads/portadas/';
-                $config['allowed_types'] = 'gif|jpg|png';
-                $config['max_size'] = 2048; // 2MB
-                $config['file_name'] = uniqid('portada_');
+            $idPublicacion = $this->publicacion_model->agregar_publicacion($data);
 
-                $this->load->library('upload', $config);
-
-                if ($this->upload->do_upload('portada')) {
-                    $upload_data = $this->upload->data();
-                    $data['portada'] = $upload_data['file_name'];
-                } else {
-                    $this->session->set_flashdata('error', $this->upload->display_errors());
-                    redirect('publicaciones/agregar');
-                }
-            }
-            
-            if ($this->publicacion_model->agregar_publicacion($data)) {
+            if ($idPublicacion) {
+                $this->_manejar_carga_portada($idPublicacion);
                 $this->session->set_flashdata('mensaje', 'Publicación agregada correctamente.');
+                redirect('publicaciones/index', 'refresh');
             } else {
                 $this->session->set_flashdata('error', 'Error al agregar la publicación.');
+                redirect('publicaciones/agregar', 'refresh');
             }
-            redirect('publicaciones/index', 'refresh');
+            if (!empty($_FILES['portada']['name'])) {
+                $config['upload_path'] = './uploads/portadas/';
+                $config['allowed_types'] = 'gif|jpg|png|jpeg';
+                $config['max_size'] = 2048; // 2MB
+                $config['file_name'] = 'portada_' . time();
+        
+                $this->upload->initialize($config);
+        
+                if (!$this->upload->do_upload('portada')) {
+                    $error = $this->upload->display_errors();
+                    log_message('error', 'Error al subir imagen: ' . $error);
+                    $this->session->set_flashdata('error', 'Error al subir la imagen: ' . $error);
+                    redirect('publicaciones/agregar');
+                    return;
+                } else {
+                    $upload_data = $this->upload->data();
+                    $data['portada'] = $upload_data['file_name'];
+                }
+            }
+        
+        
+            if ($this->publicacion_model->agregar_publicacion($data)) {
+                $this->session->set_flashdata('mensaje', 'Publicación agregada correctamente.');
+                redirect('publicaciones/index');
+            } else {
+                $this->session->set_flashdata('error', 'Error al agregar la publicación.');
+                redirect('publicaciones/agregar');
+            }
         }
     }
 
-    public function editar($idPublicacion) {
+    public function modificar($idPublicacion)
+    {
         $this->_verificar_permisos_admin_encargado();
         $data['publicacion'] = $this->publicacion_model->obtener_publicacion($idPublicacion);
         $data['tipos'] = $this->tipo_model->obtener_tipos();
@@ -152,7 +168,8 @@ class Publicaciones extends CI_Controller {
         $this->load->view('inc/footer');
     }
 
-    public function editarbd() {
+    public function modificarbd()
+    {
         $this->_verificar_permisos_admin_encargado();
         $idPublicacion = $this->input->post('idPublicacion');
         $this->form_validation->set_rules('titulo', 'Título', 'required');
@@ -163,7 +180,7 @@ class Publicaciones extends CI_Controller {
         $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required');
 
         if ($this->form_validation->run() == FALSE) {
-            $this->editar($idPublicacion);
+            $this->modificar($idPublicacion);
         } else {
             $data = array(
                 'idTipo' => $this->input->post('idTipo'),
@@ -177,30 +194,25 @@ class Publicaciones extends CI_Controller {
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
             );
 
-            // Manejo de la portada
+            $this->_manejar_carga_portada($idPublicacion);
             if (!empty($_FILES['portada']['name'])) {
                 $config['upload_path'] = './uploads/portadas/';
-                $config['allowed_types'] = 'gif|jpg|png';
+                $config['allowed_types'] = 'gif|jpg|png|jpeg';
                 $config['max_size'] = 2048; // 2MB
-                $config['file_name'] = uniqid('portada_');
-
-                $this->load->library('upload', $config);
-
-                if ($this->upload->do_upload('portada')) {
+                $config['file_name'] = 'portada_' . time();
+        
+                $this->upload->initialize($config);
+        
+                if (!$this->upload->do_upload('portada')) {
+                    $error = $this->upload->display_errors();
+                    log_message('error', 'Error al subir imagen: ' . $error);
+                    $this->session->set_flashdata('error', $error);
+                } else {
                     $upload_data = $this->upload->data();
                     $data['portada'] = $upload_data['file_name'];
-
-                    // Eliminar la portada anterior si existe
-                    $publicacion_anterior = $this->publicacion_model->obtener_publicacion($idPublicacion);
-                    if ($publicacion_anterior->portada) {
-                        unlink('./uploads/portadas/' . $publicacion_anterior->portada);
-                    }
-                } else {
-                    $this->session->set_flashdata('error', $this->upload->display_errors());
-                    redirect('publicaciones/editar/' . $idPublicacion);
                 }
             }
-            
+
             if ($this->publicacion_model->actualizar_publicacion($idPublicacion, $data)) {
                 $this->session->set_flashdata('mensaje', 'Publicación actualizada correctamente.');
             } else {
@@ -209,6 +221,34 @@ class Publicaciones extends CI_Controller {
             redirect('publicaciones/index', 'refresh');
         }
     }
+    
+    private function _manejar_carga_portada($idPublicacion) {
+        $nombrearchivo = $idPublicacion . ".jpg";
+        $config['upload_path'] = './uploads/portadas/';
+        $config['file_name'] = $nombrearchivo;
+        $config['allowed_types'] = 'jpg|jpeg|png|gif';
+        $config['max_size'] = 2048; // 2MB max
+
+        $this->load->library('upload', $config);
+
+        $direccion = $config['upload_path'] . $nombrearchivo;
+        if (file_exists($direccion)) {
+            unlink($direccion);
+        }
+
+        if ($this->upload->do_upload('portada')) {
+            $data_update['portada'] = $nombrearchivo;
+            $this->publicacion_model->actualizar_publicacion($idPublicacion, $data_update);
+        } else {
+            $upload_error = $this->upload->display_errors();
+            if (!empty($_FILES['portada']['name'])) {
+                $this->session->set_flashdata('error', 'Error al subir la portada: ' . $upload_error);
+            }
+        }
+    }
+
+            
+        
 
     public function eliminar($idPublicacion) {
         $this->_verificar_permisos_admin_encargado();
@@ -254,7 +294,12 @@ class Publicaciones extends CI_Controller {
 
     public function ver($idPublicacion) {
         $this->_verificar_sesion();
-        $data['publicacion'] = $this->publicacion_model->obtener_publicacion_detallada($idPublicacion);
+        $publicacion = $this->publicacion_model->obtener_publicacion_detallada($idPublicacion);
+        if (!$publicacion) {
+            $this->session->set_flashdata('error', 'La publicación no existe.');
+            redirect('publicaciones/index');
+        }
+        $data['publicacion'] = $publicacion;
         $data['es_lector'] = $this->_es_lector();
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
@@ -267,4 +312,14 @@ class Publicaciones extends CI_Controller {
         $this->_verificar_sesion();
         return $this->publicacion_model->obtener_publicaciones_disponibles();
     }
+    public function obtener_publicacion_detallada($idPublicacion) {
+        $this->db->select('PUBLICACION.*, TIPO.nombreTipo, EDITORIAL.nombreEditorial, USUARIO.nombres, USUARIO.apellidoPaterno');
+        $this->db->from('PUBLICACION');
+        $this->db->join('TIPO', 'TIPO.idTipo = PUBLICACION.idTipo');
+        $this->db->join('EDITORIAL', 'EDITORIAL.idEditorial = PUBLICACION.idEditorial');
+        $this->db->join('USUARIO', 'USUARIO.idUsuario = PUBLICACION.idUsuarioCreador', 'left');
+        $this->db->where('PUBLICACION.idPublicacion', $idPublicacion);
+        return $this->db->get()->row();
+    }
+
 }
