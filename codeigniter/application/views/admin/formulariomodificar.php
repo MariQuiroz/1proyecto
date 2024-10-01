@@ -53,8 +53,11 @@
             <option value="lector" <?php echo ($infoUsuario->rol == 'lector') ? 'selected' : ''; ?>>Lector</option>
           </select>
         </div>
-
+        
         <button type="submit" class="btn btn-success">MODIFICAR USUARIO</button>
+      
+        <button onclick="goBack()" class="btn btn-secondary ">Volver</button>
+    
       <?php
         echo form_close();
       } else {
@@ -65,8 +68,8 @@
   </div>
 </div>
 
-<br>
-<button onclick="goBack()" class="btn btn-secondary mb-3">Volver</button>
+
+
 <script>
 function goBack() {
     window.history.back();

@@ -70,6 +70,7 @@
                                     <small class="form-text text-muted">Formatos permitidos: JPG, JPEG, PNG, GIF. Tamaño máximo: 2MB. Deje este campo vacío si no desea cambiar la portada.</small>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Actualizar Publicación</button>
+                                <a href="<?php echo site_url('publicaciones'); ?>" class="btn btn-secondary">Cancelar</a>
                             <?php echo form_close(); ?>
                         </div>
                     </div>

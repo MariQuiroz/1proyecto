@@ -115,6 +115,7 @@
                         <div class="form-group row mb-3">
                             <div class="col-9 offset-3">
                                 <button type="submit" class="btn btn-primary">Agregar Usuario</button>
+                                <a href="<?php echo site_url('usuarios/mostrar'); ?>" class="btn btn-secondary">Cancelar</a>
                             </div>
                         </div>
                     <?php echo form_close(); ?>
