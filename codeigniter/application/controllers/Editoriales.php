@@ -34,6 +34,15 @@ class Editoriales extends CI_Controller {
 
     public function agregar() {
         $this->_verificar_permisos();
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('editoriales/agregar');
+        $this->load->view('inc/footer');
+    }
+
+    public function agregarbd() {
+        $this->_verificar_permisos();
         $this->form_validation->set_rules('nombreEditorial', 'Nombre de la Editorial', 'required|is_unique[EDITORIAL.nombreEditorial]');
 
         if ($this->form_validation->run() == FALSE) {
@@ -62,10 +71,21 @@ class Editoriales extends CI_Controller {
     public function editar($idEditorial) {
         $this->_verificar_permisos();
         $data['editorial'] = $this->editorial_model->obtener_editorial($idEditorial);
+        
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('editoriales/editar', $data);
+        $this->load->view('inc/footer');
+    }
 
+    public function editarbd() {
+        $this->_verificar_permisos();
+        $idEditorial = $this->input->post('idEditorial');
         $this->form_validation->set_rules('nombreEditorial', 'Nombre de la Editorial', 'required|is_unique[EDITORIAL.nombreEditorial.idEditorial.' . $idEditorial . ']');
 
         if ($this->form_validation->run() == FALSE) {
+            $data['editorial'] = $this->editorial_model->obtener_editorial($idEditorial);
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
@@ -83,7 +103,7 @@ class Editoriales extends CI_Controller {
             } else {
                 $this->session->set_flashdata('error', 'Error al actualizar la editorial.');
             }
-            redirect('editoriales/index');
+            redirect('editoriales');
         }
     }
 
@@ -102,3 +122,7 @@ class Editoriales extends CI_Controller {
         redirect('editoriales/index');
     }
 }
+
+
+
+

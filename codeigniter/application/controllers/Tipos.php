@@ -34,6 +34,15 @@ class Tipos extends CI_Controller {
 
     public function agregar() {
         $this->_verificar_permisos();
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('tipos/agregar');
+        $this->load->view('inc/footer');
+    }
+
+    public function agregarbd() {
+        $this->_verificar_permisos();
         $this->form_validation->set_rules('nombreTipo', 'Nombre del Tipo', 'required|is_unique[TIPO.nombreTipo]');
 
         if ($this->form_validation->run() == FALSE) {
@@ -62,10 +71,21 @@ class Tipos extends CI_Controller {
     public function editar($idTipo) {
         $this->_verificar_permisos();
         $data['tipo'] = $this->tipo_model->obtener_tipo($idTipo);
+        
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('tipos/editar', $data);
+        $this->load->view('inc/footer');
+    }
 
+    public function editarbd() {
+        $this->_verificar_permisos();
+        $idTipo = $this->input->post('idTipo');
         $this->form_validation->set_rules('nombreTipo', 'Nombre del Tipo', 'required|is_unique[TIPO.nombreTipo.idTipo.' . $idTipo . ']');
 
         if ($this->form_validation->run() == FALSE) {
+            $data['tipo'] = $this->tipo_model->obtener_tipo($idTipo);
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
