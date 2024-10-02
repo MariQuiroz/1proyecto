@@ -1,4 +1,3 @@
-
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
@@ -6,245 +5,296 @@ class Solicitudes extends CI_Controller {
 
     public function __construct() {
         parent::__construct();
-        $this->load->model('solicitud_prestamo_model');
-        $this->load->model('publicacion_model');
-        $this->load->model('notificacion_model');
-        $this->load->model('prestamo_model');
+        $this->load->model('Solicitud_model');
+        $this->load->model('Publicacion_model');
         $this->load->library('session');
         $this->load->library('form_validation');
     }
 
-    private function _verificar_sesion() {
-        if (!$this->session->userdata('logged_in')) {
-            redirect('usuarios/index');
-        }
-    }
 
-    public function crear($idPublicacion) {
-        // Verificar si el usuario está autenticado
-        $this->_verificar_sesion();
-    
-        // Verificar si el idPublicacion es válido
-        if (!is_numeric($idPublicacion)) {
-            show_404(); // Mostrar error 404 si el id no es numérico
+        private function _verificar_sesion() {
+            if (!$this->session->userdata('login')) {
+                redirect('usuarios/login');
+            }
         }
     
-        // Obtener los detalles de la publicación
-        $data['publicacion'] = $this->publicacion_model->get_publicacion($idPublicacion);
+        private function _verificar_rol($roles_permitidos) {
+            $this->_verificar_sesion();
+            $rol_actual = $this->session->userdata('rol');
+            if (!in_array($rol_actual, $roles_permitidos)) {
+                $this->session->set_flashdata('error', 'No tienes permiso para realizar esta acción.');
+                redirect('usuarios/panel');
+            }
+        }
+    
+        /*public function crear($idPublicacion) {
+            $this->_verificar_rol(['lector']);
         
-        // Verificar si la publicación existe
-        if (empty($data['publicacion'])) {
-            show_404(); // Mostrar error 404 si la publicación no existe
-        }
-    
-        // Establecer reglas de validación
-        $this->form_validation->set_rules('motivo', 'Motivo', 'required', array('required' => 'El motivo es obligatorio.'));
-    
-        // Si la validación falla, mostrar el formulario nuevamente
-        if ($this->form_validation->run() === FALSE) {
-            // Cargar la vista del formulario de solicitud
+            $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
+        
+            if (!$publicacion) {
+                $this->session->set_flashdata('error', 'La publicación seleccionada no existe.');
+                redirect('publicaciones/index');
+            }
+        
+            if ($publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                $this->session->set_flashdata('error', 'La publicación seleccionada no está disponible para préstamo.');
+                redirect('publicaciones/index');
+            }
+        
+            if ($this->input->post()) {
+                $idUsuario = $this->session->userdata('idUsuario');
+                $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
+        
+                if ($resultado) {
+                    $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
+                    redirect('solicitudes/mis_solicitudes');
+                } else {
+                    $this->session->set_flashdata('error', 'Error al crear la solicitud.');
+                }
+            }
+        
+            $data['publicacion'] = $publicacion;
             $this->load->view('inc/header');
-            $this->load->view('solicitudes/solicitud_form', $data); // Vista que muestra el formulario
-            $this->load->view('inc/footer');
-        } else {
-            // Insertar nueva solicitud en la base de datos
-            $solicitudData = array(
-                'idUsuario' => $this->session->userdata('idUsuario'),
-                'idPublicacion' => $idPublicacion,
-                'motivoConsulta' => $this->input->post('motivo'),
-                'estadoSolicitud' => 'pendiente',
-                'fechaSolicitud' => date('Y-m-d H:i:s')
-            );
-    
-            // Llamar al modelo para crear la solicitud
-            $idSolicitud = $this->solicitud_prestamo_model->crear_solicitud($solicitudData);
-            
-            // Verificar si la solicitud se creó correctamente
-            if ($idSolicitud) {
-                $this->session->set_flashdata('success', 'Solicitud creada correctamente.');
-                $this->notificar_encargados($idSolicitud);
-            } else {
-                $this->session->set_flashdata('error', 'Hubo un problema al crear la solicitud.');
-            }
-    
-            // Redirigir al panel del lector
-            redirect('lector/panel');
-        }
-    }
-    
-    private function notificar_encargados($idSolicitud) {
-        // Lógica para notificar a los encargados
-        $encargados = $this->usuario_model->obtener_usuarios_por_rol('encargado');
-        foreach ($encargados as $encargado) {
-            $dataNotificacion = array(
-                'idUsuario' => $encargado->idUsuario,
-                'idSolicitud' => $idSolicitud,
-                'mensaje' => 'Nueva solicitud de préstamo pendiente.',
-                'estadoNotificacion' => ESTADO_NOTIFICACION_PENDIENTE,
-                'fechaNotificacion' => date('Y-m-d H:i:s')
-            );
-            $this->notificacion_model->crear_notificacion($dataNotificacion);
-        }
-    }
-
-    public function listar_pendientes() {
-        if (!$this->session->userdata('logged_in') || $this->session->userdata('rol') != 'encargado') {
-            redirect('usuarios/index');
-        }
-
-        $data['solicitudes'] = $this->solicitud_prestamo_model->get_solicitudes_pendientes();
-        $this->load->view('solicitudes/pendientes', $data);
-    }
-
-    public function aprobar($idSolicitud) {
-        if (!$this->session->userdata('logged_in') || $this->session->userdata('rol') != 'encargado') {
-            redirect('usuarios/index');
-        }
-
-        $this->db->trans_start();
-
-        $this->solicitud_prestamo_model->actualizar_estado_solicitud($idSolicitud, 'aprobada');
-        $solicitud = $this->solicitud_prestamo_model->get_solicitud($idSolicitud);
-        $this->publicacion_model->actualizar_estado_publicacion($solicitud->idPublicacion, 'en_prestamo');
-
-        // Crear el préstamo
-        $dataPrestamo = array(
-            'idSolicitud' => $idSolicitud,
-            'fechaPrestamo' => date('Y-m-d H:i:s'),
-            'fechaDevolucionEstimada' => date('Y-m-d', strtotime('+7 days'))
-        );
-        $this->load->model('prestamo_model');
-        $this->prestamo_model->crear_prestamo($dataPrestamo);
-
-        $this->db->trans_complete();
-
-        if ($this->db->trans_status() === FALSE) {
-            $this->session->set_flashdata('error', 'Hubo un problema al aprobar la solicitud.');
-        } else {
-            $this->session->set_flashdata('success', 'Solicitud aprobada y préstamo creado exitosamente.');
-            // Notificar al usuario
-            $this->notificar_usuario_aprobacion($solicitud->idUsuario, $solicitud->idPublicacion);
-        }
-
-        redirect('solicitudes/listar_pendientes');
-    }
-
-    /*public function rechazar($idSolicitud) {
-        if (!$this->session->userdata('logged_in') || $this->session->userdata('rol') != 'encargado') {
-            redirect('usuarios/login');
-        }
-
-        $this->solicitud_prestamo_model->actualizar_estado_solicitud($idSolicitud, 'rechazada');
-        $solicitud = $this->solicitud_prestamo_model->get_solicitud($idSolicitud);
-
-        $this->session->set_flashdata('success', 'Solicitud rechazada.');
-*/
-    /*public function aprobar($idSolicitud) {
-        if (!$this->session->userdata('logged_in') || $this->session->userdata('rol') != 'encargado') {
-            redirect('usuarios/index');
-        }
-
-        $this->db->trans_start();
-
-        $solicitud = $this->solicitud_prestamo_model->get_solicitud($idSolicitud);
-        if (!$solicitud || $solicitud->estado != 'pendiente') {
-            $this->session->set_flashdata('error', 'Solicitud no válida para aprobación.');
-            redirect('solicitudes/listar_pendientes');
-        }
-
-        $this->solicitud_prestamo_model->actualizar_estado_solicitud($idSolicitud, 'aprobada');
-        $this->publicacion_model->actualizar_estado_publicacion($solicitud->idPublicacion, 'en_prestamo');
-
-        $dataPrestamo = array(
-            'idSolicitud' => $idSolicitud,
-            'fechaPrestamo' => date('Y-m-d H:i:s'),
-            'fechaDevolucionEstimada' => date('Y-m-d', strtotime('+7 days'))
-        );
-        $idPrestamo = $this->prestamo_model->crear_prestamo($dataPrestamo);
-
-        $this->db->trans_complete();
-
-        if ($this->db->trans_status() === FALSE) {
-            $this->session->set_flashdata('error', 'Hubo un problema al aprobar la solicitud.');
-        } else {
-            $this->session->set_flashdata('success', 'Solicitud aprobada y préstamo creado exitosamente.');
-            $this->notificar_usuario_aprobacion($solicitud->idUsuario, $solicitud->idPublicacion);
-        }
-
-        redirect('solicitudes/listar_pendientes');
-    }*/
-
-    public function rechazar($idSolicitud) {
-        if (!$this->session->userdata('logged_in') || $this->session->userdata('rol') != 'encargado') {
-            redirect('usuarios/index');
-        }
-
-        $solicitud = $this->solicitud_prestamo_model->get_solicitud($idSolicitud);
-        if (!$solicitud || $solicitud->estado != 'pendiente') {
-            $this->session->set_flashdata('error', 'Solicitud no válida para rechazo.');
-            redirect('solicitudes/listar_pendientes');
-        }
-
-        $this->solicitud_prestamo_model->actualizar_estado_solicitud($idSolicitud, 'rechazada');
-        $this->session->set_flashdata('success', 'Solicitud rechazada.');
-        $this->notificar_usuario_rechazo($solicitud->idUsuario, $solicitud->idPublicacion);
-
-        redirect('solicitudes/listar_pendientes');
-    }
-
-    private function notificar_usuario_aprobacion($idUsuario, $idPublicacion) {
-        $dataNotificacion = array(
-            'idUsuario' => $idUsuario,
-            'idPublicacion' => $idPublicacion,
-            'mensaje' => 'Su solicitud de préstamo ha sido aprobada.',
-            'fechaNotificacion' => date('Y-m-d H:i:s')
-        );
-        $this->notificacion_model->crear_notificacion($dataNotificacion);
-    }
-
-    private function notificar_usuario_rechazo($idUsuario, $idPublicacion) {
-        $dataNotificacion = array(
-            'idUsuario' => $idUsuario,
-            'idPublicacion' => $idPublicacion,
-            'mensaje' => 'Su solicitud de préstamo ha sido rechazada.',
-            'fechaNotificacion' => date('Y-m-d H:i:s')
-        );
-        $this->notificacion_model->crear_notificacion($dataNotificacion);
-    }
-
-    public function mis_solicitudes() {
-        if (!$this->session->userdata('logged_in')) {
-            redirect('usuarios/index');
-        }
-
-        $idUsuario = $this->session->userdata('idUsuario');
-        $data['solicitudes'] = $this->solicitud_prestamo_model->get_solicitudes_usuario($idUsuario);
-        $this->load->view('solicitudes/mis_solicitudes', $data);
-    }
-   /* public function crear() {
-        if (!$this->session->userdata('logged_in')) {
-            redirect('usuarios/index');
-        }
-    
-        $this->form_validation->set_rules('idPublicacion', 'Publicación', 'required');
-    
-        if ($this->form_validation->run() == FALSE) {
-            $data['publicaciones'] = $this->publicacion_model->obtener_publicaciones_disponibles();
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
             $this->load->view('solicitudes/crear', $data);
-        } else {
-            $data = array(
-                'idUsuario' => $this->session->userdata('idUsuario'),
-                'idPublicacion' => $this->input->post('idPublicacion'),
-                'estado' => 'pendiente',
-                'fechaSolicitud' => date('Y-m-d H:i:s')
-            );
-    
-            if ($this->solicitud_prestamo_model->crear_solicitud($data)) {
-                $this->session->set_flashdata('success', 'Solicitud enviada correctamente.');
-            } else {
-                $this->session->set_flashdata('error', 'Hubo un problema al enviar la solicitud.');
-            }
-            redirect('solicitudes/mis_solicitudes');
+            $this->load->view('inc/footer');
         }
-    }*/
+    
+    
+        public function aprobar($idSolicitud) {
+            $this->_verificar_rol(['administrador', 'encargado']);
+        
+            $idEncargado = $this->session->userdata('idUsuario');
+            $fechaPrestamo = date('Y-m-d H:i:s'); // Podrías permitir que el encargado especifique esta fecha
+        
+            $resultado = $this->Solicitud_model->aprobar_solicitud($idSolicitud, $idEncargado, $fechaPrestamo);
+        
+            if ($resultado) {
+                $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamo registrado con éxito.');
+            } else {
+                $this->session->set_flashdata('error', 'Error al aprobar la solicitud.');
+            }
+        
+            redirect('solicitudes/pendientes');
+        }
+        public function rechazar($idSolicitud) {
+            $this->_verificar_rol(['administrador', 'encargado']);
+        
+            $idEncargado = $this->session->userdata('idUsuario');
+        
+            $resultado = $this->Solicitud_model->rechazar_solicitud($idSolicitud, $idEncargado);
+        
+            if ($resultado) {
+                $this->session->set_flashdata('mensaje', 'Solicitud rechazada con éxito.');
+            } else {
+                $this->session->set_flashdata('error', 'Error al rechazar la solicitud.');
+            }
+        
+            redirect('solicitudes/pendientes');
+        }*/
+    
+        public function pendientes() {
+            $this->_verificar_rol(['administrador', 'encargado']);
+    
+            $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_pendientes();
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('solicitudes/pendientes', $data);
+            $this->load->view('inc/footer');
+        }
+    
+        public function eliminar($idSolicitud) {
+            $this->_verificar_rol(['administrador', 'encargado']);
+    
+            $idUsuario = $this->session->userdata('idUsuario');
+            $resultado = $this->Solicitud_model->eliminar_solicitud($idSolicitud, $idUsuario);
+    
+            if ($resultado) {
+                $this->session->set_flashdata('mensaje', 'Solicitud eliminada con éxito.');
+            } else {
+                $this->session->set_flashdata('error', 'Error al eliminar la solicitud.');
+            }
+    
+            redirect('solicitudes/pendientes');
+        }
+        public function mis_solicitudes() {
+            $this->_verificar_rol(['lector']);
+            
+            $idUsuario = $this->session->userdata('idUsuario');
+            $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_usuario($idUsuario);
+            
+            // No es necesario pasar las constantes a la vista si están definidas globalmente
+            
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('solicitudes/mis_solicitudes', $data);
+            $this->load->view('inc/footer');
+        }
+    
+        public function confirmar($idPublicacion) {
+            $this->_verificar_rol(['lector']);
+            
+            $idUsuario = $this->session->userdata('idUsuario');
+            $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
+            
+            if (!$publicacion) {
+                $this->session->set_flashdata('error', 'La publicación seleccionada no existe.');
+                redirect('publicaciones/index');
+            }
+            
+            if ($publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                $this->session->set_flashdata('error', 'La publicación seleccionada no está disponible para préstamo.');
+                redirect('publicaciones/index');
+            }
+            
+            $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
+            
+            if ($resultado) {
+                $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
+                redirect('solicitudes/mis_solicitudes');
+            } else {
+                $this->session->set_flashdata('error', 'Error al crear la solicitud.');
+                redirect('publicaciones/index');
+            }
+        }
+        public function detalle($idSolicitud) {
+            $this->_verificar_sesion();
+            
+            $solicitud = $this->Solicitud_model->obtener_detalle_solicitud($idSolicitud);
+            
+            if (!$solicitud) {
+                $this->session->set_flashdata('error', 'La solicitud no existe.');
+                redirect('solicitudes/mis_solicitudes');
+            }
+            
+            // Verificar si el usuario actual tiene permiso para ver esta solicitud
+            if ($this->session->userdata('rol') == 'lector' && $solicitud->idUsuario != $this->session->userdata('idUsuario')) {
+                $this->session->set_flashdata('error', 'No tienes permiso para ver esta solicitud.');
+                redirect('solicitudes/mis_solicitudes');
+            }
+            
+            $data['solicitud'] = $solicitud;
+            
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('solicitudes/detalle', $data);
+            $this->load->view('inc/footer');
+        }
+        public function crear($idPublicacion) {
+            $this->_verificar_rol(['lector']);
+    
+            $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
+    
+            if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
+                redirect('publicaciones/index');
+            }
+    
+            if ($this->input->post()) {
+                $this->db->trans_start();
+    
+                $idUsuario = $this->session->userdata('idUsuario');
+                $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
+    
+                if ($resultado) {
+                    $this->db->trans_complete();
+                    if ($this->db->trans_status() === FALSE) {
+                        $this->session->set_flashdata('error', 'Error al crear la solicitud. Por favor, intente de nuevo.');
+                    } else {
+                        $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
+                        redirect('solicitudes/mis_solicitudes');
+                    }
+                } else {
+                    $this->db->trans_rollback();
+                    $this->session->set_flashdata('error', 'Error al crear la solicitud.');
+                }
+            }
+    
+            $data['publicacion'] = $publicacion;
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('solicitudes/crear', $data);
+            $this->load->view('inc/footer');
+        }
+    
+        public function aprobar($idSolicitud) {
+            $this->_verificar_rol(['administrador', 'encargado']);
+    
+            $this->db->trans_start();
+    
+            $idEncargado = $this->session->userdata('idUsuario');
+            $resultado = $this->Solicitud_model->aprobar_solicitud($idSolicitud, $idEncargado);
+    
+            if ($resultado) {
+                $this->db->trans_complete();
+                if ($this->db->trans_status() === FALSE) {
+                    $this->session->set_flashdata('error', 'Error al aprobar la solicitud. Por favor, intente de nuevo.');
+                } else {
+                    $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamo registrado con éxito.');
+                }
+            } else {
+                $this->db->trans_rollback();
+                $this->session->set_flashdata('error', 'Error al aprobar la solicitud.');
+            }
+    
+            redirect('solicitudes/pendientes');
+        }
+    
+        public function rechazar($idSolicitud) {
+            $this->_verificar_rol(['administrador', 'encargado']);
+    
+            $this->db->trans_start();
+    
+            $idEncargado = $this->session->userdata('idUsuario');
+            $resultado = $this->Solicitud_model->rechazar_solicitud($idSolicitud, $idEncargado);
+    
+            if ($resultado) {
+                $this->db->trans_complete();
+                if ($this->db->trans_status() === FALSE) {
+                    $this->session->set_flashdata('error', 'Error al rechazar la solicitud. Por favor, intente de nuevo.');
+                } else {
+                    $this->session->set_flashdata('mensaje', 'Solicitud rechazada con éxito.');
+                }
+            } else {
+                $this->db->trans_rollback();
+                $this->session->set_flashdata('error', 'Error al rechazar la solicitud.');
+            }
+    
+            redirect('solicitudes/pendientes');
+        }
+        public function aprobadas() {
+            $this->_verificar_rol(['administrador', 'encargado']);
+            $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_por_estado(ESTADO_SOLICITUD_APROBADA);
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('solicitudes/aprobadas', $data);
+            $this->load->view('inc/footer');
+        }
+        
+        public function rechazadas() {
+            $this->_verificar_rol(['administrador', 'encargado']);
+            $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_por_estado(ESTADO_SOLICITUD_RECHAZADA);
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('solicitudes/rechazadas', $data);
+            $this->load->view('inc/footer');
+        }
+        
+        public function historial() {
+            $this->_verificar_rol(['administrador', 'encargado']);
+            $data['solicitudes'] = $this->Solicitud_model->obtener_historial_solicitudes();
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('solicitudes/historial', $data);
+            $this->load->view('inc/footer');
+        }
 }

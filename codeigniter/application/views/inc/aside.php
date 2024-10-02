@@ -62,11 +62,13 @@
                     </a>
                     <ul class="nav-second-level" aria-expanded="false">
                         <?php if ($this->session->userdata('rol') == 'lector'): ?>
-                            <li><a href="<?php echo site_url('publicaciones/seleccionar'); ?>">Seleccionar Publicación</a></li>
                             <li><a href="<?php echo site_url('solicitudes/mis_solicitudes'); ?>">Mis Solicitudes</a></li>
                         <?php endif; ?>
                         <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
-                            <li><a href="<?php echo site_url('solicitudes/listar_pendientes'); ?>">Solicitudes Pendientes</a></li>
+                            <li><a href="<?php echo site_url('solicitudes/pendientes'); ?>">Solicitudes Pendientes</a></li>
+                            <li><a href="<?php echo site_url('solicitudes/aprobadas'); ?>">Solicitudes Aprobadas</a></li>
+                            <li><a href="<?php echo site_url('solicitudes/rechazadas'); ?>">Solicitudes Rechazadas</a></li>
+                            <li><a href="<?php echo site_url('solicitudes/historial'); ?>">Historial de Solicitudes</a></li>
                         <?php endif; ?>
                     </ul>
                 </li>
@@ -82,7 +84,7 @@
                             <li><a href="<?php echo site_url('prestamos/mis_prestamos'); ?>">Mis Préstamos</a></li>
                         <?php endif; ?>
                         <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
-                            <li><a href="<?php echo site_url('prestamos/index'); ?>">Préstamos Activos</a></li>
+                            <li><a href="<?php echo site_url('prestamos/activos'); ?>">Préstamos Activos</a></li>
                             <li><a href="<?php echo site_url('prestamos/historial'); ?>">Historial de Préstamos</a></li>
                         <?php endif; ?>
                     </ul>

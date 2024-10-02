@@ -8,9 +8,101 @@ class Prestamo_model extends CI_Model {
         $this->load->database();
     }
 
-    public function crear_prestamo($data) {
-        $this->db->insert('PRESTAMO', $data);
-        return $this->db->insert_id();
+    public function iniciar_prestamo($idSolicitud, $idEncargado) {
+        $solicitud = $this->db->get_where('SOLICITUD_PRESTAMO', ['idSolicitud' => $idSolicitud])->row();
+        
+        if (!$solicitud) {
+            return false;
+        }
+
+        $publicacion = $this->db->get_where('PUBLICACION', ['idPublicacion' => $solicitud->idPublicacion])->row();
+        
+        if ($publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+            return false;
+        }
+
+        $data_prestamo = [
+            'idSolicitud' => $idSolicitud,
+            'idUsuario' => $solicitud->idUsuario,
+            'idPublicacion' => $solicitud->idPublicacion,
+            'idEncargadoPrestamo' => $idEncargado,
+            'fechaPrestamo' => date('Y-m-d H:i:s'),
+            'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
+            'horaInicio' => date('H:i:s'),
+            'estado' => 1,
+            'fechaCreacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $this->session->userdata('idUsuario') // Usar el ID del usuario en sesión
+        ];
+
+        $this->db->insert('PRESTAMO', $data_prestamo);
+
+        $this->db->where('idPublicacion', $solicitud->idPublicacion);
+        $this->db->update('PUBLICACION', ['estado' => ESTADO_PUBLICACION_EN_CONSULTA]);
+
+        $this->db->where('idSolicitud', $idSolicitud);
+        $this->db->update('SOLICITUD_PRESTAMO', ['estadoSolicitud' => ESTADO_SOLICITUD_FINALIZADA]);
+
+        return true;
+    }
+
+
+    public function finalizar_prestamo($idPrestamo, $idEncargado) {
+        $prestamo = $this->db->get_where('PRESTAMO', ['idPrestamo' => $idPrestamo])->row();
+        
+        if (!$prestamo) {
+            return false;
+        }
+    
+        $data_update = [
+            'estadoPrestamo' => ESTADO_PRESTAMO_FINALIZADO,
+            'idEncargadoDevolucion' => $idEncargado,
+            'horaDevolucion' => date('H:i:s'),
+            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $this->session->userdata('idUsuario') // Usar el ID del usuario en sesión
+        ];
+    
+        $this->db->trans_start(); // Iniciar transacción
+    
+        $this->db->where('idPrestamo', $idPrestamo);
+        $this->db->update('PRESTAMO', $data_update);
+    
+        $this->db->where('idPublicacion', $prestamo->idPublicacion);
+        $this->db->update('PUBLICACION', ['estado' => ESTADO_PUBLICACION_DISPONIBLE]);
+    
+        $this->db->trans_complete(); // Completar transacción
+    
+        return $this->db->trans_status();
+    }
+
+    public function obtener_prestamos_activos() {
+        $this->db->select('P.*, U.nombres, U.apellidoPaterno, PUB.titulo');
+        $this->db->from('PRESTAMO P');
+        $this->db->join('USUARIO U', 'P.idUsuario = U.idUsuario');
+        $this->db->join('PUBLICACION PUB', 'P.idPublicacion = PUB.idPublicacion');
+        $this->db->where('P.estadoPrestamo', ESTADO_PRESTAMO_ACTIVO);
+        return $this->db->get()->result();
+    }
+
+    public function obtener_historial_prestamos() {
+        $this->db->select('P.*, U.nombres, U.apellidoPaterno, PUB.titulo');
+        $this->db->from('PRESTAMO P');
+        $this->db->join('USUARIO U', 'P.idUsuario = U.idUsuario');
+        $this->db->join('PUBLICACION PUB', 'P.idPublicacion = PUB.idPublicacion');
+        $this->db->order_by('P.fechaPrestamo', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    public function obtener_prestamos_usuario($idUsuario) {
+        $this->db->select('P.*, PUB.titulo');
+        $this->db->from('PRESTAMO P');
+        $this->db->join('PUBLICACION PUB', 'P.idPublicacion = PUB.idPublicacion');
+        $this->db->where('P.idUsuario', $idUsuario);
+        $this->db->order_by('P.fechaPrestamo', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    public function obtener_prestamo($idPrestamo) {
+        return $this->db->get_where('PRESTAMO', ['idPrestamo' => $idPrestamo])->row();
     }
 
     public function get_prestamos_activos() {
@@ -45,13 +137,7 @@ class Prestamo_model extends CI_Model {
         $this->db->where('sp.idUsuario', $idUsuario);
         return $this->db->get()->result();
     }
-    public function obtener_prestamos_activos() {
-        $this->db->select('*');
-        $this->db->from('PRESTAMOS');
-        $this->db->where('estado', 'activo');  // Suponiendo que 'estado' es la columna que indica si el préstamo está activo
-        $query = $this->db->get();
-        return $query->result();
-    }
+    
     public function obtener_prestamos_activos_usuario($idUsuario) {
         $this->db->select('PRESTAMO.*, PUBLICACION.titulo');
         $this->db->from('PRESTAMO');
@@ -82,10 +168,5 @@ class Prestamo_model extends CI_Model {
         $this->db->where('horaDevolucion IS NULL');
         return $this->db->count_all_results('PRESTAMO');
     }
-
-    
-
-    
-   
 
 }

@@ -4,7 +4,7 @@
         <div class="navbar-custom">
             <!-- LOGO -->
             <div class="logo-box">
-                <a href="<?php echo site_url('lector/panel'); ?>" class="logo text-center">
+                <a href="<?php echo site_url('usuarios/lector'); ?>" class="logo text-center">
                     <span class="logo-lg">
                         <img src="<?php echo base_url('assets/images/logo-light.png'); ?>" alt="" height="16">
                     </span>
@@ -59,42 +59,6 @@
                         </div>
                     </div>     
                     <!-- end page title --> 
-
-                    <!-- Sección para mostrar las publicaciones disponibles para solicitar -->
-                    <div class="row">
-                        <div class="col-xl-12">
-                            <div class="card-box">
-                                <h4 class="header-title mb-3">Seleccionar Publicación para Solicitar</h4>
-
-                                <div class="table-responsive">
-                                    <table class="table table-hover table-centered m-0">
-                                        <thead>
-                                            <tr>
-                                                <th>Título</th>
-                                                <th>Editorial</th>
-                                                <th>Tipo</th>
-                                                <th>Acción</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($publicaciones as $publicacion): ?>
-                                            <tr>
-                                                <td><?php echo $publicacion->titulo; ?></td>
-                                                <td><?php echo $publicacion->nombreEditorial; ?></td>
-                                                <td><?php echo $publicacion->nombreTipo; ?></td>
-                                                <td>
-                                                    <!-- Enlace para solicitar la publicación -->
-                                                    <a href="<?php echo site_url('solicitudes/crear/' . $publicacion->idPublicacion); ?>" class="btn btn-xs btn-primary">Solicitar</a>
-                                                </td>
-                                            </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Mis Préstamos Activos -->
                     <div class="row">
                         <div class="col-xl-6">
@@ -106,8 +70,7 @@
                                         <thead>
                                             <tr>
                                                 <th>Título</th>
-                                                <th>Hora de Préstamo</th>
-                                                <th>Hora de Devolución</th>
+                                                <th>Fecha de Préstamo</th>
                                                 <th>Estado</th>
                                             </tr>
                                         </thead>
@@ -115,8 +78,7 @@
                                             <?php foreach ($prestamos_activos as $prestamo): ?>
                                             <tr>
                                                 <td><?php echo $prestamo->titulo; ?></td>
-                                                <td><?php echo $prestamo->horaInicio; ?></td>
-                                                <td><?php echo $prestamo->horaDevolucion; ?></td>
+                                                <td><?php echo $prestamo->fechaCreacion; ?></td>
                                                 <td><span class="badge badge-success">Activo</span></td>
                                             </tr>
                                             <?php endforeach; ?>

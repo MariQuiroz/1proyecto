@@ -149,20 +149,20 @@ class Usuarios extends CI_Controller {
                 $data['total_usuarios'] = $this->usuario_model->contar_usuarios();
                 $data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
                 $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
-                $data['solicitudes_pendientes'] = $this->solicitud_prestamo_model->contar_solicitudes_pendientes();
+                $data['solicitudes_pendientes'] = $this->solicitud_model->contar_solicitudes_pendientes();
                 $data['prestamos_no_devueltos'] = $this->prestamo_model->contar_prestamos_no_devueltos();
                 break;
             
             case 'encargado':
                 $data['total_publicaciones'] = $this->publicacion_model->contar_publicaciones();
                 $data['prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos();
-                $data['solicitudes_pendientes'] = $this->solicitud_prestamo_model->contar_solicitudes_pendientes();
+                $data['solicitudes_pendientes'] = $this->solicitud_model->contar_solicitudes_pendientes();
                 break;
             
             case 'lector':
                 $idUsuario = $this->session->userdata('idUsuario');
                 $data['mis_prestamos_activos'] = $this->prestamo_model->contar_prestamos_activos_usuario($idUsuario);
-                $data['mis_solicitudes_pendientes'] = $this->solicitud_prestamo_model->contar_solicitudes_pendientes_usuario($idUsuario);
+                $data['mis_solicitudes_pendientes'] = $this->solicitud_model->contar_solicitudes_pendientes_usuario($idUsuario);
                 break;
             
             default:
@@ -869,14 +869,14 @@ private function _enviar_email_bienvenida($email, $username, $contrasena_tempora
     if ($this->session->userdata('rol') == 'lector') {
         $this->load->model('publicacion_model');
         $this->load->model('prestamo_model'); 
-        $this->load->model('solicitud_prestamo_model');  // Cargar el modelo de solicitudes de préstamo
+        $this->load->model('solicitud_model');  // Cargar el modelo de solicitudes de préstamo
 
         $idUsuario = $this->session->userdata('idUsuario');
 
         // Obtener publicaciones, préstamos activos y solicitudes pendientes del usuario
         $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
         $data['prestamos_activos'] = $this->prestamo_model->obtener_prestamos_activos_usuario($idUsuario);
-        $data['solicitudes_pendientes'] = $this->solicitud_prestamo_model->obtener_solicitudes_pendientes_usuario($idUsuario); // Obtener solicitudes pendientes
+        $data['solicitudes_pendientes'] = $this->solicitud_model->obtener_solicitudes_pendientes_usuario($idUsuario); // Obtener solicitudes pendientes
 
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');

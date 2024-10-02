@@ -8,62 +8,6 @@ class Publicacion_model extends CI_Model {
         $this->load->database();
     }
 
-    /*public function listar_publicaciones() {
-        $this->db->select('p.*, t.nombreTipo, e.nombreEditorial, u.nombres, u.apellidoPaterno');
-        $this->db->from('PUBLICACION p');
-        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
-        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
-        $this->db->join('USUARIO u', 'p.idUsuario = u.idUsuario');
-        $this->db->where('p.estado !=', 0);
-        $query = $this->db->get();
-        return $query->result();
-    }*/
-
-    /*public function agregar_publicacion($data) {
-        return $this->db->insert('PUBLICACION', $data);
-    }*/
-
-    /*public function obtener_publicacion($idPublicacion) {
-        $this->db->where('idPublicacion', $idPublicacion);
-        $query = $this->db->get('PUBLICACION');
-        return $query->row();
-    }*/
-
-   /* public function obtener_publicacion_detallada($idPublicacion) {
-        $this->db->select('p.*, t.nombreTipo, e.nombreEditorial, u.nombres, u.apellidoPaterno');
-        $this->db->from('PUBLICACION p');
-        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
-        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
-        $this->db->join('USUARIO u', 'p.idUsuario = u.idUsuario');
-        $this->db->where('p.idPublicacion', $idPublicacion);
-        $query = $this->db->get();
-        return $query->row();
-    }*/
-
-   /* public function actualizar_publicacion($idPublicacion, $data) {
-        $this->db->where('idPublicacion', $idPublicacion);
-        return $this->db->update('PUBLICACION', $data);
-    }*/
-
-    /*public function cambiar_estado_publicacion($idPublicacion, $data) {
-        $this->db->where('idPublicacion', $idPublicacion);
-        return $this->db->update('PUBLICACION', $data);
-    }
-*/
-    /*public function buscar_publicaciones($termino) {
-        $this->db->select('p.*, t.nombreTipo, e.nombreEditorial');
-        $this->db->from('PUBLICACION p');
-        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
-        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
-        $this->db->like('p.titulo', $termino);
-        $this->db->or_like('p.descripcion', $termino);
-        $this->db->or_like('t.nombreTipo', $termino);
-        $this->db->or_like('e.nombreEditorial', $termino);
-        $this->db->where('p.estado !=', 0);
-        $query = $this->db->get();
-        return $query->result();
-    }*/
-
     public function contar_publicaciones() {
         $this->db->where('estado !=', 0);
         return $this->db->count_all_results('PUBLICACION');
@@ -117,8 +61,12 @@ class Publicacion_model extends CI_Model {
     }
 
     public function obtener_publicacion($idPublicacion) {
-        $this->db->where('idPublicacion', $idPublicacion);
-        return $this->db->get('PUBLICACION')->row();
+        $this->db->select('PUBLICACION.*, EDITORIAL.nombreEditorial, TIPO.nombreTipo');
+        $this->db->from('PUBLICACION');
+        $this->db->join('EDITORIAL', 'EDITORIAL.idEditorial = PUBLICACION.idEditorial');
+        $this->db->join('TIPO', 'TIPO.idTipo = PUBLICACION.idTipo');
+        $this->db->where('PUBLICACION.idPublicacion', $idPublicacion);
+        return $this->db->get()->row();
     }
 
     public function listar_publicaciones() {

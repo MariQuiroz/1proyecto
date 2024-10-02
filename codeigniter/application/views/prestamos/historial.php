@@ -4,7 +4,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box">
-                        <h4 class="page-title">Mis Préstamos</h4>
+                        <h4 class="page-title">Historial de Préstamos</h4>
                     </div>
                 </div>
             </div>
@@ -13,15 +13,16 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="header-title">Listado de Mis Préstamos</h4>
+                            <h4 class="header-title">Historial Completo de Préstamos</h4>
                             <p class="text-muted font-13 mb-4">
-                                Aquí se muestran todos tus préstamos, tanto activos como históricos.
+                                Aquí se muestra el historial completo de todos los préstamos.
                             </p>
 
-                            <table id="prestamos-activos-table" class="table dt-responsive nowrap">
+                            <table id="historial-prestamos-table" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
                                         <th>ID Préstamo</th>
+                                        <th>Usuario</th>
                                         <th>Publicación</th>
                                         <th>Fecha Inicio</th>
                                         <th>Fecha Fin</th>
@@ -33,6 +34,7 @@
                                     <?php foreach ($prestamos as $prestamo): ?>
                                     <tr>
                                         <td><?php echo $prestamo->idPrestamo; ?></td>
+                                        <td><?php echo $prestamo->nombres . ' ' . $prestamo->apellidoPaterno; ?></td>
                                         <td><?php echo $prestamo->titulo; ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
                                         <td><?php echo $prestamo->horaDevolucion ? date('d/m/Y H:i', strtotime($prestamo->horaDevolucion)) : 'N/A'; ?></td>
@@ -69,7 +71,7 @@
 
 <script>
 $(document).ready(function() {
-    $('#mis-prestamos-table').DataTable({
+    $('#historial-prestamos-table').DataTable({
         responsive: true,
         language: {
             url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
