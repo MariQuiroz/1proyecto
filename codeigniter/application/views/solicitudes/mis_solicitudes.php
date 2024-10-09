@@ -14,7 +14,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-centered table-striped table-hover mb-0">
+                            <table id="basic-datatable" class="table dt-responsive nowrap">
                                     <thead>
                                         <tr>
                                             <th>ID Solicitud</th>

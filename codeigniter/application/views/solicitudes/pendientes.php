@@ -18,7 +18,7 @@
                                 Aquí puedes ver y gestionar todas las solicitudes pendientes de préstamo de publicaciones.
                             </p>
 
-                            <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
+                            <table id="basic-datatable" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
                                         <th>ID Solicitud</th>

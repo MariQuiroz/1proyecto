@@ -18,7 +18,7 @@
                                 Aquí se muestran todas las solicitudes de préstamo que han sido rechazadas.
                             </p>
 
-                            <table id="solicitudes-rechazadas-table" class="table dt-responsive nowrap">
+                            <table id="basic-datatable" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
                                         <th>ID Solicitud</th>

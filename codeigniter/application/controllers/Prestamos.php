@@ -80,19 +80,31 @@ public function finalizar($idPrestamo) {
     public function activos() {
         $this->_verificar_rol(['administrador', 'encargado']);
         $data['prestamos'] = $this->Prestamo_model->obtener_prestamos_activos();
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
         $this->load->view('prestamos/activos', $data);
+        $this->load->view('inc/footer');
     }
 
     public function historial() {
         $this->_verificar_rol(['administrador', 'encargado']);
         $data['prestamos'] = $this->Prestamo_model->obtener_historial_prestamos();
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
         $this->load->view('prestamos/historial', $data);
+        $this->load->view('inc/footer');
     }
 
     public function mis_prestamos() {
         $this->_verificar_rol(['lector']);
         $idUsuario = $this->session->userdata('idUsuario');
         $data['prestamos'] = $this->Prestamo_model->obtener_prestamos_usuario($idUsuario);
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
         $this->load->view('prestamos/mis_prestamos', $data);
+        $this->load->view('inc/footer');
     }
 }

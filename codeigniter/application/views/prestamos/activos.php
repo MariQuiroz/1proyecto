@@ -18,7 +18,7 @@
                                 Aquí se muestran todos los préstamos actualmente en curso.
                             </p>
 
-                            <table id="prestamos-activos-table" class="table dt-responsive nowrap">
+                            <table id="basic-datatable" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
                                         <th>ID Préstamo</th>
