@@ -6,11 +6,11 @@ class Solicitudes extends CI_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model('Solicitud_model');
+        $this->load->model('Prestamo_model');  // Añade esta línea
         $this->load->model('Publicacion_model');
         $this->load->library('session');
         $this->load->library('form_validation');
     }
-
 
         private function _verificar_sesion() {
             if (!$this->session->userdata('login')) {
@@ -225,27 +225,41 @@ class Solicitudes extends CI_Controller {
     
         public function aprobar($idSolicitud) {
             $this->_verificar_rol(['administrador', 'encargado']);
-    
+        
             $this->db->trans_start();
-    
+        
             $idEncargado = $this->session->userdata('idUsuario');
             $resultado = $this->Solicitud_model->aprobar_solicitud($idSolicitud, $idEncargado);
-    
+        
             if ($resultado) {
                 $this->db->trans_complete();
                 if ($this->db->trans_status() === FALSE) {
                     $this->session->set_flashdata('error', 'Error al aprobar la solicitud. Por favor, intente de nuevo.');
+                    redirect('solicitudes/pendientes');
                 } else {
                     $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamo registrado con éxito.');
+                    
+                    // Obtener los datos para la ficha de préstamo
+                    $ficha_prestamo = $this->Prestamo_model->obtener_datos_ficha_prestamo($resultado);
+                    
+                    if (!is_array($ficha_prestamo)) {
+                        $ficha_prestamo = array();
+                    }
+                    
+                    // Agregar una variable para indicar que la ficha ha sido mostrada
+                    $ficha_prestamo['ficha_mostrada'] = true;
+                    
+                    // Cargar la vista de la ficha de préstamo
+                    $this->load->view('prestamos/ficha_prestamo', $ficha_prestamo);
+                    return;
                 }
             } else {
                 $this->db->trans_rollback();
                 $this->session->set_flashdata('error', 'Error al aprobar la solicitud.');
+                redirect('solicitudes/pendientes');
             }
-    
-            redirect('solicitudes/pendientes');
         }
-    
+
         public function rechazar($idSolicitud) {
             $this->_verificar_rol(['administrador', 'encargado']);
     

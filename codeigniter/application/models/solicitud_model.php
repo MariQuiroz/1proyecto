@@ -37,7 +37,7 @@ class Solicitud_model extends CI_Model {
         return $this->db->trans_status() ? $idSolicitud : false;
     }
 
-    public function aprobar_solicitud($idSolicitud, $idEncargado) {
+    /*public function aprobar_solicitud($idSolicitud, $idEncargado) {
         $this->db->trans_start();
     
         $solicitud = $this->db->get_where('SOLICITUD_PRESTAMO', ['idSolicitud' => $idSolicitud])->row();
@@ -81,7 +81,7 @@ class Solicitud_model extends CI_Model {
     
         return $this->db->trans_status();
     }
-
+*/
 
     public function rechazar_solicitud($idSolicitud, $idEncargado) {
         if (!$this->_verificar_rol(['administrador', 'encargado'])) {
@@ -222,6 +222,53 @@ class Solicitud_model extends CI_Model {
         $this->db->where('SP.estado', 1);
         $this->db->order_by('SP.fechaSolicitud', 'DESC');
         return $this->db->get()->result();
+    }
+    public function aprobar_solicitud($idSolicitud, $idEncargado) {
+        $solicitud = $this->db->get_where('SOLICITUD_PRESTAMO', ['idSolicitud' => $idSolicitud])->row();
+        
+        if (!$solicitud || $solicitud->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
+            return false;
+        }
+    
+        $this->db->trans_start();
+    
+        // Actualizar la solicitud
+        $this->db->where('idSolicitud', $idSolicitud);
+        $this->db->update('SOLICITUD_PRESTAMO', [
+            'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
+            'fechaAprobacionRechazo' => date('Y-m-d H:i:s'),
+            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $idEncargado
+        ]);
+    
+        // Crear el préstamo
+        $data_prestamo = [
+            'idSolicitud' => $idSolicitud,
+            'idUsuario' => $solicitud->idUsuario,
+            'idPublicacion' => $solicitud->idPublicacion,
+            'idEncargadoPrestamo' => $idEncargado,
+            'fechaPrestamo' => date('Y-m-d H:i:s'),
+            'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
+            'horaInicio' => date('H:i:s'),
+            'estado' => 1,
+            'fechaCreacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $idEncargado
+        ];
+    
+        $this->db->insert('PRESTAMO', $data_prestamo);
+        $idPrestamo = $this->db->insert_id();
+    
+        // Actualizar el estado de la publicación
+        $this->db->where('idPublicacion', $solicitud->idPublicacion);
+        $this->db->update('PUBLICACION', [
+            'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
+            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $idEncargado
+        ]);
+    
+        $this->db->trans_complete();
+    
+        return $this->db->trans_status() ? $idPrestamo : false;
     }
     
 }

@@ -104,6 +104,25 @@ class Prestamo_model extends CI_Model {
     public function obtener_prestamo($idPrestamo) {
         return $this->db->get_where('PRESTAMO', ['idPrestamo' => $idPrestamo])->row();
     }
+    public function obtener_prestamo_detallado($idPrestamo) {
+        $this->db->select('P.*, PUB.titulo, PUB.fechaPublicacion, PUB.ubicacionFisica, PUB.signatura_topografica, U.carnet, U.profesion, E.nombres AS nombres_encargado, E.apellidoPaterno AS apellidoPaterno_encargado');
+        $this->db->from('PRESTAMO P');
+        $this->db->join('PUBLICACION PUB', 'P.idPublicacion = PUB.idPublicacion');
+        $this->db->join('USUARIO U', 'P.idUsuario = U.idUsuario');
+        $this->db->join('USUARIO E', 'P.idEncargadoPrestamo = E.idUsuario');
+        $this->db->where('P.idPrestamo', $idPrestamo);
+        return $this->db->get()->row();
+    }
+    public function obtener_datos_ficha_prestamo($idPrestamo) {
+        $this->db->select('P.*, PUB.titulo, PUB.fechaPublicacion, ED.nombreEditorial, PUB.ubicacionFisica, U.carnet, U.profesion, EN.nombres AS nombreEncargado, EN.apellidoPaterno AS apellidoEncargado');
+        $this->db->from('PRESTAMO P');
+        $this->db->join('PUBLICACION PUB', 'P.idPublicacion = PUB.idPublicacion');
+        $this->db->join('EDITORIAL ED', 'PUB.idEditorial = ED.idEditorial');
+        $this->db->join('USUARIO U', 'P.idUsuario = U.idUsuario');
+        $this->db->join('USUARIO EN', 'P.idEncargadoPrestamo = EN.idUsuario');
+        $this->db->where('P.idPrestamo', $idPrestamo);
+        return $this->db->get()->row_array(); // Cambiamos row() por row_array()
+    }
 
     public function get_prestamos_activos() {
         $this->db->select('p.*, u.nombres, u.apellidos, pub.titulo');
