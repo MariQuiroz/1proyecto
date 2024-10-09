@@ -86,7 +86,7 @@ class Prestamos extends CI_Controller {
         
         return $data;
     }
-public function finalizar($idPrestamo) {
+/*public function finalizar($idPrestamo) {
     $this->_verificar_rol(['administrador', 'encargado']);
 
     $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
@@ -106,9 +106,76 @@ public function finalizar($idPrestamo) {
 
     redirect('prestamos/activos');
 }
+*/
+public function finalizar($idPrestamo) {
+    $this->_verificar_rol(['administrador', 'encargado']);
+
+    $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
+    if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
+        $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
+        redirect('prestamos/activos');
+        return;
+    }
+
+    $idEncargado = $this->session->userdata('idUsuario');
+    $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado);
+
+    if ($resultado) {
+        // Obtener datos para la ficha de devolución
+        $ficha_devolucion = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
+        
+        // Generar la ficha de devolución
+        $html_ficha = $this->load->view('prestamos/ficha_devolucion', $ficha_devolucion, TRUE);
+        
+        // Enviar correo electrónico con la ficha de devolución
+        $correo_enviado = $this->_enviar_correo_devolucion($ficha_devolucion['email'], $html_ficha);
+
+        if ($correo_enviado) {
+            $this->session->set_flashdata('mensaje', 'Préstamo finalizado con éxito y ficha de devolución enviada por correo.');
+
+        } else {
+            $this->session->set_flashdata('mensaje', 'Préstamo finalizado con éxito, pero hubo un problema al enviar el correo.');
+        }
+    } else {
+        $this->session->set_flashdata('error', 'No se pudo finalizar el préstamo. Por favor, intente de nuevo.');
+    }
+
+    // Asegurarse de que la redirección ocurra después de establecer el mensaje flash
+    redirect('prestamos/activos');
+}
+
+
+private function _enviar_correo_devolucion($email, $html_ficha) {
+    $this->load->library('email');
+
+    $config['protocol'] = 'smtp';
+    $config['smtp_host'] = 'smtp.gmail.com';
+    $config['smtp_port'] = 587;
+    $config['smtp_user'] = 'quirozmolinamaritza@gmail.com'; // Reemplaza con tu correo
+    $config['smtp_pass'] = 'zdmk qkfw wgdf lshq'; // Reemplaza con tu contraseña
+    $config['smtp_crypto'] = 'tls';
+    $config['mailtype'] = 'html';
+    $config['charset'] = 'utf-8';
+    $config['newline'] = "\r\n";
+
+    $this->email->initialize($config);
+
+    $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
+    $this->email->to($email);
+    $this->email->subject('Comprobante de Devolución - Hemeroteca UMSS');
+    $this->email->message($html_ficha);
+
+    if ($this->email->send()) {
+        return true;
+    } else {
+        log_message('error', 'Error al enviar correo de devolución: ' . $this->email->print_debugger());
+        return false;
+    }
+}
 
     public function activos() {
         $this->_verificar_rol(['administrador', 'encargado']);
+  
         $data['prestamos'] = $this->Prestamo_model->obtener_prestamos_activos();
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
