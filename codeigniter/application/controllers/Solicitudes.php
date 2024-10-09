@@ -243,21 +243,94 @@ class Solicitudes extends CI_Controller {
                     $ficha_prestamo = $this->Prestamo_model->obtener_datos_ficha_prestamo($resultado);
                     
                     if (!is_array($ficha_prestamo)) {
-                        $ficha_prestamo = array();
+                        $this->session->set_flashdata('error', 'Error al generar la ficha de préstamo.');
+                        redirect('solicitudes/pendientes');
                     }
                     
-                    // Agregar una variable para indicar que la ficha ha sido mostrada
-                    $ficha_prestamo['ficha_mostrada'] = true;
+                    // Generar el PDF y obtener la URL
+                    $pdfUrl = $this->generar_pdf_ficha_prestamo($ficha_prestamo, $idSolicitud);
                     
-                    // Cargar la vista de la ficha de préstamo
-                    $this->load->view('prestamos/ficha_prestamo', $ficha_prestamo);
-                    return;
+                    // Redirigir a la página de solicitudes pendientes con la URL del PDF
+                    redirect('solicitudes/pendientes?pdf=' . urlencode($pdfUrl));
                 }
             } else {
                 $this->db->trans_rollback();
                 $this->session->set_flashdata('error', 'Error al aprobar la solicitud.');
                 redirect('solicitudes/pendientes');
             }
+        }
+        
+        private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
+            // Asegurarse de que la librería TCPDF esté cargada
+            $this->load->library('pdf');
+        
+            // Crear nueva instancia de TCPDF
+            $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        
+            // Configurar el documento
+            $pdf->SetCreator(PDF_CREATOR);
+            $pdf->SetAuthor('Hemeroteca UMSS');
+            $pdf->SetTitle('Ficha de Préstamo');
+            $pdf->SetSubject('Ficha de Préstamo');
+            $pdf->SetKeywords('UMSS, Biblioteca, Préstamo');
+        
+            // Configurar fuentes
+            $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+        
+            // Configurar márgenes
+            $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+            $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+            $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+        
+            // Configurar saltos de página automáticos
+            $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+        
+            // Configurar factor de escala de imagen
+            $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+        
+            // Agregar una página
+            $pdf->AddPage();
+        
+            // Preparar el contenido HTML
+            $html = '
+            <h1 style="text-align: center;">U.M.S.S. BIBLIOTECAS - EN SALA</h1>
+            <table cellpadding="5">
+                <tr><td width="30%"><strong>Título:</strong></td><td>' . $this->sanitize_for_pdf($datos['titulo']) . '</td></tr>
+                <tr><td><strong>Fecha de Publicación:</strong></td><td>' . $this->sanitize_for_pdf($datos['fechaPublicacion']) . '</td></tr>
+                <tr><td><strong>Editorial:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreEditorial']) . '</td></tr>
+                <tr><td><strong>Ubicación:</strong></td><td>' . $this->sanitize_for_pdf($datos['ubicacionFisica']) . '</td></tr>
+                <tr><td><strong>Carnet del Lector:</strong></td><td>' . $this->sanitize_for_pdf($datos['carnet']) . '</td></tr>
+                <tr><td><strong>Profesión:</strong></td><td>' . $this->sanitize_for_pdf($datos['profesion']) . '</td></tr>
+                <tr><td><strong>Fecha de Préstamo:</strong></td><td>' . $this->sanitize_for_pdf($datos['fechaPrestamo']) . '</td></tr>
+                <tr><td><strong>Prestado por:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreEncargado'] . ' ' . $datos['apellidoEncargado']) . '</td></tr>
+            </table>
+            <br><br><br>
+            <div style="text-align: center;">
+                <p>_________________________</p>
+                <p>Firma del Lector</p>
+            </div>
+            ';
+        
+            // Escribir el HTML en el PDF
+            $pdf->writeHTML($html, true, false, true, false, '');
+        
+            // Generar un nombre único para el archivo PDF
+            $pdfFileName = 'ficha_prestamo_' . $idSolicitud . '_' . time() . '.pdf';
+            $pdfPath = FCPATH . 'uploads/' . $pdfFileName;
+        
+            // Guardar el PDF en el servidor
+            $pdf->Output($pdfPath, 'F');
+        
+            // Devolver la URL del PDF
+            return base_url('uploads/' . $pdfFileName);
+        }
+        
+        // Función auxiliar para sanitizar texto para PDF
+        private function sanitize_for_pdf($text) {
+            // Convertir caracteres especiales a entidades HTML
+            $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+            // Convertir entidades HTML a sus equivalentes Unicode
+            return html_entity_decode($text, ENT_QUOTES, 'UTF-8');
         }
 
         public function rechazar($idSolicitud) {

@@ -53,3 +53,9 @@
     </div>
 </div>
 
+<script>
+// Colocar este script al final de la vista de solicitudes pendientes
+<?php if ($this->input->get('pdf')): ?>
+    window.open('<?php echo $this->input->get('pdf'); ?>', '_blank');
+<?php endif; ?>
+</script>

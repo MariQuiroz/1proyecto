@@ -113,6 +113,7 @@ class Prestamo_model extends CI_Model {
         $this->db->where('P.idPrestamo', $idPrestamo);
         return $this->db->get()->row();
     }
+    
     public function obtener_datos_ficha_prestamo($idPrestamo) {
         $this->db->select('P.*, PUB.titulo, PUB.fechaPublicacion, ED.nombreEditorial, PUB.ubicacionFisica, U.carnet, U.profesion, EN.nombres AS nombreEncargado, EN.apellidoPaterno AS apellidoEncargado');
         $this->db->from('PRESTAMO P');
@@ -123,7 +124,21 @@ class Prestamo_model extends CI_Model {
         $this->db->where('P.idPrestamo', $idPrestamo);
         return $this->db->get()->row_array(); // Cambiamos row() por row_array()
     }
+
     public function obtener_datos_ficha_devolucion($idPrestamo) {
+        $this->db->select('p.idPrestamo, p.fechaPrestamo, pub.titulo, 
+                           u.nombres as nombreLector, u.apellidoPaterno as apellidoLector, u.email,
+                           e.nombres as nombreEncargado, e.apellidoPaterno as apellidoEncargado');
+        $this->db->from('PRESTAMO p');
+        $this->db->join('PUBLICACION pub', 'p.idPublicacion = pub.idPublicacion');
+        $this->db->join('USUARIO u', 'p.idUsuario = u.idUsuario');
+        $this->db->join('USUARIO e', 'p.idEncargadoPrestamo = e.idUsuario');
+        $this->db->where('p.idPrestamo', $idPrestamo);
+        $query = $this->db->get();
+    
+        return $query->row_array();
+    }
+   /* public function obtener_datos_ficha_devolucion($idPrestamo) {
         $this->db->select('P.*, PUB.titulo, U.nombres AS nombreLector, U.apellidoPaterno AS apellidoLector, U.email, EN.nombres AS nombreEncargado, EN.apellidoPaterno AS apellidoEncargado');
         $this->db->from('PRESTAMO P');
         $this->db->join('PUBLICACION PUB', 'P.idPublicacion = PUB.idPublicacion');
@@ -131,7 +146,7 @@ class Prestamo_model extends CI_Model {
         $this->db->join('USUARIO EN', 'P.idEncargadoDevolucion = EN.idUsuario');
         $this->db->where('P.idPrestamo', $idPrestamo);
         return $this->db->get()->row_array();
-    }
+    }*/
 
     public function get_prestamos_activos() {
         $this->db->select('p.*, u.nombres, u.apellidos, pub.titulo');
