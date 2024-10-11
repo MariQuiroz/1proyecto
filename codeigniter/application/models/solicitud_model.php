@@ -224,8 +224,15 @@ class Solicitud_model extends CI_Model {
         return $this->db->get()->result();
     }
     public function aprobar_solicitud($idSolicitud, $idEncargado) {
-        $solicitud = $this->db->get_where('SOLICITUD_PRESTAMO', ['idSolicitud' => $idSolicitud])->row();
-        
+        $this->db->select('SP.*, U.nombres as nombresLector, U.apellidoPaterno as apellidoLector, U.carnet, U.profesion, P.titulo, P.fechaPublicacion, P.ubicacionFisica, E.nombreEditorial, ENC.nombres as nombresEncargado, ENC.apellidoPaterno as apellidoEncargado');
+        $this->db->from('SOLICITUD_PRESTAMO SP');
+        $this->db->join('USUARIO U', 'SP.idUsuario = U.idUsuario');
+        $this->db->join('PUBLICACION P', 'SP.idPublicacion = P.idPublicacion');
+        $this->db->join('EDITORIAL E', 'P.idEditorial = E.idEditorial');
+        $this->db->join('USUARIO ENC', 'ENC.idUsuario = ' . $idEncargado);
+        $this->db->where('SP.idSolicitud', $idSolicitud);
+        $solicitud = $this->db->get()->row();
+    
         if (!$solicitud || $solicitud->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
             return false;
         }
@@ -242,16 +249,17 @@ class Solicitud_model extends CI_Model {
         ]);
     
         // Crear el préstamo
+        $fechaPrestamo = date('Y-m-d H:i:s');
         $data_prestamo = [
             'idSolicitud' => $idSolicitud,
             'idUsuario' => $solicitud->idUsuario,
             'idPublicacion' => $solicitud->idPublicacion,
             'idEncargadoPrestamo' => $idEncargado,
-            'fechaPrestamo' => date('Y-m-d H:i:s'),
+            'fechaPrestamo' => $fechaPrestamo,
             'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
             'horaInicio' => date('H:i:s'),
             'estado' => 1,
-            'fechaCreacion' => date('Y-m-d H:i:s'),
+            'fechaCreacion' => $fechaPrestamo,
             'idUsuarioCreador' => $idEncargado
         ];
     
@@ -262,13 +270,38 @@ class Solicitud_model extends CI_Model {
         $this->db->where('idPublicacion', $solicitud->idPublicacion);
         $this->db->update('PUBLICACION', [
             'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
-            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'fechaActualizacion' => $fechaPrestamo,
             'idUsuarioCreador' => $idEncargado
         ]);
     
+        $datos_ficha = [
+            'idPrestamo' => $idPrestamo,
+            'nombreEditorial' => $solicitud->nombreEditorial,
+            'fechaPublicacion' => $solicitud->fechaPublicacion,
+            'ubicacionFisica' => $solicitud->ubicacionFisica,
+            'titulo' => $solicitud->titulo,
+            'nombreCompletoLector' => $solicitud->nombresLector . ' ' . $solicitud->apellidoLector,
+            'carnet' => $solicitud->carnet,
+            'profesion' => $solicitud->profesion,
+            'fechaPrestamo' => $fechaPrestamo,
+            'nombreCompletoEncargado' => $solicitud->nombresEncargado . ' ' . $solicitud->apellidoEncargado
+        ];
+    
         $this->db->trans_complete();
     
-        return $this->db->trans_status() ? $idPrestamo : false;
+        if ($this->db->trans_status() === FALSE) {
+            return false;
+        }
+    
+        return $datos_ficha;
+    }
+    public function obtener_solicitud($idSolicitud) {
+        $this->db->select('s.*, p.titulo, u.nombres, u.apellidoPaterno');
+        $this->db->from('SOLICITUD_PRESTAMO s');
+        $this->db->join('PUBLICACION p', 'p.idPublicacion = s.idPublicacion');
+        $this->db->join('USUARIO u', 'u.idUsuario = s.idUsuario');
+        $this->db->where('s.idSolicitud', $idSolicitud);
+        return $this->db->get()->row();
     }
     
 }

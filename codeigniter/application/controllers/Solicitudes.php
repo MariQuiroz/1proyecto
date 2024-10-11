@@ -187,21 +187,33 @@ class Solicitudes extends CI_Controller {
         }
         public function crear($idPublicacion) {
             $this->_verificar_rol(['lector']);
-    
+        
             $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
-    
+        
             if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
                 $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
                 redirect('publicaciones/index');
             }
-    
+        
             if ($this->input->post()) {
                 $this->db->trans_start();
-    
+        
                 $idUsuario = $this->session->userdata('idUsuario');
                 $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
-    
+        
                 if ($resultado) {
+                    // Crear notificación de confirmación de solicitud
+                    $this->load->model('Notificacion_model');
+                    $mensaje = "Se ha recibido tu solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
+                    $this->Notificacion_model->crear_notificacion($idUsuario, $idPublicacion, 'solicitud_prestamo', $mensaje);
+        
+                    // Enviar email si el usuario lo prefiere
+                    $preferencias = $this->Notificacion_model->obtener_preferencias($idUsuario);
+                    if ($preferencias && $preferencias->notificarEmail) {
+                        $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
+                        $this->_enviar_email($usuario->email, 'Confirmación de solicitud de préstamo', $mensaje);
+                    }
+        
                     $this->db->trans_complete();
                     if ($this->db->trans_status() === FALSE) {
                         $this->session->set_flashdata('error', 'Error al crear la solicitud. Por favor, intente de nuevo.');
@@ -214,7 +226,7 @@ class Solicitudes extends CI_Controller {
                     $this->session->set_flashdata('error', 'Error al crear la solicitud.');
                 }
             }
-    
+        
             $data['publicacion'] = $publicacion;
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
@@ -232,23 +244,28 @@ class Solicitudes extends CI_Controller {
             $resultado = $this->Solicitud_model->aprobar_solicitud($idSolicitud, $idEncargado);
         
             if ($resultado) {
+                // Crear notificación de aprobación
+                $this->load->model('Notificacion_model');
+                $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
+                $mensaje = "Tu solicitud de préstamo para la publicación '{$solicitud->titulo}' ha sido aprobada.";
+                $this->Notificacion_model->crear_notificacion($solicitud->idUsuario, $solicitud->idPublicacion, 'aprobacion_rechazo', $mensaje);
+        
+                // Enviar email si el usuario lo prefiere
+                $preferencias = $this->Notificacion_model->obtener_preferencias($solicitud->idUsuario);
+                if ($preferencias && $preferencias->notificarEmail) {
+                    $usuario = $this->Usuario_model->obtener_usuario($solicitud->idUsuario);
+                    $this->_enviar_email($usuario->email, 'Solicitud de préstamo aprobada', $mensaje);
+                }
+        
                 $this->db->trans_complete();
+        
                 if ($this->db->trans_status() === FALSE) {
                     $this->session->set_flashdata('error', 'Error al aprobar la solicitud. Por favor, intente de nuevo.');
-                    redirect('solicitudes/pendientes');
                 } else {
                     $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamo registrado con éxito.');
                     
-                    // Obtener los datos para la ficha de préstamo
-                    $ficha_prestamo = $this->Prestamo_model->obtener_datos_ficha_prestamo($resultado);
-                    
-                    if (!is_array($ficha_prestamo)) {
-                        $this->session->set_flashdata('error', 'Error al generar la ficha de préstamo.');
-                        redirect('solicitudes/pendientes');
-                    }
-                    
                     // Generar el PDF y obtener la URL
-                    $pdfUrl = $this->generar_pdf_ficha_prestamo($ficha_prestamo, $idSolicitud);
+                    $pdfUrl = $this->generar_pdf_ficha_prestamo($resultado, $idSolicitud);
                     
                     // Redirigir a la página de solicitudes pendientes con la URL del PDF
                     redirect('solicitudes/pendientes?pdf=' . urlencode($pdfUrl));
@@ -256,8 +273,17 @@ class Solicitudes extends CI_Controller {
             } else {
                 $this->db->trans_rollback();
                 $this->session->set_flashdata('error', 'Error al aprobar la solicitud.');
-                redirect('solicitudes/pendientes');
             }
+        
+            redirect('solicitudes/pendientes');
+        }
+        
+        private function _enviar_email($to, $subject, $message) {
+            $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
+            $this->email->to($to);
+            $this->email->subject($subject);
+            $this->email->message($message);
+            return $this->email->send();
         }
         
         private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
@@ -295,14 +321,15 @@ class Solicitudes extends CI_Controller {
             $html = '
             <h1 style="text-align: center;">U.M.S.S. BIBLIOTECAS - EN SALA</h1>
             <table cellpadding="5">
-                <tr><td width="30%"><strong>Título:</strong></td><td>' . $this->sanitize_for_pdf($datos['titulo']) . '</td></tr>
+                <tr><td width="30%"><strong>Editorial:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreEditorial']) . '</td></tr>
                 <tr><td><strong>Fecha de Publicación:</strong></td><td>' . $this->sanitize_for_pdf($datos['fechaPublicacion']) . '</td></tr>
-                <tr><td><strong>Editorial:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreEditorial']) . '</td></tr>
                 <tr><td><strong>Ubicación:</strong></td><td>' . $this->sanitize_for_pdf($datos['ubicacionFisica']) . '</td></tr>
+                <tr><td><strong>Título:</strong></td><td>' . $this->sanitize_for_pdf($datos['titulo']) . '</td></tr>
+                <tr><td><strong>Nombre del Lector:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td></tr>
                 <tr><td><strong>Carnet del Lector:</strong></td><td>' . $this->sanitize_for_pdf($datos['carnet']) . '</td></tr>
                 <tr><td><strong>Profesión:</strong></td><td>' . $this->sanitize_for_pdf($datos['profesion']) . '</td></tr>
                 <tr><td><strong>Fecha de Préstamo:</strong></td><td>' . $this->sanitize_for_pdf($datos['fechaPrestamo']) . '</td></tr>
-                <tr><td><strong>Prestado por:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreEncargado'] . ' ' . $datos['apellidoEncargado']) . '</td></tr>
+                <tr><td><strong>Prestado por:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreCompletoEncargado']) . '</td></tr>
             </table>
             <br><br><br>
             <div style="text-align: center;">
@@ -332,7 +359,7 @@ class Solicitudes extends CI_Controller {
             // Convertir entidades HTML a sus equivalentes Unicode
             return html_entity_decode($text, ENT_QUOTES, 'UTF-8');
         }
-
+        
         public function rechazar($idSolicitud) {
             $this->_verificar_rol(['administrador', 'encargado']);
     

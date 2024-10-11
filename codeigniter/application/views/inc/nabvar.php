@@ -18,12 +18,50 @@
         </li>
 
         <li class="dropdown notification-list">
-            <a class="nav-link dropdown-toggle  waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
                 <i class="fe-bell noti-icon"></i>
-                <span class="badge badge-danger rounded-circle noti-icon-badge">5</span>
+                <?php 
+                $notificaciones_no_leidas = $this->Notificacion_model->contar_notificaciones_no_leidas($this->session->userdata('idUsuario'));
+                if ($notificaciones_no_leidas > 0):
+                ?>
+                <span class="badge badge-danger rounded-circle noti-icon-badge"><?php echo $notificaciones_no_leidas; ?></span>
+                <?php endif; ?>
             </a>
             <div class="dropdown-menu dropdown-menu-right dropdown-lg">
-                <!-- Contenido de notificaciones (sin cambios) -->
+                <div class="dropdown-item noti-title">
+                    <h5 class="m-0">
+                        <span class="float-right">
+                            <a href="<?php echo site_url('notificaciones/marcar_todas_leidas'); ?>" class="text-dark">
+                                <small>Marcar todas como leídas</small>
+                            </a>
+                        </span>Notificaciones
+                    </h5>
+                </div>
+
+                <div class="slimscroll noti-scroll">
+                    <?php 
+                    $notificaciones = $this->Notificacion_model->obtener_ultimas_notificaciones($this->session->userdata('idUsuario'), 5);
+                    foreach ($notificaciones as $notificacion):
+                    ?>
+                    <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" class="dropdown-item notify-item <?php echo $notificacion->leida ? '' : 'active'; ?>">
+                        <div class="notify-icon bg-primary">
+                            <i class="mdi mdi-comment-account-outline"></i>
+                        </div>
+                        <p class="notify-details"><?php echo $notificacion->mensaje; ?>
+                            <small class="text-muted"><?php echo time_elapsed_string($notificacion->fechaEnvio); ?></small>
+                        </p>
+                    </a>
+                    <?php endforeach; ?>
+
+                    <?php if (empty($notificaciones)): ?>
+                    <p class="text-center">No tienes notificaciones nuevas</p>
+                    <?php endif; ?>
+                </div>
+
+                <a href="<?php echo site_url('notificaciones'); ?>" class="dropdown-item text-center text-primary notify-item notify-all">
+                    Ver todas
+                    <i class="fi-arrow-right"></i>
+                </a>
             </div>
         </li>
 
