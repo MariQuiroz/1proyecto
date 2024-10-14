@@ -19,8 +19,19 @@ class Notificaciones extends CI_Controller {
     public function index() {
         $this->_verificar_sesion();
         $idUsuario = $this->session->userdata('idUsuario');
-        $data['notificaciones'] = $this->Notificacion_model->obtener_notificaciones_usuario($idUsuario);
-        
+        $rol = $this->session->userdata('rol'); // Añade esta línea para obtener el rol
+    
+        if (!$idUsuario || !$rol) {
+            redirect('usuarios/login'); // Redirige al login si no hay sesión
+        }
+    
+        $data['notificaciones'] = $this->Notificacion_model->obtener_notificaciones($idUsuario, $rol);
+        $data['rol'] = $rol; // Pasa el rol a la vista
+    
+        // Agregar esto para depuración
+        error_log("Rol del usuario: " . $rol);
+        error_log("Notificaciones obtenidas: " . print_r($data['notificaciones'], true));
+    
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
         $this->load->view('inc/aside');
@@ -72,10 +83,11 @@ class Notificaciones extends CI_Controller {
     }
 
     private function _enviar_email($to, $subject, $message) {
-        $this->email->from('hemeroteca@example.com', 'Hemeroteca UMSS');
+        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
         $this->email->to($to);
         $this->email->subject($subject);
         $this->email->message($message);
         return $this->email->send();
     }
+    
 }

@@ -21,7 +21,9 @@
             <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
                 <i class="fe-bell noti-icon"></i>
                 <?php 
-                $notificaciones_no_leidas = $this->Notificacion_model->contar_notificaciones_no_leidas($this->session->userdata('idUsuario'));
+                $idUsuario = $this->session->userdata('idUsuario');
+                $rol = $this->session->userdata('rol');
+                $notificaciones_no_leidas = $this->Notificacion_model->contar_notificaciones_no_leidas($idUsuario, $rol);
                 if ($notificaciones_no_leidas > 0):
                 ?>
                 <span class="badge badge-danger rounded-circle noti-icon-badge"><?php echo $notificaciones_no_leidas; ?></span>
@@ -40,20 +42,37 @@
 
                 <div class="slimscroll noti-scroll">
                     <?php 
-                    $notificaciones = $this->Notificacion_model->obtener_ultimas_notificaciones($this->session->userdata('idUsuario'), 5);
-                    foreach ($notificaciones as $notificacion):
+                    $notificaciones = $this->Notificacion_model->obtener_ultimas_notificaciones($idUsuario, $rol, 5);
+                    if (!empty($notificaciones)):
+                        foreach ($notificaciones as $notificacion):
+                            $icon_class = 'mdi mdi-comment-account-outline';
+                            switch($notificacion->tipo) {
+                                case 'solicitud_prestamo':
+                                    $icon_class = 'mdi mdi-book-open-page-variant';
+                                    break;
+                                case 'aprobacion_rechazo':
+                                    $icon_class = 'mdi mdi-check-circle-outline';
+                                    break;
+                                case 'nueva_solicitud':
+                                    $icon_class = 'mdi mdi-alert-circle-outline';
+                                    break;
+                                case 'sistema':
+                                    $icon_class = 'mdi mdi-cog-outline';
+                                    break;
+                            }
                     ?>
                     <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" class="dropdown-item notify-item <?php echo $notificacion->leida ? '' : 'active'; ?>">
                         <div class="notify-icon bg-primary">
-                            <i class="mdi mdi-comment-account-outline"></i>
+                            <i class="<?php echo $icon_class; ?>"></i>
                         </div>
                         <p class="notify-details"><?php echo $notificacion->mensaje; ?>
                             <small class="text-muted"><?php echo time_elapsed_string($notificacion->fechaEnvio); ?></small>
                         </p>
                     </a>
-                    <?php endforeach; ?>
-
-                    <?php if (empty($notificaciones)): ?>
+                    <?php 
+                        endforeach;
+                    else:
+                    ?>
                     <p class="text-center">No tienes notificaciones nuevas</p>
                     <?php endif; ?>
                 </div>

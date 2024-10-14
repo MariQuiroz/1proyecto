@@ -213,6 +213,7 @@ class Solicitudes extends CI_Controller {
                         $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
                         $this->_enviar_email($usuario->email, 'Confirmación de solicitud de préstamo', $mensaje);
                     }
+                    
         
                     $this->db->trans_complete();
                     if ($this->db->trans_status() === FALSE) {
