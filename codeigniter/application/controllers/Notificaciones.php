@@ -29,6 +29,15 @@ class Notificaciones extends CI_Controller {
         $data['notificaciones'] = $notificaciones;
         $data['rol'] = $rol;
     
+        // Pasar las constantes de tipo de notificación a la vista
+        $data['NOTIFICACION_SOLICITUD_PRESTAMO'] = NOTIFICACION_SOLICITUD_PRESTAMO;
+        $data['NOTIFICACION_APROBACION_PRESTAMO'] = NOTIFICACION_APROBACION_PRESTAMO;
+        $data['NOTIFICACION_RECHAZO_PRESTAMO'] = NOTIFICACION_RECHAZO_PRESTAMO;
+        $data['NOTIFICACION_DEVOLUCION'] = NOTIFICACION_DEVOLUCION;
+        $data['NOTIFICACION_DISPONIBILIDAD'] = NOTIFICACION_DISPONIBILIDAD;
+        $data['NOTIFICACION_NUEVA_SOLICITUD'] = NOTIFICACION_NUEVA_SOLICITUD;
+        $data['NOTIFICACION_VENCIMIENTO'] = NOTIFICACION_VENCIMIENTO;
+    
         log_message('info', 'Cargando notificaciones para usuario ID=' . $idUsuario . ', Rol=' . $rol . ', Cantidad=' . count($notificaciones));
     
         $this->load->view('inc/header');
@@ -88,5 +97,38 @@ class Notificaciones extends CI_Controller {
         $this->email->message($message);
         return $this->email->send();
     }
-    
+    public function ver($idNotificacion) {
+        $this->_verificar_sesion();
+        
+        $notificacion = $this->Notificacion_model->obtener_notificacion($idNotificacion);
+        
+        if (!$notificacion) {
+            $this->session->set_flashdata('error', 'La notificación no existe.');
+            redirect('notificaciones');
+        }
+        
+        // Marcar la notificación como leída
+        $this->Notificacion_model->marcar_como_leida($idNotificacion);
+        
+        // Redirigir según el tipo de notificación
+        switch ($notificacion->tipo) {
+            case NOTIFICACION_NUEVA_SOLICITUD:
+                redirect('solicitudes/pendientes');
+                break;
+            case NOTIFICACION_SOLICITUD_PRESTAMO:
+            case NOTIFICACION_APROBACION_PRESTAMO:
+            case NOTIFICACION_RECHAZO_PRESTAMO:
+                redirect('solicitudes/detalle/' . $notificacion->idPublicacion);
+                break;
+            case NOTIFICACION_DEVOLUCION:
+            case NOTIFICACION_VENCIMIENTO:
+                redirect('prestamos/detalle/' . $notificacion->idPublicacion);
+                break;
+            case NOTIFICACION_DISPONIBILIDAD:
+                redirect('publicaciones/ver/' . $notificacion->idPublicacion);
+                break;
+            default:
+                redirect('notificaciones');
+        }
+    }
 }

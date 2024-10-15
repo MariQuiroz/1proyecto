@@ -12,33 +12,13 @@ class Notificacion_model extends CI_Model {
         
     }
 
-    public function crear_notificacion($idUsuario, $idPublicacion, $tipoNotificacion, $mensaje) {
-        $data = array(
-            'idUsuario' => $idUsuario,
-            'idPublicacion' => $idPublicacion,
-            'tipoNotificacion' => $tipoNotificacion,
-            'mensaje' => $mensaje,
-            'fechaEnvio' => date('Y-m-d H:i:s'),
-            'leida' => FALSE
-        );
-
-        $this->db->trans_start();
-        $this->db->insert('NOTIFICACION', $data);
-        $this->db->trans_complete();
-
-        return $this->db->trans_status();
-    }
-
     public function obtener_notificaciones_usuario($idUsuario) {
         $this->db->where('idUsuario', $idUsuario);
         $this->db->order_by('fechaEnvio', 'DESC');
         return $this->db->get('NOTIFICACION')->result();
     }
 
-    public function marcar_como_leida($idNotificacion) {
-        $this->db->where('idNotificacion', $idNotificacion);
-        return $this->db->update('NOTIFICACION', array('leida' => TRUE));
-    }
+   
 
     public function guardar_preferencias($idUsuario, $preferencias) {
         $data = array(
@@ -101,76 +81,80 @@ class Notificacion_model extends CI_Model {
         return $this->db->get()->result();
     }*/
 
-    public function crear_notificacion_admin($idUsuario, $idPublicacion, $tipoNotificacion, $mensaje) {
+    public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) {
         $data = array(
             'idUsuario' => $idUsuario,
             'idPublicacion' => $idPublicacion,
-            'tipoNotificacion' => $tipoNotificacion,
+            'tipo' => $tipo,
             'mensaje' => $mensaje,
             'fechaEnvio' => date('Y-m-d H:i:s'),
             'leida' => FALSE
         );
-    
+
         $this->db->trans_start();
         $this->db->insert('NOTIFICACION', $data);
         $insert_id = $this->db->insert_id();
         $this->db->trans_complete();
-    
+
         if ($this->db->trans_status() === FALSE) {
-            log_message('error', 'Error al crear notificación para admin/encargado: ' . $this->db->last_query());
+            log_message('error', 'Error al crear notificación: ' . $this->db->last_query());
             return false;
         } else {
-            log_message('info', 'Notificación creada para admin/encargado: ID=' . $insert_id);
+            log_message('info', 'Notificación creada: ID=' . $insert_id);
             return true;
         }
     }
 
-    public function obtener_notificaciones_admin($idUsuario, $rol) {
-        $this->db->where('idUsuario', $idUsuario);
-        if ($rol == 'administrador' || $rol == 'encargado') {
-            $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
-        }
-        $this->db->order_by('fechaEnvio', 'DESC');
-        return $this->db->get('NOTIFICACION')->result();
-    }
-  
-
-public function obtener_notificaciones($idUsuario, $rol) {
-    $this->db->select('idNotificacion, idUsuario, mensaje, tipoNotificacion, fechaEnvio, leida, idPublicacion');
-    $this->db->from('NOTIFICACION');
-
-    if ($rol == 'administrador' || $rol == 'encargado') {
-        $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
-    } else {
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where_in('tipoNotificacion', ['solicitud_prestamo', 'aprobacion_rechazo']);
-    }
+    public function obtener_notificaciones($idUsuario, $rol) {
+        $this->db->select('idNotificacion, idUsuario, mensaje, tipo, fechaEnvio, leida, idPublicacion');
+        $this->db->from('NOTIFICACION');
     
-    $this->db->order_by('fechaEnvio', 'DESC');
-    return $this->db->get()->result();
-}
-
-public function contar_notificaciones_no_leidas($idUsuario, $rol) {
-    $this->db->where('leida', 0);
-    if ($rol == 'administrador' || $rol == 'encargado') {
-        $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
-    } else {
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where_in('tipoNotificacion', ['solicitud_prestamo', 'aprobacion_rechazo']);
+        if ($rol == 'administrador' || $rol == 'encargado') {
+            $this->db->group_start()
+                ->where('idUsuario', $idUsuario)
+                ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
+            ->group_end();
+        } else {
+            $this->db->where('idUsuario', $idUsuario);
+            $this->db->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
+        }
+        
+        $this->db->order_by('fechaEnvio', 'DESC');
+        return $this->db->get()->result();
     }
-    return $this->db->count_all_results('NOTIFICACION');
-}
+
+    public function contar_notificaciones_no_leidas($idUsuario, $rol) {
+        $this->db->where('leida', 0);
+        if ($rol == 'administrador' || $rol == 'encargado') {
+            $this->db->group_start()
+                ->where('idUsuario', $idUsuario)
+                ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
+            ->group_end();
+        } else {
+            $this->db->where('idUsuario', $idUsuario);
+            $this->db->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
+        }
+        return $this->db->count_all_results('NOTIFICACION');
+    }
 
 public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
     if ($rol == 'administrador' || $rol == 'encargado') {
-        $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
+        $this->db->where_in('tipo', ['nueva_solicitud', 'sistema']);
     } else {
         $this->db->where('idUsuario', $idUsuario);
-        $this->db->where_in('tipoNotificacion', ['solicitud_prestamo', 'aprobacion_rechazo']);
+        $this->db->where_in('tipo', ['solicitud_prestamo', 'aprobacion_rechazo']);
     }
     $this->db->order_by('fechaEnvio', 'DESC');
     $this->db->limit($limite);
     return $this->db->get('NOTIFICACION')->result();
+}
+public function obtener_notificacion($idNotificacion) {
+    return $this->db->get_where('NOTIFICACION', ['idNotificacion' => $idNotificacion])->row();
+}
+
+public function marcar_como_leida($idNotificacion) {
+    $this->db->where('idNotificacion', $idNotificacion);
+    return $this->db->update('NOTIFICACION', ['leida' => TRUE]);
 }
 
 }

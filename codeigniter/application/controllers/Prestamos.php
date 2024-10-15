@@ -178,26 +178,30 @@ class Prestamos extends CI_Controller {
 */
 public function finalizar($idPrestamo) {
     $this->_verificar_rol(['administrador', 'encargado']);
-
+    
     $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
     if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
         $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
         redirect('prestamos/activos');
         return;
     }
-
+    
     $this->db->trans_start();
-
+    
     $idEncargado = $this->session->userdata('idUsuario');
     $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado);
-
+    
     if ($resultado) {
         // Generar la ficha de devolución y enviar por correo
         $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
         $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
-
+        
+        // Crear notificación de devolución
+        $mensaje = "El préstamo de la publicación '{$prestamo->titulo}' ha sido finalizado.";
+        $this->Notificacion_model->crear_notificacion($prestamo->idUsuario, $prestamo->idPublicacion, NOTIFICACION_DEVOLUCION, $mensaje);
+        
         $this->db->trans_complete();
-
+        
         if ($this->db->trans_status() === FALSE) {
             $this->session->set_flashdata('error', 'Hubo un error al finalizar el préstamo. Por favor, intente de nuevo.');
         } else {
@@ -213,10 +217,9 @@ public function finalizar($idPrestamo) {
         $this->db->trans_rollback();
         $this->session->set_flashdata('error', 'No se pudo finalizar el préstamo. Por favor, intente de nuevo.');
     }
-
+    
     redirect('prestamos/activos');
 }
-
 private function generar_ficha_devolucion($idPrestamo) {
     $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
 

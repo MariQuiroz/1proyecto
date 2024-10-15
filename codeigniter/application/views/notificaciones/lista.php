@@ -1,3 +1,4 @@
+
 <div class="content-page">
     <div class="content">
         <!-- Start Content-->
@@ -12,43 +13,49 @@
                     </div>
                 <?php else: ?>
                     <div class="list-group">
-                        <?php foreach ($notificaciones as $notificacion): ?>
-                            <div class="list-group-item list-group-item-action <?php echo $notificacion->leida ? 'bg-light' : ''; ?>">
-                                <div class="d-flex w-100 justify-content-between align-items-center">
-                                    <h5 class="mb-1">
-                                        <?php
-                                        $icon_class = 'fa-bell';
-                                        switch($notificacion->tipoNotificacion) {
-                                            case 'solicitud_prestamo':
-                                                $icon_class = 'fa-book';
-                                                break;
-                                            case 'aprobacion_rechazo':
-                                                $icon_class = 'fa-check-circle';
-                                                break;
-                                            case 'nueva_solicitud':
-                                                $icon_class = 'fa-exclamation-circle';
-                                                break;
-                                            case 'sistema':
-                                                $icon_class = 'fa-cog';
-                                                break;
-                                        }
-                                        ?>
-                                        <i class="fas <?php echo $icon_class; ?> mr-2"></i>
-                                        <?php echo ucfirst($notificacion->tipoNotificacion); ?>
-                                    </h5>
-                                    <small>
-                                        <?php echo date('d/m/Y H:i', strtotime($notificacion->fechaEnvio)); ?>
-                                    </small>
-                                </div>
-                                <p class="mb-1"><?php echo $notificacion->mensaje; ?></p>
-                                <?php if (($rol == 'administrador' || $rol == 'encargado') && $notificacion->tipoNotificacion == 'nueva_solicitud'): ?>
-                                    <a href="<?php echo site_url('solicitudes/ver/' . $notificacion->idPublicacion); ?>" class="btn btn-primary btn-sm mt-2">Ver solicitud</a>
-                                <?php endif; ?>
-                                <?php if (!$notificacion->leida): ?>
-                                    <a href="<?php echo site_url('notificaciones/marcar_leida/' . $notificacion->idNotificacion); ?>" class="btn btn-outline-secondary btn-sm mt-2">Marcar como leída</a>
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach; ?>
+                    <?php foreach ($notificaciones as $notificacion): ?>
+    <tr>
+        <td><?php echo $notificacion->idNotificacion; ?></td>
+        <td><?php echo $notificacion->mensaje; ?></td>
+        <td>
+    <?php 
+    $tipo = isset($notificacion->tipo) ? $notificacion->tipo : 0;
+    switch($tipo) {
+        case NOTIFICACION_SOLICITUD_PRESTAMO:
+            echo 'Solicitud de Préstamo';
+            break;
+        case NOTIFICACION_APROBACION_PRESTAMO:
+            echo 'Aprobación de Préstamo';
+            break;
+        case NOTIFICACION_RECHAZO_PRESTAMO:
+            echo 'Rechazo de Préstamo';
+            break;
+        case NOTIFICACION_DEVOLUCION:
+            echo 'Devolución';
+            break;
+        case NOTIFICACION_DISPONIBILIDAD:
+            echo 'Disponibilidad';
+            break;
+        case NOTIFICACION_NUEVA_SOLICITUD:
+            echo 'Nueva Solicitud';
+            break;
+        case NOTIFICACION_VENCIMIENTO:
+            echo 'Vencimiento';
+            break;
+        default:
+            echo 'Desconocido';
+    }
+    ?>
+</td>
+        <td><?php echo $notificacion->fechaEnvio; ?></td>
+        <td><?php echo $notificacion->leida ? 'Sí' : 'No'; ?></td>
+        <td>
+            <?php if (!$notificacion->leida): ?>
+                <a href="<?php echo site_url('notificaciones/marcar_leida/'.$notificacion->idNotificacion); ?>" class="btn btn-sm btn-primary">Marcar como leída</a>
+            <?php endif; ?>
+        </td>
+    </tr>
+<?php endforeach; ?>
                     </div>
                 <?php endif; ?>
             </div>

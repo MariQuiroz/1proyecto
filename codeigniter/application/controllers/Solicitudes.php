@@ -154,15 +154,23 @@ class Solicitudes extends CI_Controller {
             if ($resultado) {
                 // Crear notificación para el lector
                 $mensaje_lector = "Se ha recibido tu solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
-                $this->Notificacion_model->crear_notificacion($idUsuario, $idPublicacion, 'solicitud_prestamo', $mensaje_lector);
-    
+                $this->Notificacion_model->crear_notificacion($idUsuario, $idPublicacion, NOTIFICACION_SOLICITUD_PRESTAMO, $mensaje_lector);
+        
                 // Crear notificación para los administradores y encargados
                 $admins_encargados = $this->Usuario_model->obtener_admins_encargados();
                 foreach ($admins_encargados as $usuario) {
                     $mensaje_admin = "Nueva solicitud de préstamo para la publicación '{$publicacion->titulo}' del usuario '{$this->session->userdata('nombres')} {$this->session->userdata('apellidoPaterno')}'.";
-                    $this->Notificacion_model->crear_notificacion($usuario->idUsuario, $idPublicacion, 'nueva_solicitud', $mensaje_admin);
+                    $this->Notificacion_model->crear_notificacion($usuario->idUsuario, $idPublicacion, NOTIFICACION_NUEVA_SOLICITUD, $mensaje_admin);
+                    log_message('info', 'Notificación creada para admin/encargado: ID=' . $usuario->idUsuario);
                 }
-    
+        
+                // Enviar email si el usuario lo prefiere
+                $preferencias = $this->Notificacion_model->obtener_preferencias($idUsuario);
+                if ($preferencias && $preferencias->notificarEmail) {
+                    $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
+                    $this->_enviar_email($usuario->email, 'Confirmación de solicitud de préstamo', $mensaje_lector);
+                }
+        
                 $this->db->trans_complete();
                 
                 if ($this->db->trans_status() === FALSE) {
@@ -176,6 +184,15 @@ class Solicitudes extends CI_Controller {
             }
             
             redirect('solicitudes/mis_solicitudes');
+        }
+
+        
+        private function _enviar_email($to, $subject, $message) {
+            $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
+            $this->email->to($to);
+            $this->email->subject($subject);
+            $this->email->message($message);
+            return $this->email->send();
         }
     
         public function detalle($idSolicitud) {
@@ -302,13 +319,6 @@ class Solicitudes extends CI_Controller {
             redirect('solicitudes/pendientes');
         }
         
-        private function _enviar_email($to, $subject, $message) {
-            $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
-            $this->email->to($to);
-            $this->email->subject($subject);
-            $this->email->message($message);
-            return $this->email->send();
-        }
         
         private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
             // Asegurarse de que la librería TCPDF esté cargada
@@ -386,13 +396,18 @@ class Solicitudes extends CI_Controller {
         
         public function rechazar($idSolicitud) {
             $this->_verificar_rol(['administrador', 'encargado']);
-    
+            
             $this->db->trans_start();
-    
+            
             $idEncargado = $this->session->userdata('idUsuario');
             $resultado = $this->Solicitud_model->rechazar_solicitud($idSolicitud, $idEncargado);
-    
+            
             if ($resultado) {
+                // Crear notificación de rechazo
+                $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
+                $mensaje = "Tu solicitud de préstamo para la publicación '{$solicitud->titulo}' ha sido rechazada.";
+                $this->Notificacion_model->crear_notificacion($solicitud->idUsuario, $solicitud->idPublicacion, NOTIFICACION_RECHAZO_PRESTAMO, $mensaje);
+                
                 $this->db->trans_complete();
                 if ($this->db->trans_status() === FALSE) {
                     $this->session->set_flashdata('error', 'Error al rechazar la solicitud. Por favor, intente de nuevo.');
@@ -403,9 +418,10 @@ class Solicitudes extends CI_Controller {
                 $this->db->trans_rollback();
                 $this->session->set_flashdata('error', 'Error al rechazar la solicitud.');
             }
-    
+            
             redirect('solicitudes/pendientes');
         }
+        
         public function aprobadas() {
             $this->_verificar_rol(['administrador', 'encargado']);
             $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_por_estado(ESTADO_SOLICITUD_APROBADA);

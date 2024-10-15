@@ -246,5 +246,5 @@ class Usuario_model extends CI_Model {
         $this->db->where('estado', 1); // Asumiendo que 1 significa activo
         return $this->db->get()->result();
     }
-
+    
 }

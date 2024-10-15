@@ -30,27 +30,36 @@
                     if (!empty($notificaciones)):
                         foreach ($notificaciones as $notificacion):
                             $icon_class = 'mdi mdi-comment-account-outline';
-                            switch($notificacion->tipoNotificacion) {
-                                case 'solicitud_prestamo':
+                            switch($notificacion->tipo) {
+                                case NOTIFICACION_SOLICITUD_PRESTAMO:
                                     $icon_class = 'mdi mdi-book-open-page-variant';
                                     break;
-                                case 'aprobacion_rechazo':
+                                case NOTIFICACION_APROBACION_PRESTAMO:
+                                case NOTIFICACION_RECHAZO_PRESTAMO:
                                     $icon_class = 'mdi mdi-check-circle-outline';
                                     break;
-                                case 'nueva_solicitud':
+                                case NOTIFICACION_NUEVA_SOLICITUD:
                                     $icon_class = 'mdi mdi-alert-circle-outline';
                                     break;
-                                case 'sistema':
-                                    $icon_class = 'mdi mdi-cog-outline';
+                                case NOTIFICACION_DEVOLUCION:
+                                    $icon_class = 'mdi mdi-undo-variant';
                                     break;
+                                case NOTIFICACION_DISPONIBILIDAD:
+                                    $icon_class = 'mdi mdi-bookmark-check';
+                                    break;
+                                case NOTIFICACION_VENCIMIENTO:
+                                    $icon_class = 'mdi mdi-clock-alert';
+                                    break;
+                                default:
+                                    $icon_class = 'mdi mdi-comment-account-outline';
                             }
                     ?>
                     <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" class="dropdown-item notify-item <?php echo $notificacion->leida ? '' : 'active'; ?>">
                         <div class="notify-icon bg-primary">
                             <i class="<?php echo $icon_class; ?>"></i>
                         </div>
-                        <p class="notify-details"><?php echo $notificacion->mensaje; ?>
-                            <small class="text-muted"><?php echo time_elapsed_string($notificacion->fechaEnvio); ?></small>
+                        <p class="notify-details"><?php echo (strlen($notificacion->mensaje) > 50) ? substr($notificacion->mensaje, 0, 47) . '...' : $notificacion->mensaje; ?>
+                            <small class="text-muted"><?php echo $this->Notificacion_model->time_elapsed_string($notificacion->fechaEnvio); ?></small>
                         </p>
                     </a>
                     <?php 
