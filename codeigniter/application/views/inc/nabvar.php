@@ -25,50 +25,55 @@
                 </div>
 
                 <div class="slimscroll noti-scroll">
-                    <?php 
-                    $notificaciones = $this->Notificacion_model->obtener_ultimas_notificaciones($idUsuario, $rol, 5);
-                    if (!empty($notificaciones)):
-                        foreach ($notificaciones as $notificacion):
-                            $icon_class = 'mdi mdi-comment-account-outline';
-                            switch($notificacion->tipo) {
-                                case NOTIFICACION_SOLICITUD_PRESTAMO:
-                                    $icon_class = 'mdi mdi-book-open-page-variant';
-                                    break;
-                                case NOTIFICACION_APROBACION_PRESTAMO:
-                                case NOTIFICACION_RECHAZO_PRESTAMO:
-                                    $icon_class = 'mdi mdi-check-circle-outline';
-                                    break;
-                                case NOTIFICACION_NUEVA_SOLICITUD:
-                                    $icon_class = 'mdi mdi-alert-circle-outline';
-                                    break;
-                                case NOTIFICACION_DEVOLUCION:
-                                    $icon_class = 'mdi mdi-undo-variant';
-                                    break;
-                                case NOTIFICACION_DISPONIBILIDAD:
-                                    $icon_class = 'mdi mdi-bookmark-check';
-                                    break;
-                                case NOTIFICACION_VENCIMIENTO:
-                                    $icon_class = 'mdi mdi-clock-alert';
-                                    break;
-                                default:
-                                    $icon_class = 'mdi mdi-comment-account-outline';
-                            }
-                    ?>
-                    <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" class="dropdown-item notify-item <?php echo $notificacion->leida ? '' : 'active'; ?>">
-                        <div class="notify-icon bg-primary">
-                            <i class="<?php echo $icon_class; ?>"></i>
-                        </div>
-                        <p class="notify-details"><?php echo (strlen($notificacion->mensaje) > 50) ? substr($notificacion->mensaje, 0, 47) . '...' : $notificacion->mensaje; ?>
-                            <small class="text-muted"><?php echo $this->Notificacion_model->time_elapsed_string($notificacion->fechaEnvio); ?></small>
-                        </p>
-                    </a>
-                    <?php 
-                        endforeach;
-                    else:
-                    ?>
-                    <p class="text-center">No tienes notificaciones nuevas</p>
-                    <?php endif; ?>
-                </div>
+                <?php 
+                $notificaciones = $this->Notificacion_model->obtener_ultimas_notificaciones($idUsuario, $rol, 5);
+                if (!empty($notificaciones)):
+                    foreach ($notificaciones as $notificacion):
+                        $icon_class = 'mdi mdi-comment-account-outline';
+                        $mensaje_mostrar = $notificacion->mensaje;
+                        
+                        switch($notificacion->tipo) {
+                            case NOTIFICACION_SOLICITUD_PRESTAMO:
+                                $icon_class = 'mdi mdi-book-open-page-variant';
+                                break;
+                            case NOTIFICACION_APROBACION_PRESTAMO:
+                            case NOTIFICACION_RECHAZO_PRESTAMO:
+                                $icon_class = 'mdi mdi-check-circle-outline';
+                                break;
+                            case NOTIFICACION_NUEVA_SOLICITUD:
+                                $icon_class = 'mdi mdi-alert-circle-outline';
+                                if ($rol == 'administrador' || $rol == 'encargado') {
+                                    $mensaje_mostrar = "Nueva solicitud de préstamo";
+                                }
+                                break;
+                            case NOTIFICACION_DEVOLUCION:
+                                $icon_class = 'mdi mdi-undo-variant';
+                                break;
+                            case NOTIFICACION_DISPONIBILIDAD:
+                                $icon_class = 'mdi mdi-bookmark-check';
+                                break;
+                            case NOTIFICACION_VENCIMIENTO:
+                                $icon_class = 'mdi mdi-clock-alert';
+                                break;
+                            default:
+                                $icon_class = 'mdi mdi-comment-account-outline';
+                        }
+                ?>
+                <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" class="dropdown-item notify-item <?php echo $notificacion->leida ? '' : 'active'; ?>">
+                    <div class="notify-icon bg-primary">
+                        <i class="<?php echo $icon_class; ?>"></i>
+                    </div>
+                    <p class="notify-details"><?php echo (strlen($mensaje_mostrar) > 50) ? substr($mensaje_mostrar, 0, 47) . '...' : $mensaje_mostrar; ?>
+                        <small class="text-muted"><?php echo $this->Notificacion_model->time_elapsed_string($notificacion->fechaEnvio); ?></small>
+                    </p>
+                </a>
+                <?php 
+                    endforeach;
+                else:
+                ?>
+                <p class="text-center">No tienes notificaciones nuevas</p>
+                <?php endif; ?>
+            </div>
 
                 <a href="<?php echo site_url('notificaciones'); ?>" class="dropdown-item text-center text-primary notify-item notify-all">
                     Ver todas
