@@ -100,52 +100,77 @@ class Notificacion_model extends CI_Model {
         $this->db->order_by('fechaEnvio', 'DESC');
         return $this->db->get()->result();
     }*/
-    public function contar_notificaciones_no_leidas($idUsuario, $rol) {
-        if (!$idUsuario) return 0;
-        
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where('leida', 0);
-        
-        // Filtrar por tipo de notificación según el rol
-        if ($rol == 'lector') {
-            $this->db->where_in('tipoNotificacion', ['solicitud_prestamo', 'aprobacion_rechazo']);
-        } elseif ($rol == 'administrador' || $rol == 'encargado') {
-            $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
+
+    public function crear_notificacion_admin($idUsuario, $idPublicacion, $tipoNotificacion, $mensaje) {
+        $data = array(
+            'idUsuario' => $idUsuario,
+            'idPublicacion' => $idPublicacion,
+            'tipoNotificacion' => $tipoNotificacion,
+            'mensaje' => $mensaje,
+            'fechaEnvio' => date('Y-m-d H:i:s'),
+            'leida' => FALSE
+        );
+    
+        $this->db->trans_start();
+        $this->db->insert('NOTIFICACION', $data);
+        $insert_id = $this->db->insert_id();
+        $this->db->trans_complete();
+    
+        if ($this->db->trans_status() === FALSE) {
+            log_message('error', 'Error al crear notificación para admin/encargado: ' . $this->db->last_query());
+            return false;
+        } else {
+            log_message('info', 'Notificación creada para admin/encargado: ID=' . $insert_id);
+            return true;
         }
-        
-        return $this->db->count_all_results('NOTIFICACION');
     }
 
-    public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
+    public function obtener_notificaciones_admin($idUsuario, $rol) {
         $this->db->where('idUsuario', $idUsuario);
-        
-        // Filtrar por tipo de notificación según el rol
-        if ($rol == 'lector') {
-            $this->db->where_in('tipoNotificacion', ['solicitud_prestamo', 'aprobacion_rechazo']);
-        } elseif ($rol == 'administrador' || $rol == 'encargado') {
+        if ($rol == 'administrador' || $rol == 'encargado') {
             $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
         }
-        
         $this->db->order_by('fechaEnvio', 'DESC');
-        $this->db->limit($limite);
         return $this->db->get('NOTIFICACION')->result();
     }
+  
 
-    // El método obtener_notificaciones ya está correctamente implementado, pero lo incluyo por completitud
-    public function obtener_notificaciones($idUsuario, $rol) {
-        $this->db->select('idNotificacion, idUsuario, mensaje, tipoNotificacion as tipo, fechaEnvio as fechaNotificacion, leida, idPublicacion');
-        $this->db->from('NOTIFICACION');
+public function obtener_notificaciones($idUsuario, $rol) {
+    $this->db->select('idNotificacion, idUsuario, mensaje, tipoNotificacion, fechaEnvio, leida, idPublicacion');
+    $this->db->from('NOTIFICACION');
+
+    if ($rol == 'administrador' || $rol == 'encargado') {
+        $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
+    } else {
         $this->db->where('idUsuario', $idUsuario);
-        
-        // Filtrar notificaciones según el rol
-        if ($rol == 'lector') {
-            $this->db->where_in('tipoNotificacion', ['solicitud_prestamo', 'aprobacion_rechazo']);
-        } elseif ($rol == 'administrador' || $rol == 'encargado') {
-            $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
-        }
-        
-        $this->db->order_by('fechaEnvio', 'DESC');
-        return $this->db->get()->result();
+        $this->db->where_in('tipoNotificacion', ['solicitud_prestamo', 'aprobacion_rechazo']);
     }
+    
+    $this->db->order_by('fechaEnvio', 'DESC');
+    return $this->db->get()->result();
+}
+
+public function contar_notificaciones_no_leidas($idUsuario, $rol) {
+    $this->db->where('leida', 0);
+    if ($rol == 'administrador' || $rol == 'encargado') {
+        $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
+    } else {
+        $this->db->where('idUsuario', $idUsuario);
+        $this->db->where_in('tipoNotificacion', ['solicitud_prestamo', 'aprobacion_rechazo']);
+    }
+    return $this->db->count_all_results('NOTIFICACION');
+}
+
+public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
+    if ($rol == 'administrador' || $rol == 'encargado') {
+        $this->db->where_in('tipoNotificacion', ['nueva_solicitud', 'sistema']);
+    } else {
+        $this->db->where('idUsuario', $idUsuario);
+        $this->db->where_in('tipoNotificacion', ['solicitud_prestamo', 'aprobacion_rechazo']);
+    }
+    $this->db->order_by('fechaEnvio', 'DESC');
+    $this->db->limit($limite);
+    return $this->db->get('NOTIFICACION')->result();
+}
 
 }

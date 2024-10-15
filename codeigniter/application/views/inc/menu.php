@@ -4,7 +4,6 @@
 
             <div class="content-page">
                 <div class="content">
-
                     <!-- Start Content-->
                     <div class="container-fluid">
 

@@ -1,23 +1,7 @@
 <!-- Topbar Start -->
 <div class="navbar-custom">
     <ul class="list-unstyled topnav-menu float-right mb-0">
-
-        <li class="d-none d-sm-block">
-            <form class="app-search">
-                <div class="app-search-box">
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search...">
-                        <div class="input-group-append">
-                            <button class="btn" type="submit">
-                                <i class="fe-search"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </li>
-
-        <li class="dropdown notification-list">
+        <li class="dropdown notification-list d-inline-block">
             <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
                 <i class="fe-bell noti-icon"></i>
                 <?php 
@@ -33,7 +17,7 @@
                 <div class="dropdown-item noti-title">
                     <h5 class="m-0">
                         <span class="float-right">
-                            <a href="<?php echo site_url('notificaciones/marcar_todas_leidas'); ?>" class="text-dark">
+                            <a href="<?php echo site_url('notificaciones/marcar_todas_leidas'); ?>" class="text-white">
                                 <small>Marcar todas como leídas</small>
                             </a>
                         </span>Notificaciones
@@ -46,7 +30,7 @@
                     if (!empty($notificaciones)):
                         foreach ($notificaciones as $notificacion):
                             $icon_class = 'mdi mdi-comment-account-outline';
-                            switch($notificacion->tipo) {
+                            switch($notificacion->tipoNotificacion) {
                                 case 'solicitud_prestamo':
                                     $icon_class = 'mdi mdi-book-open-page-variant';
                                     break;
@@ -93,7 +77,7 @@
             </a>
             <div class="dropdown-menu dropdown-menu-right profile-dropdown ">
                 <div class="dropdown-header noti-title">
-                    <h6 class="text-overflow m-0">Bienvenido !</h6>
+                    <h6 class="text-overflow m-0 text-white">Bienvenido!</h6>
                 </div>
 
                 <?php echo form_open_multipart('usuarios/perfil', ['class' => 'dropdown-item notify-item']); ?>
@@ -122,18 +106,11 @@
                 <?php echo form_close(); ?>
             </div>
         </li>
-
-        <li class="dropdown notification-list">
-            <a href="javascript:void(0);" class="nav-link right-bar-toggle waves-effect">
-                <i class="fe-settings noti-icon"></i>
-            </a>
-        </li>
-
     </ul>
 
     <!-- LOGO -->
     <div class="logo-box">
-        <a href="index.html" class="logo text-center">
+        <a href="<?php echo base_url(); ?>" class="logo text-center">
             <span class="logo-lg">
                 <img src="<?php echo base_url(); ?>adminXeria/light/dist/assets/images/logo-light.png" alt="" height="16">
             </span>

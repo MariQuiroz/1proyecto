@@ -19,18 +19,17 @@ class Notificaciones extends CI_Controller {
     public function index() {
         $this->_verificar_sesion();
         $idUsuario = $this->session->userdata('idUsuario');
-        $rol = $this->session->userdata('rol'); // Añade esta línea para obtener el rol
+        $rol = $this->session->userdata('rol');
     
         if (!$idUsuario || !$rol) {
-            redirect('usuarios/login'); // Redirige al login si no hay sesión
+            redirect('usuarios/login');
         }
     
-        $data['notificaciones'] = $this->Notificacion_model->obtener_notificaciones($idUsuario, $rol);
-        $data['rol'] = $rol; // Pasa el rol a la vista
+        $notificaciones = $this->Notificacion_model->obtener_notificaciones($idUsuario, $rol);
+        $data['notificaciones'] = $notificaciones;
+        $data['rol'] = $rol;
     
-        // Agregar esto para depuración
-        error_log("Rol del usuario: " . $rol);
-        error_log("Notificaciones obtenidas: " . print_r($data['notificaciones'], true));
+        log_message('info', 'Cargando notificaciones para usuario ID=' . $idUsuario . ', Rol=' . $rol . ', Cantidad=' . count($notificaciones));
     
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');

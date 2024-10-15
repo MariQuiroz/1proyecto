@@ -239,5 +239,12 @@ class Usuario_model extends CI_Model {
         return $this->db->update('USUARIO', $data);
     }
 
-   
+    public function obtener_admins_encargados() {
+        $this->db->select('idUsuario, nombres, apellidoPaterno, email');
+        $this->db->from('USUARIO');
+        $this->db->where_in('rol', ['administrador', 'encargado']);
+        $this->db->where('estado', 1); // Asumiendo que 1 significa activo
+        return $this->db->get()->result();
+    }
+
 }

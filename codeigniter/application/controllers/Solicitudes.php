@@ -6,12 +6,13 @@ class Solicitudes extends CI_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model('Solicitud_model');
-        $this->load->model('Prestamo_model');  // Añade esta línea
+        $this->load->model('Prestamo_model');
         $this->load->model('Publicacion_model');
+        $this->load->model('Usuario_model'); // Añade esta línea
+        $this->load->model('Notificacion_model');
         $this->load->library('session');
         $this->load->library('form_validation');
     }
-
         private function _verificar_sesion() {
             if (!$this->session->userdata('login')) {
                 redirect('usuarios/login');
@@ -141,26 +142,42 @@ class Solicitudes extends CI_Controller {
             $idUsuario = $this->session->userdata('idUsuario');
             $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
             
-            if (!$publicacion) {
-                $this->session->set_flashdata('error', 'La publicación seleccionada no existe.');
+            if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
                 redirect('publicaciones/index');
             }
             
-            if ($publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-                $this->session->set_flashdata('error', 'La publicación seleccionada no está disponible para préstamo.');
-                redirect('publicaciones/index');
-            }
+            $this->db->trans_start();
             
             $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
             
             if ($resultado) {
-                $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
-                redirect('solicitudes/mis_solicitudes');
+                // Crear notificación para el lector
+                $mensaje_lector = "Se ha recibido tu solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
+                $this->Notificacion_model->crear_notificacion($idUsuario, $idPublicacion, 'solicitud_prestamo', $mensaje_lector);
+    
+                // Crear notificación para los administradores y encargados
+                $admins_encargados = $this->Usuario_model->obtener_admins_encargados();
+                foreach ($admins_encargados as $usuario) {
+                    $mensaje_admin = "Nueva solicitud de préstamo para la publicación '{$publicacion->titulo}' del usuario '{$this->session->userdata('nombres')} {$this->session->userdata('apellidoPaterno')}'.";
+                    $this->Notificacion_model->crear_notificacion($usuario->idUsuario, $idPublicacion, 'nueva_solicitud', $mensaje_admin);
+                }
+    
+                $this->db->trans_complete();
+                
+                if ($this->db->trans_status() === FALSE) {
+                    $this->session->set_flashdata('error', 'Error al crear la solicitud. Por favor, intente de nuevo.');
+                } else {
+                    $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
+                }
             } else {
+                $this->db->trans_rollback();
                 $this->session->set_flashdata('error', 'Error al crear la solicitud.');
-                redirect('publicaciones/index');
             }
+            
+            redirect('solicitudes/mis_solicitudes');
         }
+    
         public function detalle($idSolicitud) {
             $this->_verificar_sesion();
             
@@ -213,7 +230,13 @@ class Solicitudes extends CI_Controller {
                         $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
                         $this->_enviar_email($usuario->email, 'Confirmación de solicitud de préstamo', $mensaje);
                     }
-                    
+                    // Crear notificación para administradores y encargados
+                    $this->load->model('Usuario_model');
+                    $admins_encargados = $this->Usuario_model->obtener_admins_encargados();
+                    foreach ($admins_encargados as $usuario) {
+                        $mensaje = "Nueva solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
+                        $this->Notificacion_model->crear_notificacion_admin($usuario->idUsuario, $idPublicacion, 'nueva_solicitud', $mensaje);
+                    }
         
                     $this->db->trans_complete();
                     if ($this->db->trans_status() === FALSE) {
