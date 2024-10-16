@@ -25,56 +25,55 @@
                 </div>
 
                 <div class="slimscroll noti-scroll">
-                <?php 
-                $notificaciones = $this->Notificacion_model->obtener_ultimas_notificaciones($idUsuario, $rol, 5);
-                if (!empty($notificaciones)):
-                    foreach ($notificaciones as $notificacion):
-                        $icon_class = 'mdi mdi-comment-account-outline';
-                        $mensaje_mostrar = $notificacion->mensaje;
-                        
-                        switch($notificacion->tipo) {
-                            case NOTIFICACION_SOLICITUD_PRESTAMO:
-                                $icon_class = 'mdi mdi-book-open-page-variant';
-                                break;
-                            case NOTIFICACION_APROBACION_PRESTAMO:
-                            case NOTIFICACION_RECHAZO_PRESTAMO:
-                                $icon_class = 'mdi mdi-check-circle-outline';
-                                break;
-                            case NOTIFICACION_NUEVA_SOLICITUD:
-                                $icon_class = 'mdi mdi-alert-circle-outline';
-                                if ($rol == 'administrador' || $rol == 'encargado') {
-                                    $mensaje_mostrar = "Nueva solicitud de préstamo";
-                                }
-                                break;
-                            case NOTIFICACION_DEVOLUCION:
-                                $icon_class = 'mdi mdi-undo-variant';
-                                break;
-                            case NOTIFICACION_DISPONIBILIDAD:
-                                $icon_class = 'mdi mdi-bookmark-check';
-                                break;
-                            case NOTIFICACION_VENCIMIENTO:
-                                $icon_class = 'mdi mdi-clock-alert';
-                                break;
-                            default:
-                                $icon_class = 'mdi mdi-comment-account-outline';
-                        }
-                ?>
-                <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" class="dropdown-item notify-item <?php echo $notificacion->leida ? '' : 'active'; ?>">
-                    <div class="notify-icon bg-primary">
-                        <i class="<?php echo $icon_class; ?>"></i>
-                    </div>
-                    <p class="notify-details"><?php echo (strlen($mensaje_mostrar) > 50) ? substr($mensaje_mostrar, 0, 47) . '...' : $mensaje_mostrar; ?>
-                        <small class="text-muted"><?php echo $this->Notificacion_model->time_elapsed_string($notificacion->fechaEnvio); ?></small>
-                    </p>
-                </a>
-                <?php 
-                    endforeach;
-                else:
-                ?>
-                <p class="text-center">No tienes notificaciones nuevas</p>
-                <?php endif; ?>
-            </div>
-
+                    <?php 
+                    $notificaciones = $this->Notificacion_model->obtener_ultimas_notificaciones($idUsuario, $rol, 5);
+                    if (!empty($notificaciones)):
+                        foreach ($notificaciones as $notificacion):
+                            $icon_class = 'mdi mdi-comment-account-outline';
+                            $mensaje_mostrar = $notificacion->mensaje;
+                            
+                            switch($notificacion->tipo) {
+                                case NOTIFICACION_SOLICITUD_PRESTAMO:
+                                    $icon_class = 'mdi mdi-book-open-page-variant';
+                                    break;
+                                case NOTIFICACION_APROBACION_PRESTAMO:
+                                case NOTIFICACION_RECHAZO_PRESTAMO:
+                                    $icon_class = 'mdi mdi-check-circle-outline';
+                                    break;
+                                case NOTIFICACION_NUEVA_SOLICITUD:
+                                    $icon_class = 'mdi mdi-alert-circle-outline';
+                                    if ($rol == 'administrador' || $rol == 'encargado') {
+                                        $mensaje_mostrar = "Nueva solicitud de préstamo";
+                                    }
+                                    break;
+                                case NOTIFICACION_DEVOLUCION:
+                                    $icon_class = 'mdi mdi-undo-variant';
+                                    break;
+                                case NOTIFICACION_DISPONIBILIDAD:
+                                    $icon_class = 'mdi mdi-bookmark-check';
+                                    break;
+                                case NOTIFICACION_VENCIMIENTO:
+                                    $icon_class = 'mdi mdi-clock-alert';
+                                    break;
+                                default:
+                                    $icon_class = 'mdi mdi-comment-account-outline';
+                            }
+                    ?>
+                    <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" class="dropdown-item notify-item <?php echo $notificacion->leida ? '' : 'active'; ?>">
+                        <div class="notify-icon bg-primary">
+                            <i class="<?php echo $icon_class; ?>"></i>
+                        </div>
+                        <p class="notify-details"><?php echo (strlen($mensaje_mostrar) > 50) ? substr($mensaje_mostrar, 0, 47) . '...' : $mensaje_mostrar; ?>
+                            <small class="text-muted"><?php echo $this->Notificacion_model->time_elapsed_string($notificacion->fechaEnvio); ?></small>
+                        </p>
+                    </a>
+                    <?php 
+                        endforeach;
+                    else:
+                    ?>
+                    <p class="text-center">No tienes notificaciones nuevas</p>
+                    <?php endif; ?>
+                </div>
                 <a href="<?php echo site_url('notificaciones'); ?>" class="dropdown-item text-center text-primary notify-item notify-all">
                     Ver todas
                     <i class="fi-arrow-right"></i>
@@ -94,30 +93,22 @@
                     <h6 class="text-overflow m-0 text-white">Bienvenido!</h6>
                 </div>
 
-                <?php echo form_open_multipart('usuarios/perfil', ['class' => 'dropdown-item notify-item']); ?>
-                    <button type="submit" class="btn btn-link p-0">
-                        <i class="fe-user"></i>
-                        <span>Mi Perfil</span>
-                    </button>
-                <?php echo form_close(); ?>
+                <a href="<?php echo site_url('usuarios/perfil'); ?>" class="dropdown-item notify-item">
+                    <i class="fe-user"></i>
+                    <span>Mi Perfil</span>
+                </a>
 
-                <?php if ($this->session->userdata('rol') == 'administrador'): ?>
-                    <?php echo form_open_multipart('admin/configuracion', ['class' => 'dropdown-item notify-item']); ?>
-                        <button type="submit" class="btn btn-link p-0">
-                            <i class="fe-settings"></i>
-                            <span>Configuración</span>
-                        </button>
-                    <?php echo form_close(); ?>
-                <?php endif; ?>
+                <a href="<?php echo site_url('usuarios/configuracion'); ?>" class="dropdown-item notify-item">
+                    <i class="fe-settings"></i>
+                    <span>Configuración</span>
+                </a>
 
                 <div class="dropdown-divider"></div>
 
-                <?php echo form_open_multipart('usuarios/logout', ['class' => 'dropdown-item notify-item']); ?>
-                    <button type="submit" class="btn btn-link p-0">
-                        <i class="fe-log-out"></i>
-                        <span>Cerrar Sesión</span>
-                    </button>
-                <?php echo form_close(); ?>
+                <a href="<?php echo site_url('usuarios/logout'); ?>" class="dropdown-item notify-item">
+                    <i class="fe-log-out"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
             </div>
         </li>
     </ul>
@@ -135,13 +126,11 @@
     </div>
 
     <ul class="list-unstyled topnav-menu topnav-menu-left m-0">
-        <li>
             <button class="button-menu-mobile waves-effect">
                 <span></span>
                 <span></span>
                 <span></span>
             </button>
-        </li>
     </ul>
 </div>
 <!-- end Topbar -->

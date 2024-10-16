@@ -61,3 +61,6 @@ $route['cambiar_password'] = 'usuarios/cambiar_password';
 $route['recuperar_contrasena'] = 'usuarios/recuperar_contrasena';
 $route['registro'] = 'usuarios/registro';
 $route['test_email'] = 'usuarios/test_email';
+
+$route['usuarios/perfil'] = 'usuarios/perfil';
+$route['usuarios/lector'] = 'usuarios/lector';
