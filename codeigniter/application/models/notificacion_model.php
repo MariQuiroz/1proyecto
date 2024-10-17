@@ -18,68 +18,6 @@ class Notificacion_model extends CI_Model {
         return $this->db->get('NOTIFICACION')->result();
     }
 
-   
-
-    public function guardar_preferencias($idUsuario, $preferencias) {
-        $data = array(
-            'idUsuario' => $idUsuario,
-            'notificarDisponibilidad' => $preferencias['disponibilidad'],
-            'notificarEmail' => $preferencias['email'],
-            'notificarSistema' => $preferencias['sistema']
-        );
-
-        $this->db->replace('PREFERENCIAS_NOTIFICACION', $data);
-    }
-
-    public function obtener_preferencias($idUsuario) {
-        return $this->db->get_where('PREFERENCIAS_NOTIFICACION', array('idUsuario' => $idUsuario))->row();
-    }
-
-    public function agregar_interes_publicacion($idUsuario, $idPublicacion) {
-        $data = array(
-            'idUsuario' => $idUsuario,
-            'idPublicacion' => $idPublicacion,
-            'fechaInteres' => date('Y-m-d H:i:s')
-        );
-
-        return $this->db->insert('INTERES_PUBLICACION', $data);
-    }
-
-    public function obtener_usuarios_interesados($idPublicacion) {
-        $this->db->select('idUsuario');
-        $this->db->where('idPublicacion', $idPublicacion);
-        return $this->db->get('INTERES_PUBLICACION')->result();
-    }
-   
-
-   /* public function obtener_ultimas_notificaciones($idUsuario, $limite = 5) {
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->order_by('fechaEnvio', 'DESC');
-        $this->db->limit($limite);
-        return $this->db->get('NOTIFICACION')->result();
-    }*/
-   /* public function contar_notificaciones_no_leidas($idUsuario) {
-        if (!$idUsuario) return 0;
-        
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where('leida', 0);
-        return $this->db->count_all_results('NOTIFICACION');
-    }*/
-    /*public function obtener_notificaciones($idUsuario, $rol) {
-        $this->db->select('idUsuario, mensaje, tipo, fechaEnvio as fechaNotificacion, leida');
-        $this->db->from('NOTIFICACION');
-        $this->db->where('idUsuario', $idUsuario);
-        
-        // Filtrar notificaciones según el rol
-        if ($rol == 'lector') {
-            $this->db->where_in('tipo', ['solicitud_prestamo', 'aprobacion_rechazo']);
-        } elseif ($rol == 'administrador' || $rol == 'encargado') {
-            $this->db->where_in('tipo', ['nueva_solicitud', 'sistema']);
-        }
-        
-        $this->db->order_by('fechaEnvio', 'DESC');
-        return $this->db->get()->result();
-    }*/
 
     public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) {
         $data = array(
@@ -174,17 +112,6 @@ public function time_elapsed_string($datetime, $full = false) {
     if (!$full) $string = array_slice($string, 0, 1);
     return $string ? 'hace ' . implode(', ', $string) : 'justo ahora';
 }
-/*public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
-    if ($rol == 'administrador' || $rol == 'encargado') {
-        $this->db->where_in('tipo', ['nueva_solicitud', 'sistema']);
-    } else {
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where_in('tipo', ['solicitud_prestamo', 'aprobacion_rechazo']);
-    }
-    $this->db->order_by('fechaEnvio', 'DESC');
-    $this->db->limit($limite);
-    return $this->db->get('NOTIFICACION')->result();
-}*/
 
 public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
     $this->db->select('idNotificacion, idUsuario, mensaje, tipo, fechaEnvio, leida, idPublicacion');
@@ -204,4 +131,59 @@ public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
     $this->db->limit($limite);
     return $this->db->get()->result();
 }
+public function guardar_preferencias($idUsuario, $preferencias) {
+    $data = array(
+        'idUsuario' => $idUsuario,
+        'notificarDisponibilidad' => $preferencias['disponibilidad'],
+        'notificarEmail' => $preferencias['email'],
+        'notificarSistema' => $preferencias['sistema']
+    );
+
+    $this->db->replace('PREFERENCIAS_NOTIFICACION', $data);
+}
+
+public function obtener_preferencias($idUsuario) {
+    return $this->db->get_where('PREFERENCIAS_NOTIFICACION', array('idUsuario' => $idUsuario))->row();
+}
+
+
+
+public function obtener_usuarios_interesados($idPublicacion) {
+    $this->db->select('idUsuario');
+    $this->db->where('idPublicacion', $idPublicacion);
+    return $this->db->get('INTERES_PUBLICACION')->result();
+}
+public function agregar_interes_publicacion($idUsuario, $idPublicacion) {
+    $this->db->where('idUsuario', $idUsuario);
+    $this->db->where('idPublicacion', $idPublicacion);
+    $query = $this->db->get('INTERES_PUBLICACION');
+
+    if ($query->num_rows() > 0) {
+        // Ya existe un interés, actualizar el estado
+        $this->db->where('idUsuario', $idUsuario);
+        $this->db->where('idPublicacion', $idPublicacion);
+        return $this->db->update('INTERES_PUBLICACION', ['estado' => ESTADO_INTERES_SOLICITADO]);
+    } else {
+        // No existe, insertar nuevo interés
+        $data = array(
+            'idUsuario' => $idUsuario,
+            'idPublicacion' => $idPublicacion,
+            'fechaInteres' => date('Y-m-d H:i:s'),
+            'estado' => ESTADO_INTERES_SOLICITADO
+        );
+        return $this->db->insert('INTERES_PUBLICACION', $data);
+    }
+}
+
+public function obtener_estado_interes($idUsuario, $idPublicacion) {
+    $this->db->where('idUsuario', $idUsuario);
+    $this->db->where('idPublicacion', $idPublicacion);
+    $query = $this->db->get('INTERES_PUBLICACION');
+
+    if ($query->num_rows() > 0) {
+        return $query->row()->estado;
+    }
+    return null;
+}
+
 }

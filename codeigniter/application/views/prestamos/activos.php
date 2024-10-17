@@ -1,16 +1,3 @@
-<?php if ($this->session->flashdata('mensaje')): ?>
-    <div class="alert alert-success">
-        <?php echo $this->session->flashdata('mensaje'); ?>
-    </div>
-<?php endif; ?>
-
-<?php if ($this->session->flashdata('error')): ?>
-    <div class="alert alert-danger">
-        <?php echo $this->session->flashdata('error'); ?>
-    </div>
-<?php endif; ?>
-
-
 <div class="content-page">
     <div class="content">
         <div class="container-fluid">
@@ -22,6 +9,24 @@
                 </div>
             </div>
             
+            <?php if ($this->session->flashdata('mensaje')): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <?php echo $this->session->flashdata('mensaje'); ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($this->session->flashdata('error')): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?php echo $this->session->flashdata('error'); ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            <?php endif; ?>
+            
             <div class="row">
                 <div class="col-12">
                     <div class="card">
@@ -30,8 +35,8 @@
                             <p class="text-muted font-13 mb-4">
                                 Aquí se muestran todos los préstamos actualmente en curso.
                             </p>
-
-                            <table id="basic-datatable" class="table dt-responsive nowrap">
+                            
+                            <table id="prestamos-activos-table" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
                                         <th>ID Préstamo</th>
@@ -49,14 +54,13 @@
                                         <td><?php echo $prestamo->titulo; ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
                                         <td>
-                                            <a href="<?php echo site_url('prestamos/finalizar/' . $prestamo->idPrestamo); ?>" class="btn btn-success btn-sm">Finalizar</a>
+                                            <a href="<?php echo site_url('prestamos/finalizar/' . $prestamo->idPrestamo); ?>" class="btn btn-success btn-sm finalizar-prestamo">Finalizar</a>
                                             <a href="<?php echo site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" class="btn btn-info btn-sm">Detalles</a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
-
                         </div> <!-- end card body-->
                     </div> <!-- end card -->
                 </div><!-- end col-->
@@ -68,10 +72,20 @@
 
 <script>
 $(document).ready(function() {
-    $('#prestamos-activos-table').DataTable({
+    var table = $('#prestamos-activos-table').DataTable({
         responsive: true,
         language: {
             url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+        }
+    });
+
+    // Manejar el clic en el botón "Finalizar"
+    $('.finalizar-prestamo').on('click', function(e) {
+        e.preventDefault();
+        var url = $(this).attr('href');
+        
+        if (confirm('¿Está seguro de que desea finalizar este préstamo? Se notificará a los usuarios interesados si la publicación queda disponible.')) {
+            window.location.href = url;
         }
     });
 });

@@ -92,11 +92,7 @@ class Publicacion_model extends CI_Model {
         return $this->db->get()->result();
     }
 
-   public function cambiar_estado_publicacion($idPublicacion, $data) {
-        $this->db->where('idPublicacion', $idPublicacion);
-        return $this->db->update('PUBLICACION', $data);
-    }
-
+   
    public function obtener_publicacion_detallada($idPublicacion) {
         $this->db->select('PUBLICACION.*, TIPO.nombreTipo, EDITORIAL.nombreEditorial');
         $this->db->from('PUBLICACION');
@@ -109,5 +105,35 @@ class Publicacion_model extends CI_Model {
     public function obtener_publicaciones_disponibles() {
         $this->db->where('estado', ESTADO_PUBLICACION_DISPONIBLE);
         return $this->db->get('PUBLICACION')->result();
+    }
+    public function cambiar_estado_publicacion($idPublicacion, $nuevoEstado) {
+        $data = array(
+            'estado' => $nuevoEstado,
+            'fechaActualizacion' => date('Y-m-d H:i:s')
+        );
+        $this->db->where('idPublicacion', $idPublicacion);
+        return $this->db->update('PUBLICACION', $data);
+    }
+    public function listar_todas_publicaciones() {
+        $this->db->select('
+            PUBLICACION.idPublicacion,
+            PUBLICACION.titulo,
+            PUBLICACION.fechaPublicacion,
+            PUBLICACION.numeroPaginas,
+            PUBLICACION.portada,
+            PUBLICACION.descripcion,
+            PUBLICACION.ubicacionFisica,
+            PUBLICACION.estado,
+            PUBLICACION.fechaCreacion,
+            PUBLICACION.fechaActualizacion,
+            TIPO.nombreTipo,
+            EDITORIAL.nombreEditorial
+        ');
+        $this->db->from('PUBLICACION');
+        $this->db->join('TIPO', 'TIPO.idTipo = PUBLICACION.idTipo');
+        $this->db->join('EDITORIAL', 'EDITORIAL.idEditorial = PUBLICACION.idEditorial');
+        // No aplicamos filtro de estado para obtener todas las publicaciones
+        $this->db->order_by('PUBLICACION.fechaCreacion', 'DESC');
+        return $this->db->get()->result();
     }
 }

@@ -1,5 +1,3 @@
-
-
 <!-- ============================================================== -->
 <!-- Start Page Content here -->
 <!-- ============================================================== -->
@@ -43,6 +41,19 @@
                                     <div class="col-12">
                                         <a href="<?php echo site_url('publicaciones/modificar/'.$publicacion->idPublicacion); ?>" class="btn btn-primary">Editar</a>
                                         <a href="<?php echo site_url('publicaciones/eliminar/'.$publicacion->idPublicacion); ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar esta publicación?');">Eliminar</a>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($this->session->userdata('rol') == 'lector'): ?>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <?php if ($publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE): ?>
+                                            <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>" class="btn btn-success">Solicitar Préstamo</a>
+                                        <?php elseif (!isset($esta_interesado) || !$esta_interesado): ?>
+                                            <a href="<?php echo site_url('publicaciones/solicitar_notificacion/'.$publicacion->idPublicacion); ?>" class="btn btn-info">Notificarme cuando esté disponible</a>
+                                        <?php else: ?>
+                                            <p class="text-info">Recibirás una notificación cuando esta publicación esté disponible.</p>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             <?php endif; ?>

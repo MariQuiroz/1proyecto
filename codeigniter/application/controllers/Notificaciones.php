@@ -52,43 +52,7 @@ class Notificaciones extends CI_Controller {
         $this->Notificacion_model->marcar_como_leida($idNotificacion);
         redirect('notificaciones');
     }
-
-    public function preferencias() {
-        $this->_verificar_sesion();
-        $idUsuario = $this->session->userdata('idUsuario');
-
-        if ($this->input->post()) {
-            $preferencias = array(
-                'disponibilidad' => $this->input->post('notificar_disponibilidad') ? TRUE : FALSE,
-                'email' => $this->input->post('notificar_email') ? TRUE : FALSE,
-                'sistema' => $this->input->post('notificar_sistema') ? TRUE : FALSE
-            );
-            $this->Notificacion_model->guardar_preferencias($idUsuario, $preferencias);
-            $this->session->set_flashdata('mensaje', 'Preferencias actualizadas correctamente.');
-            redirect('notificaciones/preferencias');
-        }
-
-        $data['preferencias'] = $this->Notificacion_model->obtener_preferencias($idUsuario);
-        
-        $this->load->view('inc/header');
-        $this->load->view('inc/nabvar');
-        $this->load->view('inc/aside');
-        $this->load->view('notificaciones/preferencias', $data);
-        $this->load->view('inc/footer');
-    }
-
-    public function agregar_interes($idPublicacion) {
-        $this->_verificar_sesion();
-        $idUsuario = $this->session->userdata('idUsuario');
-        
-        if ($this->Notificacion_model->agregar_interes_publicacion($idUsuario, $idPublicacion)) {
-            $this->session->set_flashdata('mensaje', 'Se te notificará cuando esta publicación esté disponible.');
-        } else {
-            $this->session->set_flashdata('error', 'Hubo un error al registrar tu interés.');
-        }
-        
-        redirect('publicaciones/ver/' . $idPublicacion);
-    }
+   
 
     private function _enviar_email($to, $subject, $message) {
         $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
@@ -130,5 +94,69 @@ class Notificaciones extends CI_Controller {
             default:
                 redirect('notificaciones');
         }
+    }
+    public function preferencias() {
+        $this->_verificar_sesion();
+        $idUsuario = $this->session->userdata('idUsuario');
+
+        if ($this->input->post()) {
+            $preferencias = array(
+                'disponibilidad' => $this->input->post('notificar_disponibilidad') ? TRUE : FALSE,
+                'email' => $this->input->post('notificar_email') ? TRUE : FALSE,
+                'sistema' => $this->input->post('notificar_sistema') ? TRUE : FALSE
+            );
+            $this->Notificacion_model->guardar_preferencias($idUsuario, $preferencias);
+            $this->session->set_flashdata('mensaje', 'Preferencias actualizadas correctamente.');
+            redirect('notificaciones/preferencias');
+        }
+
+        $data['preferencias'] = $this->Notificacion_model->obtener_preferencias($idUsuario);
+        $this->load->view('notificaciones/preferencias', $data);
+    }
+
+    public function notificar_disponibilidad($idPublicacion) {
+        $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados($idPublicacion);
+        $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
+
+        foreach ($usuarios_interesados as $usuario) {
+            $preferencias = $this->Notificacion_model->obtener_preferencias($usuario->idUsuario);
+            
+            if ($preferencias->notificarSistema) {
+                $this->Notificacion_model->crear_notificacion(
+                    $usuario->idUsuario,
+                    $idPublicacion,
+                    'La publicación "' . $publicacion->titulo . '" ya está disponible.'
+                );
+            }
+
+            if ($preferencias->notificarEmail) {
+                $this->_enviar_email_disponibilidad($usuario->idUsuario, $publicacion);
+            }
+        }
+    }
+
+    private function _enviar_email_disponibilidad($idUsuario, $publicacion) {
+        $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
+        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
+        $this->email->to($usuario->email);
+        $this->email->subject('Publicación Disponible - Hemeroteca UMSS');
+        $this->email->message('La publicación "' . $publicacion->titulo . '" ya está disponible en la hemeroteca.');
+        $this->email->send();
+    }
+    public function agregar_interes($idPublicacion) {
+        $this->_verificar_sesion();
+        
+        if ($this->session->userdata('rol') !== 'lector') {
+            $this->session->set_flashdata('error', 'Solo los lectores pueden solicitar notificaciones.');
+            redirect('publicaciones');
+        }
+
+        $idUsuario = $this->session->userdata('idUsuario');
+        if ($this->Notificacion_model->agregar_interes_publicacion($idUsuario, $idPublicacion)) {
+            $this->session->set_flashdata('mensaje', 'Se te notificará cuando esta publicación esté disponible.');
+        } else {
+            $this->session->set_flashdata('error', 'Hubo un error al registrar tu interés.');
+        }
+        redirect('publicaciones');
     }
 }

@@ -12,7 +12,7 @@
                         <div class="card-body">
                             <h4 class="header-title">Lista de Publicaciones</h4>
                             <p class="text-muted font-13 mb-4">
-                                Aquí se muestran todas las publicaciones disponibles en la hemeroteca.
+                                Aquí se muestran todas las publicaciones de la hemeroteca, con su estado actual.
                             </p>
 
                             <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
@@ -48,9 +48,24 @@
                                         <td><?php echo $publicacion->nombreTipo; ?></td>
                                         <td><?php echo date('d/m/Y', strtotime($publicacion->fechaPublicacion)); ?></td>
                                         <td>
-                                            <span class="badge <?php echo $publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE ? 'badge-success' : 'badge-warning'; ?>">
-                                                <?php echo $this->publicacion_model->obtener_nombre_estado($publicacion->estado); ?>
-                                            </span>
+                                            <?php
+                                            $badge_class = '';
+                                            $estado_texto = $this->publicacion_model->obtener_nombre_estado($publicacion->estado);
+                                            switch($publicacion->estado) {
+                                                case ESTADO_PUBLICACION_DISPONIBLE:
+                                                    $badge_class = 'badge-success';
+                                                    break;
+                                                case ESTADO_PUBLICACION_EN_CONSULTA:
+                                                    $badge_class = 'badge-warning';
+                                                    break;
+                                                case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
+                                                    $badge_class = 'badge-danger';
+                                                    break;
+                                                default:
+                                                    $badge_class = 'badge-secondary';
+                                            }
+                                            ?>
+                                            <span class="badge <?php echo $badge_class; ?>"><?php echo $estado_texto; ?></span>
                                         </td>
                                         <td>
                                             <a href="<?php echo site_url('publicaciones/ver/'.$publicacion->idPublicacion); ?>" class="btn btn-info btn-sm" title="Ver detalles">
@@ -64,11 +79,30 @@
                                                     <i class="mdi mdi-delete"></i>
                                                 </a>
                                             <?php endif; ?>
-                                            <?php if ($this->session->userdata('rol') == 'lector' && $publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE): ?>
-                                                <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>" class="btn btn-success btn-sm" title="Solicitar préstamo">
-                                                    <i class="mdi mdi-book-open-page-variant"></i> Solicitar
-                                                </a>
-                                            <?php endif; ?>
+                                            <?php if ($this->session->userdata('rol') == 'lector'): ?>
+                                                    <?php if ($publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE): ?>
+                                                        <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>" class="btn btn-success btn-sm" title="Solicitar préstamo">
+                                                            <i class="mdi mdi-book-open-page-variant"></i> Solicitar
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <?php 
+                                                        $estado_interes = $this->Notificacion_model->obtener_estado_interes($this->session->userdata('idUsuario'), $publicacion->idPublicacion);
+                                                        if ($estado_interes == ESTADO_INTERES_SOLICITADO): 
+                                                        ?>
+                                                            <button class="btn btn-secondary btn-sm" disabled title="Notificación solicitada">
+                                                                <i class="mdi mdi-bell-check"></i> Notificación Solicitada
+                                                            </button>
+                                                        <?php elseif ($estado_interes == ESTADO_INTERES_NOTIFICADO): ?>
+                                                            <button class="btn btn-info btn-sm" disabled title="Ya has sido notificado">
+                                                                <i class="mdi mdi-bell-ring"></i> Notificado
+                                                            </button>
+                                                        <?php else: ?>
+                                                            <a href="<?php echo site_url('notificaciones/agregar_interes/'.$publicacion->idPublicacion); ?>" class="btn btn-warning btn-sm" title="Solicitar notificación">
+                                                                <i class="mdi mdi-bell"></i> Notificarme
+                                                            </a>
+                                                        <?php endif; ?>
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
