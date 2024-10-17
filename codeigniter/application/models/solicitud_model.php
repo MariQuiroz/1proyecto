@@ -250,7 +250,7 @@ class Solicitud_model extends CI_Model {
     
         return $datos_ficha;
     }*/
-    public function aprobar_solicitud($idSolicitud, $idEncargado) {
+    /*public function aprobar_solicitud($idSolicitud, $idEncargado) {
         $this->db->trans_start();
 
         // Obtener detalles de la solicitud y publicación
@@ -338,6 +338,106 @@ class Solicitud_model extends CI_Model {
             return false;
         }
 
+        return $datos_ficha;
+    }*/
+    public function aprobar_solicitud($idSolicitud, $idEncargado) {
+        $this->db->trans_start();
+    
+        // Obtener detalles de la solicitud y publicación
+        $this->db->select('SP.idSolicitud, SP.idUsuario, SP.idPublicacion, SP.estadoSolicitud, U.nombres as nombresLector, U.apellidoPaterno as apellidoLector, U.carnet, U.profesion, P.titulo, P.fechaPublicacion, P.ubicacionFisica, E.nombreEditorial, ENC.nombres as nombresEncargado, ENC.apellidoPaterno as apellidoEncargado');
+        $this->db->from('SOLICITUD_PRESTAMO SP');
+        $this->db->join('USUARIO U', 'SP.idUsuario = U.idUsuario');
+        $this->db->join('PUBLICACION P', 'SP.idPublicacion = P.idPublicacion');
+        $this->db->join('EDITORIAL E', 'P.idEditorial = E.idEditorial');
+        $this->db->join('USUARIO ENC', 'ENC.idUsuario = ' . $idEncargado);
+        $this->db->where('SP.idSolicitud', $idSolicitud);
+        $solicitud = $this->db->get()->row();
+    
+        if (!$solicitud || $solicitud->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
+            $this->db->trans_rollback();
+            return false;
+        }
+    
+        $fechaActual = date('Y-m-d H:i:s');
+    
+        // Actualizar la solicitud aprobada
+        $this->db->where('idSolicitud', $idSolicitud);
+        $this->db->update('SOLICITUD_PRESTAMO', [
+            'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
+            'fechaAprobacionRechazo' => $fechaActual,
+            'fechaActualizacion' => $fechaActual,
+            'idUsuarioCreador' => $idEncargado
+        ]);
+    
+        // Notificar al usuario cuya solicitud fue aprobada
+        $mensaje_aprobacion = "Tu solicitud de préstamo para la publicación '{$solicitud->titulo}' ha sido aprobada.";
+        $this->Notificacion_model->crear_notificacion($solicitud->idUsuario, $solicitud->idPublicacion, NOTIFICACION_APROBACION_PRESTAMO, $mensaje_aprobacion);
+    
+        // Rechazar otras solicitudes pendientes para la misma publicación
+        $this->db->select('idSolicitud, idUsuario');
+        $this->db->where('idPublicacion', $solicitud->idPublicacion);
+        $this->db->where('idSolicitud !=', $idSolicitud);
+        $this->db->where('estadoSolicitud', ESTADO_SOLICITUD_PENDIENTE);
+        $solicitudes_rechazadas = $this->db->get('SOLICITUD_PRESTAMO')->result();
+    
+        foreach ($solicitudes_rechazadas as $solicitud_rechazada) {
+            // Actualizar estado de la solicitud rechazada
+            $this->db->where('idSolicitud', $solicitud_rechazada->idSolicitud);
+            $this->db->update('SOLICITUD_PRESTAMO', [
+                'estadoSolicitud' => ESTADO_SOLICITUD_RECHAZADA,
+                'fechaAprobacionRechazo' => $fechaActual,
+                'fechaActualizacion' => $fechaActual,
+                'idUsuarioCreador' => $idEncargado
+            ]);
+    
+            // Notificar al usuario cuya solicitud fue rechazada
+            $mensaje_rechazo = "Tu solicitud de préstamo para la publicación '{$solicitud->titulo}' ha sido rechazada debido a que otra solicitud fue aprobada.";
+            $this->Notificacion_model->crear_notificacion($solicitud_rechazada->idUsuario, $solicitud->idPublicacion, NOTIFICACION_RECHAZO_PRESTAMO, $mensaje_rechazo);
+        }
+    
+        // Crear el préstamo
+        $data_prestamo = [
+            'idSolicitud' => $idSolicitud,
+            'idUsuario' => $solicitud->idUsuario,
+            'idPublicacion' => $solicitud->idPublicacion,
+            'idEncargadoPrestamo' => $idEncargado,
+            'fechaPrestamo' => $fechaActual,
+            'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
+            'horaInicio' => date('H:i:s'),
+            'estado' => 1,
+            'fechaCreacion' => $fechaActual,
+            'idUsuarioCreador' => $idEncargado
+        ];
+        $this->db->insert('PRESTAMO', $data_prestamo);
+        $idPrestamo = $this->db->insert_id();
+    
+        // Actualizar el estado de la publicación
+        $this->db->where('idPublicacion', $solicitud->idPublicacion);
+        $this->db->update('PUBLICACION', [
+            'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
+            'fechaActualizacion' => $fechaActual,
+            'idUsuarioCreador' => $idEncargado
+        ]);
+    
+        $datos_ficha = [
+            'idPrestamo' => $idPrestamo,
+            'nombreEditorial' => $solicitud->nombreEditorial,
+            'fechaPublicacion' => $solicitud->fechaPublicacion,
+            'ubicacionFisica' => $solicitud->ubicacionFisica,
+            'titulo' => $solicitud->titulo,
+            'nombreCompletoLector' => $solicitud->nombresLector . ' ' . $solicitud->apellidoLector,
+            'carnet' => $solicitud->carnet,
+            'profesion' => $solicitud->profesion,
+            'fechaPrestamo' => $fechaActual,
+            'nombreCompletoEncargado' => $solicitud->nombresEncargado . ' ' . $solicitud->apellidoEncargado
+        ];
+    
+        $this->db->trans_complete();
+    
+        if ($this->db->trans_status() === FALSE) {
+            return false;
+        }
+    
         return $datos_ficha;
     }
     public function obtener_solicitud($idSolicitud) {
