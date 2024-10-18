@@ -34,8 +34,16 @@ class Publicaciones extends CI_Controller {
 
     public function index() {
         $this->_verificar_sesion();
-        $data['publicaciones'] = $this->publicacion_model->listar_todas_publicaciones();
+        $idUsuario = $this->session->userdata('idUsuario');
+        $publicaciones = $this->publicacion_model->listar_todas_publicaciones();
+
+        foreach ($publicaciones as &$publicacion) {
+            $publicacion->estado_personalizado = $this->publicacion_model->obtener_estado_personalizado($publicacion->idPublicacion, $idUsuario);
+        }
+
+        $data['publicaciones'] = $publicaciones;
         $data['es_lector'] = $this->_es_lector();
+        
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
         $this->load->view('inc/aside');

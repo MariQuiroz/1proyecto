@@ -136,4 +136,36 @@ class Publicacion_model extends CI_Model {
         $this->db->order_by('PUBLICACION.fechaCreacion', 'DESC');
         return $this->db->get()->result();
     }
+    public function obtener_estado_personalizado($idPublicacion, $idUsuario) {
+        $this->db->select('PUBLICACION.estado, PRESTAMO.idUsuario AS usuario_prestamo');
+        $this->db->from('PUBLICACION');
+        $this->db->join('PRESTAMO', 'PUBLICACION.idPublicacion = PRESTAMO.idPublicacion AND PRESTAMO.estadoPrestamo = ' . ESTADO_PRESTAMO_ACTIVO, 'left');
+        $this->db->where('PUBLICACION.idPublicacion', $idPublicacion);
+        $resultado = $this->db->get()->row();
+
+        if ($resultado) {
+            if ($resultado->estado == ESTADO_PUBLICACION_EN_CONSULTA) {
+                if ($resultado->usuario_prestamo == $idUsuario) {
+                    return 'En préstamo por ti';
+                } else {
+                    return 'En consulta';
+                }
+            } else {
+                return $this->mapear_estado($resultado->estado);
+            }
+        }
+
+        return 'Estado desconocido';
+    }
+
+    private function mapear_estado($estado) {
+        $mapeo_estados = [
+            ESTADO_PUBLICACION_DISPONIBLE => 'Disponible',
+            ESTADO_PUBLICACION_EN_CONSULTA => 'En préstamo',
+            ESTADO_PUBLICACION_EN_MANTENIMIENTO => 'En mantenimiento'
+        ];
+
+        return isset($mapeo_estados[$estado]) ? $mapeo_estados[$estado] : 'Estado desconocido';
+    }
+
 }
