@@ -24,6 +24,7 @@ class Usuario_model extends CI_Model {
         $this->db->insert('USUARIO', $data);
         return $this->db->insert_id();
     }
+    
 
     public function listaUsuarios()
 {
@@ -245,6 +246,12 @@ class Usuario_model extends CI_Model {
         $this->db->where_in('rol', ['administrador', 'encargado']);
         $this->db->where('estado', 1); // Asumiendo que 1 significa activo
         return $this->db->get()->result();
+    }
+    
+    public function username_existe($username) {
+        $this->db->where('username', $username);
+        $query = $this->db->get('USUARIO');
+        return $query->num_rows() > 0;
     }
     
 }

@@ -88,12 +88,7 @@
                                         <input type="email" name="email" id="email" class="form-control" placeholder="Ingrese su email" required>
                                     </div>
                                 </div>
-                                <div class="form-group row mb-3">
-                                    <label for="username" class="col-3 col-form-label">Nombre de Usuario</label>
-                                    <div class="col-9">
-                                        <input type="text" name="username" id="username" class="form-control" placeholder="Ingrese su nombre de usuario" required>
-                                    </div>
-                                </div>
+                                
                                 <?php if ($this->session->userdata('rol') === 'administrador'): ?>
                                 <div class="form-group row mb-3">
                                     <label for="rol" class="col-3 col-form-label">Rol</label>
@@ -109,6 +104,12 @@
                                 <?php else: ?>
                                 <input type="hidden" name="rol" value="lector">
                                 <?php endif; ?>
+
+                                <div class="form-group row mb-3">
+                                    <div class="col-9 offset-3">
+                                        <p class="text-muted">El nombre de usuario y la contraseña se generarán automáticamente y se enviarán por correo electrónico al nuevo usuario.</p>
+                                    </div>
+                                </div>
                                 
                                 <div class="form-group row mb-3">
                                     <div class="col-9 offset-3">
