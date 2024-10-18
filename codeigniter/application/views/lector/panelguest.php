@@ -1,4 +1,4 @@
-<body>
+
     <div id="wrapper">
         <div class="content-page">
             <div class="content">
@@ -76,4 +76,3 @@
             </div> <!-- content -->
         </div>
     </div>
-</body>

@@ -29,7 +29,7 @@
                                 
                                 <div class="text-center w-75 m-auto">
                                     <a href="<?php echo site_url('usuarios/index'); ?>">
-                                        <span><img src="<?php echo base_url('assets/images/logo-light.png'); ?>" alt="" height="18"></span>
+                                        <span><img src="<?php echo base_url('<?php echo base_url(); ?>img/umss1.jpg'); ?>" alt="" height="18"></span>
                                     </a>
                                     <p class="text-muted mb-4 mt-3">Ingrese su nombre de usuario y contraseña para acceder al sistema de la Hemeroteca.</p>
                                 </div>
