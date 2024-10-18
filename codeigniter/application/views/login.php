@@ -29,9 +29,9 @@
                                 
                                 <div class="text-center w-75 m-auto">
                                     <a href="<?php echo site_url('usuarios/index'); ?>">
-                                        <span><img src="<?php echo base_url('<?php echo base_url(); ?>img/umss1.jpg'); ?>" alt="" height="18"></span>
+                                     <img src="<?php echo base_url(); ?>uploads/portadas/hemeroteca.jpg" alt="100" height="100">
                                     </a>
-                                    <p class="text-muted mb-4 mt-3">Ingrese su nombre de usuario y contraseña para acceder al sistema de la Hemeroteca.</p>
+                                    <p class="text-muted mb-4 mt-3">HEMEROTECA "JOSE ANTONIO ARZE"</p>
                                 </div>
 
                                 <p>¿No recibiste el correo de verificación? <a href="<?= site_url('usuarios/reenviar_verificacion') ?>">Solicitar reenvío</a></p>
