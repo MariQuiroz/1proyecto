@@ -247,11 +247,22 @@ class Usuario_model extends CI_Model {
         $this->db->where('estado', 1); // Asumiendo que 1 significa activo
         return $this->db->get()->result();
     }
-    
+
     public function username_existe($username) {
         $this->db->where('username', $username);
         $query = $this->db->get('USUARIO');
         return $query->num_rows() > 0;
+    }
+    public function actualizar_configuracion($idUsuario, $nuevo_username, $nueva_password) {
+        $data = [
+            'username' => $nuevo_username,
+            'password' => password_hash($nueva_password, PASSWORD_DEFAULT),
+            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $this->session->userdata('idUsuario')
+        ];
+        
+        $this->db->where('idUsuario', $idUsuario);
+        return $this->db->update('USUARIO', $data);
     }
     
 }

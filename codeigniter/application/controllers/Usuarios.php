@@ -75,6 +75,7 @@ class Usuarios extends CI_Controller {
                     $this->session->set_userdata('idUsuario', $usuario->idUsuario);
                     $this->session->set_userdata('username', $usuario->username);
                     $this->session->set_userdata('rol', $usuario->rol);
+                
                     redirect('usuarios/panel','refresh');
                 }
             } else {
@@ -900,20 +901,23 @@ public function reenviar_verificacion()
         $rol = $this->session->userdata('rol');
         
         if ($this->input->post()) {
+            $this->form_validation->set_rules('nuevo_username', 'Nuevo nombre de usuario', 'required|is_unique[USUARIO.username]');
             $this->form_validation->set_rules('nueva_password', 'Nueva Contraseña', 'required|min_length[6]');
             $this->form_validation->set_rules('confirmar_password', 'Confirmar Contraseña', 'required|matches[nueva_password]');
     
             if ($this->form_validation->run()) {
+                $nuevo_username = $this->input->post('nuevo_username');
                 $nueva_password = $this->input->post('nueva_password');
     
                 $this->db->trans_start();
-                $resultado = $this->usuario_model->actualizar_password($idUsuario, $nueva_password);
+                $resultado = $this->usuario_model->actualizar_configuracion($idUsuario, $nuevo_username, $nueva_password);
                 $this->db->trans_complete();
     
                 if ($this->db->trans_status() === FALSE) {
-                    $this->session->set_flashdata('error', 'Error al actualizar la contraseña. Inténtalo de nuevo.');
+                    $this->session->set_flashdata('error', 'Error al actualizar la configuración. Inténtalo de nuevo.');
                 } else {
-                    $this->session->set_flashdata('mensaje', 'Contraseña actualizada con éxito.');
+                    $this->session->set_flashdata('mensaje', 'Configuración actualizada con éxito.');
+                    $this->session->set_userdata('username', $nuevo_username);
                 }
                 redirect('usuarios/configuracion');
             }
@@ -924,14 +928,14 @@ public function reenviar_verificacion()
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
         $this->load->view('inc/aside');
-        
-        if ($rol == 'lector') {
-            $this->load->view('usuarios/configuracion_lector', $data);
-        } else {
-            $this->load->view('usuarios/configuracion', $data);
-        }
-        
+        $this->load->view('usuarios/configuracion', $data);
         $this->load->view('inc/footer');
     }
+    public function obtener_por_username($username) {
+        $this->db->select('idUsuario, username, password, nombres, apellidoPaterno, rol, estado, cambioPasswordRequerido');
+        $this->db->where('username', $username);
+        return $this->db->get('USUARIO')->row();
+    }
+   
 }
     
