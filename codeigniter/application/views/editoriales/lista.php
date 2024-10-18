@@ -40,7 +40,7 @@
                                                 <i class="mdi mdi-pencil"></i>
                                             </a>
                                             <a href="<?php echo site_url('editoriales/eliminar/'.$editorial->idEditorial); ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar esta editorial?');" data-toggle="tooltip" title="Deshabilitar">
-                                                <i class="mdi mdi-account-off"></i>
+                                                 <i class="fe-trash-2"></i> 
                                             </a>
                                         </td>
                                     </tr>

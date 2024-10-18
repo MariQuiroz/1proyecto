@@ -5,7 +5,7 @@
 <div class="content-page">
     <div class="content">
         <!-- Start Content-->
-        <div class="container-fluid">
+        <div class="container-fluid overflow-auto" style="max-height: 500px;">
             <div class="row">
                 <div class="col-12">
                     <div class="card">
@@ -25,7 +25,7 @@
                                 <thead>
                                     <tr>
                                         <th>Portada</th>
-                                        <th>Título</th>
+                                        <th>Titular</th>
                                         <th>Editorial</th>
                                         <th>Tipo</th>
                                         <th>Fecha de Publicación</th>

@@ -2,7 +2,7 @@
 <div class="content-page">
     <div class="content">
         <!-- Start Content-->
-        <div class="container-fluid">
+        <div class="container-fluid overflow-auto" style="max-height: 500px;">
 
             <div class="container">
                 <h2 class="mb-4">Notificaciones</h2>

@@ -3,9 +3,12 @@
 <!-- ============================================================== -->
 
 <div class="content-page">
-    <div class="content">
-        <!-- Start Content-->
-        <div class="container-fluid">
+                <div class="content">
+
+                    <!-- Start Content-->
+                    <div class="container-fluid overflow-auto" style="max-height: 500px;">
+                        
+                       
             <div class="row">
                 <div class="col-12">
                     <div class="card">
@@ -73,8 +76,3 @@
             </div>
         </div> <!-- container -->
     </div> <!-- content -->
-</div>
-
-<!-- ============================================================== -->
-<!-- End Page content -->
-<!-- ============================================================== -->

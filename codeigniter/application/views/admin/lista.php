@@ -2,12 +2,11 @@
 <!-- Start Page Content here -->
 <!-- ============================================================== -->
 
- <div class"content-page">
-    <div class="content">
+<div class="content-page">
+                <div class="content">
 
-        <!-- Start Content-->
-        <div class="container-fluid">
-          
+                    <!-- Start Content-->
+                    <div class="container-fluid overflow-auto" style="max-height: 500px;">
         <!-- start page title -->
         <div class="row">
             <div class="col-12">
@@ -61,7 +60,7 @@
                         <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    
                                     <th>Nombre</th>
                                     <th>Email</th>
                                     <th>Rol</th>
@@ -72,7 +71,7 @@
                             <tbody>
                                 <?php foreach ($usuarios as $usuario): ?>
                                 <tr>
-                                    <td><?php echo $usuario->idUsuario; ?></td>
+                                 
                                     <td><?php echo $usuario->nombres . ' ' . $usuario->apellidoPaterno; ?></td>
                                     <td><?php echo $usuario->email; ?></td>
                                     <td><span class="badge badge-<?php echo $usuario->rol == 'administrador' ? 'danger' : ($usuario->rol == 'encargado' ? 'warning' : 'info'); ?>"><?php echo ucfirst($usuario->rol); ?></span></td>
@@ -98,6 +97,7 @@
         </div>
         <!-- end row-->
     </div> <!-- container -->
+    </div>
 
     <script>
         $(document).ready(function() {
@@ -118,16 +118,3 @@
 
 
 
-                        </div>
-                        
-                    </div> <!-- container -->
-
-                </div> <!-- content -->
-
-    <!-- Vendor js -->
-    <script src="<?php echo base_url('adminXeria/dist/assets/js/vendor.min.js'); ?>"></script>
-
-    <!-- App js -->
-    <script src="<?php echo base_url('adminXeria/dist/assets/js/app.min.js'); ?>"></script>
-</body>
-</html>  

@@ -1,6 +1,6 @@
 <div class="content-page">
     <div class="content">
-        <div class="container-fluid">
+        <div class="container-fluid overflow-auto" style="max-height: 500px;">
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box">

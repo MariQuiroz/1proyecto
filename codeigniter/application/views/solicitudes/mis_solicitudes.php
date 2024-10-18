@@ -1,6 +1,6 @@
 <div class="content-page">
     <div class="content">
-        <div class="container-fluid">
+        <div class="container-fluid overflow-auto" style="max-height: 500px;">
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box">
@@ -17,7 +17,7 @@
                             <table id="basic-datatable" class="table dt-responsive nowrap">
                                     <thead>
                                         <tr>
-                                            <th>ID Solicitud</th>
+                                         
                                             <th>Publicación</th>
                                             <th>Fecha Solicitud</th>
                                             <th>Estado</th>
@@ -27,7 +27,7 @@
                                     <tbody>
                                         <?php foreach ($solicitudes as $solicitud): ?>
                                         <tr>
-                                            <td><?php echo $solicitud->idSolicitud; ?></td>
+                                            
                                             <td><?php echo $solicitud->titulo; ?></td>
                                             <td><?php echo date('d/m/Y H:i:s', strtotime($solicitud->fechaSolicitud)); ?></td>
                                             <td>

@@ -1,6 +1,6 @@
 <div class="content-page">
     <div class="content">
-        <div class="container-fluid">
+        <div class="container-fluid overflow-auto" style="max-height: 500px;">
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box">
@@ -21,7 +21,7 @@
                             <table id="basic-datatable" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
-                                        <th>ID Préstamo</th>
+                                     
                                         <th>Publicación</th>
                                         <th>Fecha Inicio</th>
                                         <th>Fecha Fin</th>
@@ -32,7 +32,7 @@
                                 <tbody>
                                     <?php foreach ($prestamos as $prestamo): ?>
                                     <tr>
-                                        <td><?php echo $prestamo->idPrestamo; ?></td>
+                                        
                                         <td><?php echo $prestamo->titulo; ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
                                         <td><?php echo $prestamo->horaDevolucion ? date('d/m/Y H:i', strtotime($prestamo->horaDevolucion)) : 'N/A'; ?></td>

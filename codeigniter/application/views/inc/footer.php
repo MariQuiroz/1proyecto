@@ -1,5 +1,11 @@
 
-<!-- Footer Start -->
+
+
+            </div>
+
+
+    </div>
+    <!-- Footer Start -->
 <footer class="footer">
                     <div class="container-fluid">
                         <div class="row">
@@ -11,11 +17,6 @@
                     </div>
                 </footer>
                 <!-- end Footer -->
-
-            </div>
-
-
-</div>
         <!-- END wrapper -->
 
    

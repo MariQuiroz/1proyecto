@@ -1,6 +1,6 @@
 <div class="content-page">
     <div class="content">
-        <div class="container-fluid">
+        <div class="container-fluid overflow-auto" style="max-height: 500px;">
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box">
@@ -18,7 +18,7 @@
                                 Aquí se muestra el historial completo de todos los préstamos.
                             </p>
 
-                            <table id="historial-prestamos-table" class="table dt-responsive nowrap">
+                            <table id="basic-datatable" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
                                         <th>ID Préstamo</th>
