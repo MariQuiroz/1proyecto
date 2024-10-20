@@ -22,8 +22,8 @@
             <tbody>
                 <?php foreach ($prestamos as $prestamo): ?>
                     <tr>
-                        <td><?= $prestamo->nombres . ' ' . $prestamo->apellidoPaterno ?></td>
-                        <td><?= $prestamo->titulo ?></td>
+                        <td><?= htmlspecialchars($prestamo->nombres . ' ' . $prestamo->apellidoPaterno) ?></td>
+                        <td><?= htmlspecialchars($prestamo->titulo) ?></td>
                         <td><?= date('d/m/Y', strtotime($prestamo->fechaPrestamo)) ?></td>
                         <td><?= date('d/m/Y', strtotime($prestamo->fechaDevolucionEsperada)) ?></td>
                         <td><?= $prestamo->estado == 1 ? 'Activo' : 'Devuelto' ?></td>
@@ -37,12 +37,13 @@
             </tbody>
         </table>
     <?php endif; ?>
+    
+    <!-- Botón para volver -->
+    <button onclick="goBack()" class="btn btn-secondary mb-3">Volver</button>
 </div>
-<!-- Botón para volver -->
-<button onclick="goBack()" class="btn btn-secondary mb-3">Volver</button>
+
 <script>
 function goBack() {
     window.history.back();
 }
 </script>
-

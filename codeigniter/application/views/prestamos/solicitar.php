@@ -1,12 +1,20 @@
-<div class="container">
+<div class="container mt-4">
     <h2>Solicitar Préstamo</h2>
-    <?php echo validation_errors(); ?>
+    
+    <!-- Mostrar errores de validación -->
+    <?php if (validation_errors()): ?>
+        <div class="alert alert-danger">
+            <?= validation_errors(); ?>
+        </div>
+    <?php endif; ?>
+    
     <?php echo form_open('prestamos/solicitar'); ?>
         <div class="form-group">
             <label for="idPublicacion">Publicación:</label>
             <select name="idPublicacion" class="form-control" required>
+                <option value="">Seleccione una publicación</option>
                 <?php foreach ($publicaciones as $publicacion): ?>
-                    <option value="<?php echo $publicacion->idPublicacion; ?>"><?php echo $publicacion->titulo; ?></option>
+                    <option value="<?= htmlspecialchars($publicacion->idPublicacion); ?>"><?= htmlspecialchars($publicacion->titulo); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -16,8 +24,9 @@
         </div>
         <div class="form-group">
             <label for="motivoConsulta">Motivo de Consulta:</label>
-            <textarea name="motivoConsulta" class="form-control" rows="3"></textarea>
+            <textarea name="motivoConsulta" class="form-control" rows="3" placeholder="Escribe tu motivo de consulta aquí..."></textarea>
         </div>
         <button type="submit" class="btn btn-primary">Enviar Solicitud</button>
+        <a href="<?= site_url('prestamos'); ?>" class="btn btn-secondary">Cancelar</a>
     <?php echo form_close(); ?>
 </div>

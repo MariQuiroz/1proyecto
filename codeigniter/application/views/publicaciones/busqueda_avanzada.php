@@ -6,11 +6,11 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="titulo">Título</label>
-                <input type="text" class="form-control" id="titulo" name="titulo" value="<?= set_value('titulo') ?>">
+                <input type="text" class="form-control" id="titulo" name="titulo" value="<?= set_value('titulo') ?>" placeholder="Ingrese el título">
             </div>
             <div class="form-group col-md-6">
                 <label for="editorial">Editorial</label>
-                <input type="text" class="form-control" id="editorial" name="editorial" value="<?= set_value('editorial') ?>">
+                <input type="text" class="form-control" id="editorial" name="editorial" value="<?= set_value('editorial') ?>" placeholder="Ingrese la editorial">
             </div>
         </div>
         <div class="form-row">
@@ -24,11 +24,11 @@
             </div>
             <div class="form-group col-md-4">
                 <label for="año_desde">Año Desde</label>
-                <input type="number" class="form-control" id="año_desde" name="año_desde" min="1800" max="<?= date('Y') ?>" value="<?= set_value('año_desde') ?>">
+                <input type="number" class="form-control" id="año_desde" name="año_desde" min="1800" max="<?= date('Y') ?>" value="<?= set_value('año_desde') ?>" placeholder="Año desde">
             </div>
             <div class="form-group col-md-4">
                 <label for="año_hasta">Año Hasta</label>
-                <input type="number" class="form-control" id="año_hasta" name="año_hasta" min="1800" max="<?= date('Y') ?>" value="<?= set_value('año_hasta') ?>">
+                <input type="number" class="form-control" id="año_hasta" name="año_hasta" min="1800" max="<?= date('Y') ?>" value="<?= set_value('año_hasta') ?>" placeholder="Año hasta">
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Buscar</button>
@@ -52,8 +52,8 @@
                 <tbody>
                     <?php foreach ($resultados as $publicacion): ?>
                         <tr>
-                            <td><?= $publicacion->titulo ?></td>
-                            <td><?= $publicacion->editorial ?></td>
+                            <td><?= htmlspecialchars($publicacion->titulo) ?></td>
+                            <td><?= htmlspecialchars($publicacion->editorial) ?></td>
                             <td><?= ucfirst($publicacion->tipo) ?></td>
                             <td><?= $publicacion->añoPublicacion ?></td>
                             <td>
@@ -67,6 +67,7 @@
         <?php endif; ?>
     <?php endif; ?>
 </div>
+
 <br>
 <button onclick="goBack()" class="btn btn-secondary mb-3">Volver</button>
 <script>

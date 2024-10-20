@@ -14,10 +14,9 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="table-responsive">
-                            <table id="basic-datatable" class="table dt-responsive nowrap">
+                                <table id="basic-datatable" class="table dt-responsive nowrap">
                                     <thead>
                                         <tr>
-                                         
                                             <th>Publicación</th>
                                             <th>Fecha Solicitud</th>
                                             <th>Estado</th>
@@ -27,7 +26,6 @@
                                     <tbody>
                                         <?php foreach ($solicitudes as $solicitud): ?>
                                         <tr>
-                                            
                                             <td><?php echo $solicitud->titulo; ?></td>
                                             <td><?php echo date('d/m/Y H:i:s', strtotime($solicitud->fechaSolicitud)); ?></td>
                                             <td>

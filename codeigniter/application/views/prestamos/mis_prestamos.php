@@ -18,10 +18,9 @@
                                 Aquí se muestran todos tus préstamos, tanto activos como históricos.
                             </p>
 
-                            <table id="basic-datatable" class="table dt-responsive nowrap">
+                            <table id="mis-prestamos-table" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
-                                     
                                         <th>Publicación</th>
                                         <th>Fecha Inicio</th>
                                         <th>Fecha Fin</th>
@@ -32,10 +31,9 @@
                                 <tbody>
                                     <?php foreach ($prestamos as $prestamo): ?>
                                     <tr>
-                                        
-                                        <td><?php echo $prestamo->titulo; ?></td>
-                                        <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
-                                        <td><?php echo $prestamo->horaDevolucion ? date('d/m/Y H:i', strtotime($prestamo->horaDevolucion)) : 'N/A'; ?></td>
+                                        <td><?= htmlspecialchars($prestamo->titulo); ?></td>
+                                        <td><?= date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
+                                        <td><?= $prestamo->horaDevolucion ? date('d/m/Y H:i', strtotime($prestamo->horaDevolucion)) : 'N/A'; ?></td>
                                         <td>
                                             <?php
                                             switch($prestamo->estadoPrestamo) {
@@ -51,18 +49,18 @@
                                             ?>
                                         </td>
                                         <td>
-                                            <a href="<?php echo site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" class="btn btn-info btn-sm">Detalles</a>
+                                            <a href="<?= site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" class="btn btn-info btn-sm">Detalles</a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
 
-                        </div> <!-- end card body-->
+                        </div> <!-- end card body -->
                     </div> <!-- end card -->
-                </div><!-- end col-->
+                </div><!-- end col -->
             </div>
-            <!-- end row-->
+            <!-- end row -->
         </div>
     </div>
 </div>

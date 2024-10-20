@@ -887,7 +887,7 @@ public function reenviar_verificacion()
         $this->load->view('inc/aside');
         
         if ($rol == 'lector') {
-            $this->load->view('usuarios/perfil_lector', $data);
+            $this->load->view('usuarios/perfil', $data);
         } else {
             $this->load->view('usuarios/perfil', $data);
         }

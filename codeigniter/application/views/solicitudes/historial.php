@@ -77,7 +77,7 @@
 
 <script>
 $(document).ready(function() {
-    $('#historial-solicitudes-table').DataTable({
+    $('#basic-datatable').DataTable({
         responsive: true,
         language: {
             url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'

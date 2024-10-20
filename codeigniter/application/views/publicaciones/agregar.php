@@ -3,12 +3,9 @@
 <!-- ============================================================== -->
 
 <div class="content-page">
-                <div class="content">
-
-                    <!-- Start Content-->
-                    <div class="container-fluid overflow-auto" style="max-height: 500px;">
-                        
-                       
+    <div class="content">
+        <!-- Start Content-->
+        <div class="container-fluid overflow-auto" style="max-height: 500px;">
             <div class="row">
                 <div class="col-12">
                     <div class="card">
@@ -21,7 +18,7 @@
                             <?php echo form_open_multipart('publicaciones/agregarbd'); ?>
                                 <div class="mb-3">
                                     <label for="titulo" class="form-label">Título</label>
-                                    <input type="text" class="form-control" id="titulo" name="titulo" required>
+                                    <input type="text" class="form-control" id="titulo" name="titulo" required placeholder="Ingrese el título">
                                 </div>
                                 <div class="mb-3">
                                     <label for="idEditorial" class="form-label">Editorial</label>
@@ -47,11 +44,11 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="numeroPaginas" class="form-label">Número de Páginas</label>
-                                    <input type="number" class="form-control" id="numeroPaginas" name="numeroPaginas">
+                                    <input type="number" class="form-control" id="numeroPaginas" name="numeroPaginas" placeholder="Número de páginas">
                                 </div>
                                 <div class="mb-3">
                                     <label for="descripcion" class="form-label">Descripción</label>
-                                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3" placeholder="Ingrese una descripción"></textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label for="ubicacionFisica" class="form-label">Ubicación Física</label>
@@ -76,3 +73,8 @@
             </div>
         </div> <!-- container -->
     </div> <!-- content -->
+</div>
+
+<!-- ============================================================== -->
+<!-- End Page content -->
+<!-- ============================================================== -->

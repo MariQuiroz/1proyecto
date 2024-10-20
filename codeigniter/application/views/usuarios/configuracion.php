@@ -1,3 +1,13 @@
+<!-- ============================================================== -->
+<!-- Start Page Content here -->
+<!-- ============================================================== -->
+
+<div class="content-page">
+                <div class="content">
+
+                    <!-- Start Content-->
+                    <div class="container-fluid overflow-auto" style="max-height: 500px;">
+                                   
 <div class="content-wrapper">
     <section class="content-header">
         <h1>Configuración <small><?php echo ucfirst($this->session->userdata('rol')); ?></small></h1>
@@ -40,3 +50,7 @@
         </div>
     </section>
 </div>
+</div> <!-- container -->
+
+</div> <!-- content -->
+

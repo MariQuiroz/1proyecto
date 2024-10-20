@@ -66,39 +66,39 @@
                 </a>
             </div>
         </li>
-                  
-<!-- Código de depuración -->
 
+        <!-- Código de depuración -->
 
-<!-- Nombre del usuario -->
-<li class="d-none d-sm-block" style="margin-right: 15px;">
-    <span class="nav-link" style="color: #000000; font-weight: bold; background-color: rgba(255, 255, 255, 0.8); padding: 8px 15px; border-radius: 20px;">
-        <?php
-        if ($this->session->userdata('login')) {
-            $idUsuario = $this->session->userdata('idUsuario');
-            $username = $this->session->userdata('username');
+        <!-- Nombre del usuario -->
+        <li class="d-none d-sm-block" style="margin-right: 15px;">
+            <span class="nav-link" style="color: #000000; font-weight: bold; background-color: rgba(255, 255, 255, 0.8); padding: 8px 15px; border-radius: 20px;">
+                <?php
+                if ($this->session->userdata('login')) {
+                    $idUsuario = $this->session->userdata('idUsuario');
+                    $username = $this->session->userdata('username');
 
-            // Cargar el modelo de usuario si aún no está cargado
-            if (!isset($this->usuario_model)) {
-                $this->load->model('usuario_model');
-            }
+                    // Cargar el modelo de usuario si aún no está cargado
+                    if (!isset($this->usuario_model)) {
+                        $this->load->model('usuario_model');
+                    }
 
-            // Obtener el nombre completo del usuario de la base de datos
-            $usuario = $this->usuario_model->obtener_usuario($idUsuario);
-            
-            if ($usuario && isset($usuario->nombres) && isset($usuario->apellidoPaterno)) {
-                $nombreMostrar = $usuario->nombres . ' ' . $usuario->apellidoPaterno;
-            } else {
-                $nombreMostrar = ucfirst($username); // Usa el nombre de usuario si no se encuentra el nombre completo
-            }
+                    // Obtener el nombre completo del usuario de la base de datos
+                    $usuario = $this->usuario_model->obtener_usuario($idUsuario);
+                    
+                    if ($usuario && isset($usuario->nombres) && isset($usuario->apellidoPaterno)) {
+                        $nombreMostrar = $usuario->nombres . ' ' . $usuario->apellidoPaterno;
+                    } else {
+                        $nombreMostrar = ucfirst($username); // Usa el nombre de usuario si no se encuentra el nombre completo
+                    }
 
-            echo htmlspecialchars($nombreMostrar);
-        } else {
-            echo 'Invitado';
-        }
-        ?>
-    </span>
-</li>
+                    echo htmlspecialchars($nombreMostrar);
+                } else {
+                    echo 'Invitado';
+                }
+                ?>
+            </span>
+        </li>
+        
         <li class="dropdown notification-list">
             <a class="nav-link dropdown-toggle nav-user mr-0 waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
             <img src="<?php echo base_url(); ?>adminXeria/light/dist/assets/images/users/user-1.jpg" alt="user-image" class="rounded-circle">
@@ -128,11 +128,11 @@
                     <span>Cerrar Sesión</span>
                 </a>
             </div>
-        
+        </li>
     </ul>
 
-  <!-- LOGO -->
-  <div class="logo-box">
+    <!-- LOGO -->
+    <div class="logo-box">
         <a href="<?php echo base_url(); ?>" class="logo text-center">
             <span class="logo-lg">
                 <img src="<?php echo base_url('adminXeria/light/dist/assets/images/logo-light.png'); ?>" alt="logo" height="16">
@@ -151,8 +151,6 @@
                 <span></span>
             </button>
         </li>
-
-       
 
         <li class="dropdown d-none d-lg-block">
             <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
