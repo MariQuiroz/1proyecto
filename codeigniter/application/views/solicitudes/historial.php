@@ -75,14 +75,4 @@
     </div>
 </div>
 
-<script>
-$(document).ready(function() {
-    $('#basic-datatable').DataTable({
-        responsive: true,
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
-        },
-        order: [[3, 'desc']] // Ordenar por fecha de solicitud, de más reciente a más antigua
-    });
-});
-</script>
+

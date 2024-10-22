@@ -49,9 +49,9 @@
                                 <tbody>
                                     <?php foreach ($prestamos as $prestamo): ?>
                                     <tr>
-                                        <td><?php echo $prestamo->idPrestamo; ?></td>
-                                        <td><?php echo $prestamo->nombres . ' ' . $prestamo->apellidoPaterno; ?></td>
-                                        <td><?php echo $prestamo->titulo; ?></td>
+                                        <td><?php echo htmlspecialchars($prestamo->idPrestamo); ?></td>
+                                        <td><?php echo htmlspecialchars($prestamo->nombres . ' ' . $prestamo->apellidoPaterno); ?></td>
+                                        <td><?php echo htmlspecialchars($prestamo->titulo); ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
                                         <td>
                                             <a href="<?php echo site_url('prestamos/finalizar/' . $prestamo->idPrestamo); ?>" class="btn btn-success btn-sm finalizar-prestamo">Finalizar</a>
@@ -69,24 +69,3 @@
         </div>
     </div>
 </div>
-
-<script>
-$(document).ready(function() {
-    var table = $('#prestamos-activos-table').DataTable({
-        responsive: true,
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
-        }
-    });
-
-    // Manejar el clic en el botón "Finalizar"
-    $('.finalizar-prestamo').on('click', function(e) {
-        e.preventDefault();
-        var url = $(this).attr('href');
-        
-        if (confirm('¿Está seguro de que desea finalizar este préstamo? Se notificará a los usuarios interesados si la publicación queda disponible.')) {
-            window.location.href = url;
-        }
-    });
-});
-</script>

@@ -18,7 +18,7 @@
                                 Aquí se muestran todos tus préstamos, tanto activos como históricos.
                             </p>
 
-                            <table id="mis-prestamos-table" class="table dt-responsive nowrap">
+                            <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
                                 <thead>
                                     <tr>
                                         <th>Publicación</th>
@@ -65,13 +65,4 @@
     </div>
 </div>
 
-<script>
-$(document).ready(function() {
-    $('#mis-prestamos-table').DataTable({
-        responsive: true,
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
-        }
-    });
-});
-</script>
+

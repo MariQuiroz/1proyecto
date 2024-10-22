@@ -3,11 +3,11 @@
     <h2>Cambiar Contraseña</h2>
     
     <?php if ($this->session->flashdata('success')): ?>
-        <div class="alert alert-success"><?= $this->session->flashdata('success') ?></div>
+        <div class="alert alert-success"><?= htmlspecialchars($this->session->flashdata('success')) ?></div>
     <?php endif; ?>
 
     <?php if ($this->session->flashdata('error')): ?>
-        <div class="alert alert-danger"><?= $this->session->flashdata('error') ?></div>
+        <div class="alert alert-danger"><?= htmlspecialchars($this->session->flashdata('error')) ?></div>
     <?php endif; ?>
 
     <form action="<?= site_url('usuario/actualizar_contrasena') ?>" method="post">
@@ -28,6 +28,3 @@
 
     <a href="<?= site_url('usuario/perfil') ?>" class="btn btn-secondary mt-3">Volver al Perfil</a>
 </div>
-
-
-

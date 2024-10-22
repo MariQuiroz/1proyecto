@@ -1,18 +1,15 @@
-
 <!-- ============================================================== -->
 <!-- Start Page Content here -->
 <!-- ============================================================== -->
 
 <div class="content-page">
     <div class="content">
-        <!-- Start Content-->
         <div class="container-fluid overflow-auto" style="max-height: 500px;">    
 
             <!-- start page title -->
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box">
-                    
                         <h4 class="page-title">Agregar Nuevo Usuario</h4>
                     </div>
                 </div>
@@ -23,9 +20,9 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body">
-                            <?php if($this->session->flashdata('error')): ?>
+                            <?php if ($this->session->flashdata('error')): ?>
                                 <div class="alert alert-danger" role="alert">
-                                    <?php echo $this->session->flashdata('error'); ?>
+                                    <?= htmlspecialchars($this->session->flashdata('error')); ?>
                                 </div>
                             <?php endif; ?>
 
@@ -128,5 +125,3 @@
         </div>   
     </div> <!-- container -->
 </div> <!-- content -->
-
-   

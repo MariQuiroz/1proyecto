@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Incluye los mismos estilos que en tu vista de login -->
+    <meta charset="utf-8" />
+    <title>Recuperar Contraseña - Hemeroteca</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta content="Recupera tu contraseña de la Hemeroteca" name="description" />
+    <link rel="shortcut icon" href="<?php echo base_url(); ?>adminXeria/light/dist/assets/images/favicon.ico"/>
+    
+    <!-- App css -->
+    <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/app.min.css" rel="stylesheet" type="text/css" />
 </head>
 <body class="authentication-bg authentication-bg-pattern">
     <div class="account-pages mt-5 mb-5">
@@ -31,6 +40,11 @@
             </div>
         </div>
     </div>
-    <!-- Incluye los mismos scripts que en tu vista de login -->
+
+    <!-- Vendor js -->
+    <script src="<?php echo base_url(); ?>adminXeria/light/dist/assets/js/vendor.min.js"></script>
+
+    <!-- App js -->
+    <script src="<?php echo base_url(); ?>adminXeria/light/dist/assets/js/app.min.js"></script>
 </body>
 </html>

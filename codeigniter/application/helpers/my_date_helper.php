@@ -31,15 +31,16 @@ if (!function_exists('time_elapsed_string')) {
         if (!$full) $string = array_slice($string, 0, 1);
         return $string ? 'hace ' . implode(', ', $string) : 'justo ahora';
     }
-    if (!function_exists('truncate_string')) {
-        function truncate_string($string, $length = 50, $append = "...") {
-            $string = trim($string);
-            if (strlen($string) > $length) {
-                $string = wordwrap($string, $length);
-                $string = explode("\n", $string, 2);
-                $string = $string[0] . $append;
-            }
-            return $string;
+}
+
+if (!function_exists('truncate_string')) {
+    function truncate_string($string, $length = 50, $append = "...") {
+        $string = trim($string);
+        if (strlen($string) > $length) {
+            $string = wordwrap($string, $length);
+            $string = explode("\n", $string, 2);
+            $string = $string[0] . $append;
         }
+        return $string;
     }
 }

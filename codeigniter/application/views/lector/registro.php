@@ -3,12 +3,12 @@
     <head>
         <meta charset="utf-8" />
         <title>Xeria - Responsive Admin Dashboard Template</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <meta content="A fully featured admin theme which can be used to build CRM, CMS, etc." name="description" />
         <meta content="Coderthemes" name="author" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <!-- App favicon -->
-        <link rel="shortcut icon" href="<?php echo base_url(); ?>adminXeria/light/dist/assets/images/favicon.ico">
+        <link rel="shortcut icon" href="<?php echo base_url(); ?>adminXeria/light/dist/assets/images/favicon.ico"/>
 
         <!-- App css -->
         <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
@@ -48,23 +48,28 @@
                                 <?php echo form_open('usuarios/auto_registro', ['class' => 'form-horizontal', 'id' => 'form-registro-lector']); ?>
 
                                 <div class="form-group">
-                                    <input type="text" name="nombres" class="form-control" placeholder="Nombres" required>
+                                    <label for="nombres">Nombres</label>
+                                    <input type="text" name="nombres" class="form-control" id="nombres" placeholder="Nombres" required>
                                 </div>
 
                                 <div class="form-group">
-                                    <input type="text" name="apellidoPaterno" class="form-control" placeholder="Apellido Paterno" required>
+                                    <label for="apellidoPaterno">Apellido Paterno</label>
+                                    <input type="text" name="apellidoPaterno" class="form-control" id="apellidoPaterno" placeholder="Apellido Paterno" required>
                                 </div>
 
                                 <div class="form-group">
-                                    <input type="text" name="apellidoMaterno" class="form-control" placeholder="Apellido Materno">
+                                    <label for="apellidoMaterno">Apellido Materno</label>
+                                    <input type="text" name="apellidoMaterno" class="form-control" id="apellidoMaterno" placeholder="Apellido Materno">
                                 </div>
 
                                 <div class="form-group">
-                                    <input type="text" name="carnet" class="form-control" placeholder="Carnet" required>
+                                    <label for="carnet">Carnet</label>
+                                    <input type="text" name="carnet" class="form-control" id="carnet" placeholder="Carnet" required>
                                 </div>
 
                                 <div class="form-group">
-                                    <select name="profesion" class="form-control" required>
+                                    <label for="profesion">Profesión</label>
+                                    <select name="profesion" class="form-control" id="profesion" required>
                                         <option value="">Seleccione su profesión</option>
                                         <option value="Estudiante Umss">Estudiante UMSS</option>
                                         <option value="Docente Umss">Docente UMSS</option>
@@ -74,11 +79,13 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <input type="date" name="fechaNacimiento" class="form-control" placeholder="Fecha de nacimiento">
+                                    <label for="fechaNacimiento">Fecha de Nacimiento</label>
+                                    <input type="date" name="fechaNacimiento" class="form-control" id="fechaNacimiento" required>
                                 </div>
 
                                 <div class="form-group">
-                                    <select name="sexo" class="form-control" required>
+                                    <label for="sexo">Sexo</label>
+                                    <select name="sexo" class="form-control" id="sexo" required>
                                         <option value="">Seleccione su sexo</option>
                                         <option value="M">Masculino</option>
                                         <option value="F">Femenino</option>
@@ -86,19 +93,23 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <input type="email" name="email" class="form-control" placeholder="Correo electrónico" required>
+                                    <label for="email">Correo Electrónico</label>
+                                    <input type="email" name="email" class="form-control" id="email" placeholder="Correo electrónico" required>
                                 </div>
 
                                 <div class="form-group">
-                                    <input type="text" name="username" class="form-control" placeholder="Nombre de usuario" required>
+                                    <label for="username">Nombre de Usuario</label>
+                                    <input type="text" name="username" class="form-control" id="username" placeholder="Nombre de usuario" required>
                                 </div>
 
                                 <div class="form-group">
-                                    <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
+                                    <label for="password">Contraseña</label>
+                                    <input type="password" name="password" class="form-control" id="password" placeholder="Contraseña" required>
                                 </div>
                                 
                                 <div class="form-group">
-                                    <input type="password" name="confirm_password" class="form-control" placeholder="Repite tu Contraseña" required>
+                                    <label for="confirm_password">Repite tu Contraseña</label>
+                                    <input type="password" name="confirm_password" class="form-control" id="confirm_password" placeholder="Repite tu Contraseña" required>
                                 </div>
 
                                 <div class="form-group text-center">
@@ -119,7 +130,7 @@
         <!-- end page -->
 
         <footer class="footer footer-alt">
-            2024 &copy; Hemeroteca theme by <a href="" class="text-muted">YourName</a> 
+            2024 &copy; Hemeroteca theme by <a href="#" class="text-muted">YourName</a> 
         </footer>
 
         <!-- Vendor js -->

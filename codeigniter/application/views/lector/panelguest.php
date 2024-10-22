@@ -1,9 +1,9 @@
-<div id="wrapper">
+
     <div class="content-page">
         <div class="content">
             <!-- Start Content-->
             <div class="container-fluid">
-                <!-- start page title -->
+                <!-- Start Page Title -->
                 <div class="row">
                     <div class="col-12">
                         <div class="page-title-box">
@@ -11,7 +11,8 @@
                         </div>
                     </div>
                 </div>     
-                <!-- end page title --> 
+                <!-- End Page Title --> 
+
                 <!-- Mis Préstamos Activos -->
                 <div class="row">
                     <div class="col-xl-6">
@@ -28,13 +29,19 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($prestamos_activos as $prestamo): ?>
-                                        <tr>
-                                            <td><?php echo $prestamo->titulo; ?></td>
-                                            <td><?php echo $prestamo->fechaCreacion; ?></td>
-                                            <td><span class="badge badge-success">Activo</span></td>
-                                        </tr>
-                                        <?php endforeach; ?>
+                                        <?php if (empty($prestamos_activos)): ?>
+                                            <tr>
+                                                <td colspan="3" class="text-center">No tienes préstamos activos.</td>
+                                            </tr>
+                                        <?php else: ?>
+                                            <?php foreach ($prestamos_activos as $prestamo): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($prestamo->titulo); ?></td>
+                                                <td><?php echo htmlspecialchars($prestamo->fechaCreacion); ?></td>
+                                                <td><span class="badge badge-success">Activo</span></td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -56,22 +63,28 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($solicitudes_pendientes as $solicitud): ?>
-                                        <tr>
-                                            <td><?php echo $solicitud->titulo; ?></td>
-                                            <td><?php echo $solicitud->fechaSolicitud; ?></td>
-                                            <td><span class="badge badge-warning">Pendiente</span></td>
-                                        </tr>
-                                        <?php endforeach; ?>
+                                        <?php if (empty($solicitudes_pendientes)): ?>
+                                            <tr>
+                                                <td colspan="3" class="text-center">No tienes solicitudes pendientes.</td>
+                                            </tr>
+                                        <?php else: ?>
+                                            <?php foreach ($solicitudes_pendientes as $solicitud): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($solicitud->titulo); ?></td>
+                                                <td><?php echo htmlspecialchars($solicitud->fechaSolicitud); ?></td>
+                                                <td><span class="badge badge-warning">Pendiente</span></td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
                 </div>
+                <!-- End Row -->
 
-            </div> <!-- container -->
+            </div> <!-- End container -->
 
-        </div> <!-- content -->
+        </div> <!-- End content -->
     </div>
-</div>

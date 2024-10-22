@@ -1,6 +1,24 @@
-<!-- application/views/notificaciones/preferencias.php -->
 <div class="container">
     <h2>Preferencias de Notificación</h2>
+    
+    <?php if ($this->session->flashdata('mensaje')): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <?php echo $this->session->flashdata('mensaje'); ?>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($this->session->flashdata('error')): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?php echo $this->session->flashdata('error'); ?>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    <?php endif; ?>
+
     <?php echo form_open('notificaciones/guardar_preferencias'); ?>
         <div class="form-group">
             <label>
