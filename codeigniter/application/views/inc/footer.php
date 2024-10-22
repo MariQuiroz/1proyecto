@@ -1,12 +1,8 @@
  <!-- Footer Start -->
- <footer class="footer">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-md-6">
-                        2019 &copy; Xeria theme by <a href="">Coderthemes</a> 
-                    </div>
-                </div>
-            </div>
+ <footer class="footer footer-alt">
+           
+                        <?php echo date('Y'); ?> &copy; Hemeroteca
+
         </footer>
         <!-- end Footer -->
     </div>
