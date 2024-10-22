@@ -13,12 +13,12 @@
 
                 <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                     <li>
-                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#usuarios-submenu" aria-expanded="false" aria-controls="usuarios-submenu">
+                        <a href="javascript:void(0);" aria-haspopup="true" aria-expanded="false" id="usuarios-menu">
                             <i class="la la-users"></i>
                             <span> Usuarios </span>
                             <span class="menu-arrow"></span>
-                        </button>
-                        <ul class="nav-second-level collapse" id="usuarios-submenu">
+                        </a>
+                        <ul class="nav-second-level" aria-expanded="false">
                             <li><a href="<?php echo site_url('usuarios/mostrar'); ?>" id="usuarios-habilitados">Usuarios Habilitados</a></li>
                             <li><a href="<?php echo site_url('usuarios/deshabilitados'); ?>" id="usuarios-deshabilitados">Usuarios Deshabilitados</a></li>
                             <li><a href="<?php echo site_url('usuarios/agregar'); ?>" id="agregar-usuario">Agregar Usuario</a></li>
