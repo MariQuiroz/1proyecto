@@ -159,7 +159,7 @@ class Notificaciones extends CI_Controller {
         }
         redirect('publicaciones');
     }
-    
+
     public function marcar_todas_leidas() {
         $this->_verificar_sesion();
         
@@ -185,5 +185,39 @@ class Notificaciones extends CI_Controller {
         } else {
             redirect('notificaciones');
         }
+    }
+    public function eliminar_leidas() {
+        $this->_verificar_sesion();
+        
+        $idUsuario = $this->session->userdata('idUsuario');
+        $rol = $this->session->userdata('rol');
+    
+        if (!$idUsuario || !$rol) {
+            $this->session->set_flashdata('error', 'Sesión no válida');
+            redirect('usuarios/index', 'refresh');
+            return;
+        }
+    
+        if ($this->Notificacion_model->eliminar_notificaciones_leidas($idUsuario, $rol)) {
+            $this->session->set_flashdata('mensaje', 'Las notificaciones leídas han sido eliminadas');
+        } else {
+            $this->session->set_flashdata('error', 'Hubo un error al eliminar las notificaciones');
+        }
+    
+        redirect('notificaciones', 'refresh');
+    }
+    
+    public function eliminar($idNotificacion) {
+        $this->_verificar_sesion();
+        
+        $idUsuario = $this->session->userdata('idUsuario');
+        
+        if ($this->Notificacion_model->eliminar_notificacion($idNotificacion, $idUsuario)) {
+            $this->session->set_flashdata('mensaje', 'Notificación eliminada correctamente');
+        } else {
+            $this->session->set_flashdata('error', 'Error al eliminar la notificación');
+        }
+        
+        redirect('notificaciones', 'refresh');
     }
 }

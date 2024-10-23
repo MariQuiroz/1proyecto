@@ -206,5 +206,40 @@ public function marcar_todas_leidas($idUsuario, $rol) {
     
     return $this->db->trans_status();
 }
+public function eliminar_notificaciones_leidas($idUsuario, $rol) {
+    $this->db->trans_start();
+
+    // Construir condiciones según el rol
+    if ($rol == 'administrador' || $rol == 'encargado') {
+        $this->db->group_start()
+            ->where('idUsuario', $idUsuario)
+            ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
+        ->group_end();
+    } else {
+        $this->db->where('idUsuario', $idUsuario)
+            ->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
+    }
+
+    // Solo eliminar notificaciones leídas
+    $this->db->where('leida', TRUE);
+    $this->db->delete('NOTIFICACION');
+
+    $this->db->trans_complete();
+    
+    return $this->db->trans_status();
+}
+
+// Método para eliminar una notificación específica
+public function eliminar_notificacion($idNotificacion, $idUsuario) {
+    $this->db->trans_start();
+    
+    $this->db->where('idNotificacion', $idNotificacion);
+    $this->db->where('idUsuario', $idUsuario);
+    $this->db->delete('NOTIFICACION');
+    
+    $this->db->trans_complete();
+    
+    return $this->db->trans_status();
+}
 
 }
