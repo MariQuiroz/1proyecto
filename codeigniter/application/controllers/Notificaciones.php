@@ -159,4 +159,31 @@ class Notificaciones extends CI_Controller {
         }
         redirect('publicaciones');
     }
+    
+    public function marcar_todas_leidas() {
+        $this->_verificar_sesion();
+        
+        $idUsuario = $this->session->userdata('idUsuario');
+        $rol = $this->session->userdata('rol');
+    
+        if (!$idUsuario || !$rol) {
+            $this->session->set_flashdata('error', 'Sesión no válida');
+            redirect('usuarios/login');
+            return;
+        }
+    
+        if ($this->Notificacion_model->marcar_todas_leidas($idUsuario, $rol)) {
+            $this->session->set_flashdata('mensaje', 'Todas las notificaciones han sido marcadas como leídas');
+        } else {
+            $this->session->set_flashdata('error', 'Hubo un error al marcar las notificaciones');
+        }
+    
+        // Redirigir a la página anterior si existe
+        $previous_url = $this->session->userdata('previous_url');
+        if ($previous_url) {
+            redirect($previous_url);
+        } else {
+            redirect('notificaciones');
+        }
+    }
 }

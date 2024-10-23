@@ -29,7 +29,7 @@
                                 
                                 <div class="text-center w-75 m-auto">
                                     <a href="<?php echo site_url('usuarios/index'); ?>">
-                                     <img src="<?php echo base_url(); ?>uploads/portadas/hemeroteca4.jpg" alt="100" height="100">
+                                     <img src="<?php echo base_url(); ?>uploads/portadas/hemeroteca.jpg" alt="100" height="100">
                                     </a>
                                     <p class="text-muted mb-4 mt-3">HEMEROTECA "JOSE ANTONIO ARZE"</p>
                                 </div>

@@ -186,4 +186,25 @@ public function obtener_estado_interes($idUsuario, $idPublicacion) {
     return null;
 }
 
+public function marcar_todas_leidas($idUsuario, $rol) {
+    $this->db->trans_start();
+
+    if ($rol == 'administrador' || $rol == 'encargado') {
+        $this->db->group_start()
+            ->where('idUsuario', $idUsuario)
+            ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
+        ->group_end();
+    } else {
+        $this->db->where('idUsuario', $idUsuario)
+            ->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
+    }
+
+    $this->db->where('leida', FALSE);
+    $this->db->update('NOTIFICACION', ['leida' => TRUE]);
+
+    $this->db->trans_complete();
+    
+    return $this->db->trans_status();
+}
+
 }

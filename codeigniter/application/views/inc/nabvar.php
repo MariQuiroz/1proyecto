@@ -25,17 +25,23 @@
                 $notificaciones_no_leidas = $this->Notificacion_model->contar_notificaciones_no_leidas($idUsuario, $rol);
                 if ($notificaciones_no_leidas > 0):
                 ?>
-                <span class="badge badge-danger rounded-circle noti-icon-badge"><?php echo $notificaciones_no_leidas; ?></span>
+                <span class="badge badge-danger rounded-circle noti-icon-badge">
+                    <?php echo $notificaciones_no_leidas; ?>
+                </span>
                 <?php endif; ?>
             </a>
             <div class="dropdown-menu dropdown-menu-right dropdown-lg">
-                <div class="dropdown-item noti-title">
+                <div class="dropdown-item noti-title bg-primary">
                     <h5 class="m-0 text-white">
-                        <span class="float-right">
-                            <a href="<?php echo site_url('notificaciones/marcar_todas_leidas'); ?>" class="text-light">
-                                <small>Marcar todas como leídas</small>
+                        Notificaciones
+                        <?php if ($notificaciones_no_leidas > 0): ?>
+                            <a href="<?php echo site_url('notificaciones/marcar_todas_leidas'); ?>" 
+                               class="float-right">
+                                <small class="text-white">
+                                    <i class="fe-check-circle mr-1"></i>Marcar todas como leídas
+                                </small>
                             </a>
-                        </span>Notificaciones
+                        <?php endif; ?>
                     </h5>
                 </div>
 
@@ -44,29 +50,53 @@
                     $notificaciones = $this->Notificacion_model->obtener_ultimas_notificaciones($idUsuario, $rol, 5);
                     if (!empty($notificaciones)):
                         foreach ($notificaciones as $notificacion):
+                            // Determinar el icono basado en el tipo de notificación
+                            $icon_class = 'fe-bell'; // icono por defecto
+                            switch($notificacion->tipo) {
+                                case NOTIFICACION_SOLICITUD_PRESTAMO:
+                                    $icon_class = 'fe-bookmark';
+                                    break;
+                                case NOTIFICACION_APROBACION_PRESTAMO:
+                                    $icon_class = 'fe-check-circle';
+                                    break;
+                                case NOTIFICACION_RECHAZO_PRESTAMO:
+                                    $icon_class = 'fe-x-circle';
+                                    break;
+                                case NOTIFICACION_DEVOLUCION:
+                                    $icon_class = 'fe-corner-up-left';
+                                    break;
+                            }
                     ?>
-                    <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" class="dropdown-item notify-item <?php echo $notificacion->leida ? '' : 'active'; ?>">
+                    <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" 
+                       class="dropdown-item notify-item <?php echo $notificacion->leida ? '' : 'active'; ?>">
                         <div class="notify-icon bg-primary">
-                            <i class="mdi mdi-comment-account-outline"></i>
+                            <i class="<?php echo $icon_class; ?>"></i>
                         </div>
-                        <p class="notify-details"><?php echo $notificacion->mensaje; ?>
-                            <small class="text-muted"><?php echo $this->Notificacion_model->time_elapsed_string($notificacion->fechaEnvio); ?></small>
+                        <p class="notify-details">
+                            <?php echo htmlspecialchars($notificacion->mensaje); ?>
+                            <small class="text-muted">
+                                <?php echo $this->Notificacion_model->time_elapsed_string($notificacion->fechaEnvio); ?>
+                            </small>
                         </p>
                     </a>
                     <?php 
                         endforeach;
                     else:
                     ?>
-                    <p class="text-center">No tienes notificaciones nuevas</p>
+                    <div class="text-center p-3">
+                        <i class="fe-bell font-24 text-muted"></i>
+                        <p class="mt-2 text-muted">No hay notificaciones nuevas</p>
+                    </div>
                     <?php endif; ?>
                 </div>
-                <a href="<?php echo site_url('notificaciones'); ?>" class="dropdown-item text-center text-primary notify-item notify-all">
-                    Ver todas
+
+                <a href="<?php echo site_url('notificaciones'); ?>" 
+                   class="dropdown-item text-center text-primary notify-item notify-all">
+                    Ver todas las notificaciones
                     <i class="fi-arrow-right"></i>
                 </a>
             </div>
         </li>
-
         <!-- Código de depuración -->
 
         <!-- Nombre del usuario -->
@@ -213,3 +243,20 @@
     </ul>
 </div>
 <!-- end Topbar -->
+<?php if ($this->session->flashdata('mensaje')): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?php echo $this->session->flashdata('mensaje'); ?>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+<?php endif; ?>
+
+<?php if ($this->session->flashdata('error')): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?php echo $this->session->flashdata('error'); ?>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+<?php endif; ?>
