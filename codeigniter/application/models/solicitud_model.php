@@ -344,7 +344,11 @@ class Solicitud_model extends CI_Model {
         $this->db->trans_start();
     
         // Obtener detalles de la solicitud y publicación
-        $this->db->select('SP.idSolicitud, SP.idUsuario, SP.idPublicacion, SP.estadoSolicitud, U.nombres as nombresLector, U.apellidoPaterno as apellidoLector, U.carnet, U.profesion, P.titulo, P.fechaPublicacion, P.ubicacionFisica, E.nombreEditorial, ENC.nombres as nombresEncargado, ENC.apellidoPaterno as apellidoEncargado');
+        $this->db->select('SP.idSolicitud, SP.idUsuario, SP.idPublicacion, SP.estadoSolicitud, 
+                           U.nombres as nombresLector, U.apellidoPaterno as apellidoLector, 
+                           U.carnet, U.profesion, P.titulo, P.fechaPublicacion, P.ubicacionFisica, 
+                           E.nombreEditorial, ENC.nombres as nombresEncargado, 
+                           ENC.apellidoPaterno as apellidoEncargado');
         $this->db->from('SOLICITUD_PRESTAMO SP');
         $this->db->join('USUARIO U', 'SP.idUsuario = U.idUsuario');
         $this->db->join('PUBLICACION P', 'SP.idPublicacion = P.idPublicacion');
@@ -354,13 +358,12 @@ class Solicitud_model extends CI_Model {
         $solicitud = $this->db->get()->row();
     
         if (!$solicitud || $solicitud->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
-            $this->db->trans_rollback();
             return false;
         }
     
         $fechaActual = date('Y-m-d H:i:s');
     
-        // Actualizar la solicitud aprobada
+        // Actualizar la solicitud a aprobada
         $this->db->where('idSolicitud', $idSolicitud);
         $this->db->update('SOLICITUD_PRESTAMO', [
             'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
@@ -368,32 +371,6 @@ class Solicitud_model extends CI_Model {
             'fechaActualizacion' => $fechaActual,
             'idUsuarioCreador' => $idEncargado
         ]);
-    
-        // Notificar al usuario cuya solicitud fue aprobada
-        $mensaje_aprobacion = "Tu solicitud de préstamo para la publicación '{$solicitud->titulo}' ha sido aprobada.";
-        $this->Notificacion_model->crear_notificacion($solicitud->idUsuario, $solicitud->idPublicacion, NOTIFICACION_APROBACION_PRESTAMO, $mensaje_aprobacion);
-    
-        // Rechazar otras solicitudes pendientes para la misma publicación
-        $this->db->select('idSolicitud, idUsuario');
-        $this->db->where('idPublicacion', $solicitud->idPublicacion);
-        $this->db->where('idSolicitud !=', $idSolicitud);
-        $this->db->where('estadoSolicitud', ESTADO_SOLICITUD_PENDIENTE);
-        $solicitudes_rechazadas = $this->db->get('SOLICITUD_PRESTAMO')->result();
-    
-        foreach ($solicitudes_rechazadas as $solicitud_rechazada) {
-            // Actualizar estado de la solicitud rechazada
-            $this->db->where('idSolicitud', $solicitud_rechazada->idSolicitud);
-            $this->db->update('SOLICITUD_PRESTAMO', [
-                'estadoSolicitud' => ESTADO_SOLICITUD_RECHAZADA,
-                'fechaAprobacionRechazo' => $fechaActual,
-                'fechaActualizacion' => $fechaActual,
-                'idUsuarioCreador' => $idEncargado
-            ]);
-    
-            // Notificar al usuario cuya solicitud fue rechazada
-            $mensaje_rechazo = "Tu solicitud de préstamo para la publicación '{$solicitud->titulo}' ha sido rechazada debido a que otra solicitud fue aprobada.";
-            $this->Notificacion_model->crear_notificacion($solicitud_rechazada->idUsuario, $solicitud->idPublicacion, NOTIFICACION_RECHAZO_PRESTAMO, $mensaje_rechazo);
-        }
     
         // Crear el préstamo
         $data_prestamo = [
@@ -408,6 +385,7 @@ class Solicitud_model extends CI_Model {
             'fechaCreacion' => $fechaActual,
             'idUsuarioCreador' => $idEncargado
         ];
+        
         $this->db->insert('PRESTAMO', $data_prestamo);
         $idPrestamo = $this->db->insert_id();
     
@@ -434,11 +412,7 @@ class Solicitud_model extends CI_Model {
     
         $this->db->trans_complete();
     
-        if ($this->db->trans_status() === FALSE) {
-            return false;
-        }
-    
-        return $datos_ficha;
+        return ($this->db->trans_status() === FALSE) ? false : $datos_ficha;
     }
     public function obtener_solicitud($idSolicitud) {
         $this->db->select('s.*, p.titulo, u.nombres, u.apellidoPaterno');

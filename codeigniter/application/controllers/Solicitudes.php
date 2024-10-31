@@ -95,12 +95,7 @@ class Solicitudes extends CI_Controller {
                     log_message('info', 'Notificación creada para admin/encargado: ID=' . $usuario->idUsuario);
                 }
         
-                // Enviar email si el usuario lo prefiere
-                $preferencias = $this->Notificacion_model->obtener_preferencias($idUsuario);
-                if ($preferencias && $preferencias->notificarEmail) {
-                    $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
-                    $this->_enviar_email($usuario->email, 'Confirmación de solicitud de préstamo', $mensaje_lector);
-                }
+                
         
                 $this->db->trans_complete();
                 
@@ -150,6 +145,8 @@ class Solicitudes extends CI_Controller {
             $this->load->view('solicitudes/detalle', $data);
             $this->load->view('inc/footer');
         }
+        
+        
         public function crear($idPublicacion) {
             $this->_verificar_rol(['lector']);
         
@@ -213,21 +210,28 @@ class Solicitudes extends CI_Controller {
             $this->db->trans_start();
         
             $idEncargado = $this->session->userdata('idUsuario');
+            $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
+            
+            if (!$solicitud || $solicitud->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
+                $this->session->set_flashdata('error', 'La solicitud no es válida para ser aprobada.');
+                redirect('solicitudes/pendientes');
+                return;
+            }
+        
             $resultado = $this->Solicitud_model->aprobar_solicitud($idSolicitud, $idEncargado);
         
             if ($resultado) {
-                // Crear notificación de aprobación
-                $this->load->model('Notificacion_model');
-                $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
+                // Crear una única notificación de aprobación para el lector
                 $mensaje = "Tu solicitud de préstamo para la publicación '{$solicitud->titulo}' ha sido aprobada.";
-                $this->Notificacion_model->crear_notificacion($solicitud->idUsuario, $solicitud->idPublicacion, 'aprobacion_rechazo', $mensaje);
+                $this->Notificacion_model->crear_notificacion(
+                    $solicitud->idUsuario,
+                    $solicitud->idPublicacion,
+                    NOTIFICACION_APROBACION_PRESTAMO,
+                    $mensaje
+                );
         
-                // Enviar email si el usuario lo prefiere
-                $preferencias = $this->Notificacion_model->obtener_preferencias($solicitud->idUsuario);
-                if ($preferencias && $preferencias->notificarEmail) {
-                    $usuario = $this->Usuario_model->obtener_usuario($solicitud->idUsuario);
-                    $this->_enviar_email($usuario->email, 'Solicitud de préstamo aprobada', $mensaje);
-                }
+                // Generar el PDF y obtener la URL
+                $pdfUrl = $this->generar_pdf_ficha_prestamo($resultado, $idSolicitud);
         
                 $this->db->trans_complete();
         
@@ -235,11 +239,6 @@ class Solicitudes extends CI_Controller {
                     $this->session->set_flashdata('error', 'Error al aprobar la solicitud. Por favor, intente de nuevo.');
                 } else {
                     $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamo registrado con éxito.');
-                    
-                    // Generar el PDF y obtener la URL
-                    $pdfUrl = $this->generar_pdf_ficha_prestamo($resultado, $idSolicitud);
-                    
-                    // Redirigir a la página de solicitudes pendientes con la URL del PDF
                     redirect('solicitudes/pendientes?pdf=' . urlencode($pdfUrl));
                 }
             } else {
@@ -249,7 +248,6 @@ class Solicitudes extends CI_Controller {
         
             redirect('solicitudes/pendientes');
         }
-        
         
         private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
             // Asegurarse de que la librería TCPDF esté cargada
