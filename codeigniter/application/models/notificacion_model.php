@@ -7,9 +7,6 @@ class Notificacion_model extends CI_Model {
         parent::__construct();
         $this->load->database();
         
-            parent::__construct();
-            $this->load->model('Notificacion_model');
-        
     }
 
     public function obtener_notificaciones_usuario($idUsuario) {

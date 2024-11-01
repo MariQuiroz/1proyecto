@@ -22,7 +22,7 @@
                 <?php 
                 $idUsuario = $this->session->userdata('idUsuario');
                 $rol = $this->session->userdata('rol');
-                $notificaciones_no_leidas = $this->Notificacion_model->contar_notificaciones_no_leidas($idUsuario, $rol);
+                $notificaciones_no_leidas = $this->notificacion_model->contar_notificaciones_no_leidas($idUsuario, $rol);
                 if ($notificaciones_no_leidas > 0):
                 ?>
                 <span class="badge badge-danger rounded-circle noti-icon-badge">
@@ -47,7 +47,7 @@
 
                 <div class="slimscroll noti-scroll">
                     <?php 
-                    $notificaciones = $this->Notificacion_model->obtener_ultimas_notificaciones($idUsuario, $rol, 5);
+                    $notificaciones = $this->notificacion_model->obtener_ultimas_notificaciones($idUsuario, $rol, 5);
                     if (!empty($notificaciones)):
                         foreach ($notificaciones as $notificacion):
                             // Determinar el icono basado en el tipo de notificación
@@ -75,7 +75,7 @@
                         <p class="notify-details">
                             <?php echo htmlspecialchars($notificacion->mensaje); ?>
                             <small class="text-muted">
-                                <?php echo $this->Notificacion_model->time_elapsed_string($notificacion->fechaEnvio); ?>
+                                <?php echo $this->notificacion_model->time_elapsed_string($notificacion->fechaEnvio); ?>
                             </small>
                         </p>
                     </a>
