@@ -267,7 +267,7 @@ class Solicitudes extends CI_Controller {
         log_message('debug', '=== FIN MÉTODO CREAR ===');
     }
     
-    public function confirmar($idPublicacion) {
+    /*public function confirmar($idPublicacion) {
         log_message('debug', 'INICIO Solicitudes::confirmar()');
         $this->_verificar_rol(['lector']);
         
@@ -319,6 +319,74 @@ class Solicitudes extends CI_Controller {
             $this->session->set_flashdata('error', 'Error al crear la solicitud.');
         }
         
+        redirect('solicitudes/mis_solicitudes');
+    }*/
+    /**
+ * Confirma una solicitud de préstamo de publicación
+ * @param int $idPublicacion ID de la publicación solicitada
+ * @return void
+ */
+    public function confirmar($idPublicacion) {
+        log_message('debug', "\n==== INICIO Solicitudes::confirmar() ====");
+        $this->_verificar_rol(['lector']);
+        
+        $idUsuario = $this->session->userdata('idUsuario');
+        log_message('debug', 'Usuario solicitante ID: ' . $idUsuario);
+        
+        $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
+        if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+            log_message('debug', 'Publicación no disponible');
+            $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
+            redirect('publicaciones/index');
+        }
+        
+        $this->db->trans_start();
+        $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
+        
+        if ($resultado) {
+            $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
+            log_message('debug', 'Creando solicitud para usuario: ' . $usuario->nombres);
+            
+            // Notificación para el lector
+            $mensaje_lector = "Se ha recibido tu solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
+            $this->Notificacion_model->crear_notificacion(
+                $idUsuario, 
+                $idPublicacion, 
+                NOTIFICACION_SOLICITUD_PRESTAMO, 
+                $mensaje_lector
+            );
+    
+            // Notificaciones solo para encargados
+            $encargados = $this->Usuario_model->obtener_encargados_activos();
+            log_message('debug', 'Encargados encontrados: ' . count($encargados));
+            
+            foreach ($encargados as $encargado) {
+                log_message('debug', 'Procesando notificación para encargado ID: ' . $encargado->idUsuario);
+                $mensaje = "Nueva solicitud de préstamo para la publicación '{$publicacion->titulo}' del usuario '{$usuario->nombres} {$usuario->apellidoPaterno}'.";
+                $this->Notificacion_model->crear_notificacion(
+                    $encargado->idUsuario,
+                    $idPublicacion,
+                    NOTIFICACION_NUEVA_SOLICITUD,
+                    $mensaje
+                );
+            }
+            
+            $this->db->trans_complete();
+            
+            if ($this->db->trans_status() === FALSE) {
+                log_message('error', 'Error en la transacción');
+                $this->session->set_flashdata('error', 'Error al crear la solicitud.');
+            } else {
+                log_message('debug', 'Solicitud y notificaciones creadas exitosamente');
+                $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
+            }
+        } else {
+            $this->db->trans_rollback();
+            log_message('error', 'Error al crear solicitud');
+            $this->session->set_flashdata('error', 'Error al crear la solicitud.');
+        }
+        
+        log_message('debug', "==== FIN Solicitudes::confirmar() ====\n");
         redirect('solicitudes/mis_solicitudes');
     }
         public function aprobar($idSolicitud) {

@@ -40,7 +40,7 @@ class Notificacion_model extends CI_Model {
         }
     }
 */
-public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) {
+/*public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) {
     log_message('debug', "\n==================================================");
     log_message('debug', 'INICIO crear_notificacion()');
     log_message('debug', '--------------------------------------------------');
@@ -97,38 +97,109 @@ public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) 
     log_message('info', 'Notificación creada exitosamente - ID: ' . $insert_id);
     log_message('debug', "==================================================\n");
     return true;
-}
+}*/
 public function obtener_notificaciones($idUsuario, $rol) {
+    log_message('debug', "\n==== INICIO obtener_notificaciones() ====");
+    log_message('debug', 'Usuario ID: ' . $idUsuario . ', Rol: ' . $rol);
+    
     $this->db->select('idNotificacion, idUsuario, mensaje, tipo, fechaEnvio, leida, idPublicacion');
     $this->db->from('NOTIFICACION');
     
     if ($rol == 'encargado') {
-        $this->db->group_start()
-            ->where('idUsuario', $idUsuario)
-            ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
-        ->group_end();
+        $this->db->where('idUsuario', $idUsuario);
     } else {
         $this->db->where('idUsuario', $idUsuario);
-        $this->db->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
+        $this->db->where('tipo !=', NOTIFICACION_NUEVA_SOLICITUD);
+        log_message('debug', 'Usuario no encargado: excluyendo notificaciones de solicitudes');
     }
     
     $this->db->order_by('fechaEnvio', 'DESC');
-    return $this->db->get()->result();
+    
+    $notificaciones = $this->db->get()->result();
+    log_message('debug', 'Query ejecutado: ' . $this->db->last_query());
+    log_message('debug', 'Número de notificaciones encontradas: ' . count($notificaciones));
+    
+    log_message('debug', "==== FIN obtener_notificaciones() ====\n");
+    return $notificaciones;
 }
 
-    public function contar_notificaciones_no_leidas($idUsuario, $rol) {
-        $this->db->where('leida', 0);
-        if ($rol == 'administrador' || $rol == 'encargado') {
-            $this->db->group_start()
-                ->where('idUsuario', $idUsuario)
-                ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
-            ->group_end();
-        } else {
-            $this->db->where('idUsuario', $idUsuario);
-            $this->db->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
-        }
-        return $this->db->count_all_results('NOTIFICACION');
+public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) {
+    log_message('debug', "\n==== INICIO crear_notificacion() ====");
+    log_message('debug', 'Parámetros:');
+    log_message('debug', 'ID Usuario: ' . $idUsuario);
+    log_message('debug', 'ID Publicación: ' . $idPublicacion);
+    log_message('debug', 'Tipo: ' . $tipo);
+    log_message('debug', 'Mensaje: ' . $mensaje);
+    
+    // Obtener información del usuario
+    $usuario = $this->db->get_where('USUARIO', ['idUsuario' => $idUsuario])->row();
+    if ($usuario) {
+        log_message('debug', 'Rol del usuario destino: ' . $usuario->rol);
     }
+    
+    $data = array(
+        'idUsuario' => $idUsuario,
+        'idPublicacion' => $idPublicacion,
+        'tipo' => $tipo,
+        'mensaje' => $mensaje,
+        'fechaEnvio' => date('Y-m-d H:i:s'),
+        'leida' => FALSE
+    );
+
+    $this->db->trans_start();
+    $this->db->insert('NOTIFICACION', $data);
+    $insert_id = $this->db->insert_id();
+    $this->db->trans_complete();
+
+    if ($this->db->trans_status() === FALSE) {
+        log_message('error', 'Error al crear notificación');
+        log_message('error', $this->db->error());
+        return false;
+    }
+
+    log_message('info', 'Notificación creada exitosamente - ID: ' . $insert_id);
+    log_message('debug', "==== FIN crear_notificacion() ====\n");
+    return true;
+}
+
+public function contar_notificaciones_no_leidas($idUsuario, $rol) {
+    $this->db->where('leida', 0);
+    
+    // Modificar para que solo los encargados reciban notificaciones de nuevas solicitudes
+    if ($rol == 'encargado') {
+        $this->db->where('idUsuario', $idUsuario)
+                 ->where_in('tipo', [
+                     NOTIFICACION_NUEVA_SOLICITUD,
+                     // Otros tipos de notificaciones para encargados
+                 ]);
+    } else {
+        $this->db->where('idUsuario', $idUsuario)
+                 ->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
+    }
+    
+    return $this->db->count_all_results('NOTIFICACION');
+}
+
+public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
+    $this->db->select('idNotificacion, idUsuario, mensaje, tipo, fechaEnvio, leida, idPublicacion');
+    $this->db->from('NOTIFICACION');
+    
+    // Modificar para que solo los encargados reciban notificaciones de nuevas solicitudes
+    if ($rol == 'encargado') {
+        $this->db->where('idUsuario', $idUsuario)
+                 ->where_in('tipo', [
+                     NOTIFICACION_NUEVA_SOLICITUD,
+                     // Otros tipos de notificaciones para encargados
+                 ]);
+    } else {
+        $this->db->where('idUsuario', $idUsuario)
+                 ->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
+    }
+    
+    $this->db->order_by('fechaEnvio', 'DESC');
+    $this->db->limit($limite);
+    return $this->db->get()->result();
+}
 
 
 public function obtener_notificacion($idNotificacion) {
@@ -168,7 +239,7 @@ public function time_elapsed_string($datetime, $full = false) {
     return $string ? 'hace ' . implode(', ', $string) : 'justo ahora';
 }
 
-public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
+/*public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
     $this->db->select('idNotificacion, idUsuario, mensaje, tipo, fechaEnvio, leida, idPublicacion');
     $this->db->from('NOTIFICACION');
     
@@ -185,7 +256,7 @@ public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
     $this->db->order_by('fechaEnvio', 'DESC');
     $this->db->limit($limite);
     return $this->db->get()->result();
-}
+}*/
 public function guardar_preferencias($idUsuario, $preferencias) {
     $data = array(
         'idUsuario' => $idUsuario,

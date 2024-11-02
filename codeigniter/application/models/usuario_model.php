@@ -285,11 +285,23 @@ class Usuario_model extends CI_Model {
         return $this->db->update('USUARIO', $data);
     }
     public function obtener_encargados_activos() {
-        $this->db->select('idUsuario, nombres, apellidoPaterno');
+        log_message('debug', "\n==== INICIO obtener_encargados_activos() ====");
+        
+        $this->db->select('idUsuario, nombres, apellidoPaterno, rol');
         $this->db->from('USUARIO');
         $this->db->where('rol', 'encargado');
         $this->db->where('estado', 1);
-        return $this->db->get()->result();
+        
+        $encargados = $this->db->get()->result();
+        
+        log_message('debug', 'Query ejecutado: ' . $this->db->last_query());
+        log_message('debug', 'Número de encargados encontrados: ' . count($encargados));
+        foreach ($encargados as $encargado) {
+            log_message('debug', 'Encargado encontrado - ID: ' . $encargado->idUsuario . ', Rol: ' . $encargado->rol);
+        }
+        
+        log_message('debug', "==== FIN obtener_encargados_activos() ====\n");
+        return $encargados;
     }
     
 }
