@@ -312,47 +312,51 @@ public function obtener_estado_interes($idUsuario, $idPublicacion) {
     return null;
 }
 
-public function marcar_todas_leidas($idUsuario, $rol) {
-    $this->db->trans_start();
-
-    if ($rol == 'administrador' || $rol == 'encargado') {
-        $this->db->group_start()
-            ->where('idUsuario', $idUsuario)
-            ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
-        ->group_end();
-    } else {
-        $this->db->where('idUsuario', $idUsuario)
-            ->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
-    }
-
-    $this->db->where('leida', FALSE);
-    $this->db->update('NOTIFICACION', ['leida' => TRUE]);
-
-    $this->db->trans_complete();
-    
-    return $this->db->trans_status();
+public function marcar_todas_leidas($idUsuario, $rol, $tipos_notificacion) {
+    $this->db->where('idUsuario', $idUsuario);
+    $this->db->where_in('tipo', $tipos_notificacion);
+    $this->db->where('leida', 0);
+    return $this->db->update('NOTIFICACION', ['leida' => 1]);
 }
-public function eliminar_notificaciones_leidas($idUsuario, $rol) {
-    $this->db->trans_start();
 
-    // Construir condiciones según el rol
-    if ($rol == 'administrador' || $rol == 'encargado') {
-        $this->db->group_start()
-            ->where('idUsuario', $idUsuario)
-            ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
-        ->group_end();
-    } else {
-        $this->db->where('idUsuario', $idUsuario)
-            ->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
-    }
+public function eliminar_notificaciones_leidas($idUsuario, $rol, $tipos_notificacion) {
+    $this->db->where('idUsuario', $idUsuario);
+    $this->db->where_in('tipo', $tipos_notificacion);
+    $this->db->where('leida', 1);
+    return $this->db->delete('NOTIFICACION');
+}
 
-    // Solo eliminar notificaciones leídas
-    $this->db->where('leida', TRUE);
-    $this->db->delete('NOTIFICACION');
-
-    $this->db->trans_complete();
+public function validar_notificacion($idNotificacion, $idUsuario, $rol) {
+    $this->db->select('tipo');
+    $this->db->where('idNotificacion', $idNotificacion);
+    $this->db->where('idUsuario', $idUsuario);
+    $notificacion = $this->db->get('NOTIFICACION')->row();
     
-    return $this->db->trans_status();
+    if (!$notificacion) return false;
+    
+    // Validar que el tipo de notificación corresponda al rol
+    switch($rol) {
+        case 'encargado':
+            return in_array($notificacion->tipo, [
+                NOTIFICACION_NUEVA_SOLICITUD,
+                NOTIFICACION_APROBACION_PRESTAMO,
+                NOTIFICACION_RECHAZO_PRESTAMO
+            ]);
+        case 'lector':
+            return in_array($notificacion->tipo, [
+                NOTIFICACION_SOLICITUD_PRESTAMO,
+                NOTIFICACION_APROBACION_PRESTAMO,
+                NOTIFICACION_RECHAZO_PRESTAMO,
+                NOTIFICACION_DEVOLUCION
+            ]);
+        case 'administrador':
+            return in_array($notificacion->tipo, [
+                NOTIFICACION_VENCIMIENTO
+                // NO incluir NOTIFICACION_NUEVA_SOLICITUD
+            ]);
+        default:
+            return false;
+    }
 }
 
 // Método para eliminar una notificación específica

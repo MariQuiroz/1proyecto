@@ -165,45 +165,92 @@ class Notificaciones extends CI_Controller {
         
         $idUsuario = $this->session->userdata('idUsuario');
         $rol = $this->session->userdata('rol');
-    
+        
         if (!$idUsuario || !$rol) {
             $this->session->set_flashdata('error', 'Sesión no válida');
             redirect('usuarios/login');
             return;
         }
-    
-        if ($this->Notificacion_model->marcar_todas_leidas($idUsuario, $rol)) {
+        
+        // Verificar el tipo de notificaciones según el rol
+        $tipos_notificacion = [];
+        if ($rol == 'encargado') {
+            $tipos_notificacion = [
+                NOTIFICACION_NUEVA_SOLICITUD,
+                NOTIFICACION_APROBACION_PRESTAMO,
+                NOTIFICACION_RECHAZO_PRESTAMO
+                // Otros tipos específicos para encargados
+            ];
+        } else if ($rol == 'lector') {
+            $tipos_notificacion = [
+                NOTIFICACION_SOLICITUD_PRESTAMO,
+                NOTIFICACION_APROBACION_PRESTAMO,
+                NOTIFICACION_RECHAZO_PRESTAMO,
+                NOTIFICACION_DEVOLUCION
+                // Otros tipos específicos para lectores
+            ];
+        } else if ($rol == 'administrador') {
+            $tipos_notificacion = [
+                NOTIFICACION_VENCIMIENTO,
+                // Otros tipos específicos para administradores
+                // NO incluir NOTIFICACION_NUEVA_SOLICITUD
+            ];
+        }
+        
+        if ($this->Notificacion_model->marcar_todas_leidas($idUsuario, $rol, $tipos_notificacion)) {
             $this->session->set_flashdata('mensaje', 'Todas las notificaciones han sido marcadas como leídas');
         } else {
             $this->session->set_flashdata('error', 'Hubo un error al marcar las notificaciones');
         }
-    
-        // Redirigir a la página anterior si existe
+        
         $previous_url = $this->session->userdata('previous_url');
-        if ($previous_url) {
-            redirect($previous_url);
-        } else {
-            redirect('notificaciones');
-        }
+        redirect($previous_url ? $previous_url : 'notificaciones');
     }
+    
     public function eliminar_leidas() {
         $this->_verificar_sesion();
         
         $idUsuario = $this->session->userdata('idUsuario');
         $rol = $this->session->userdata('rol');
-    
+        
         if (!$idUsuario || !$rol) {
             $this->session->set_flashdata('error', 'Sesión no válida');
             redirect('usuarios/index', 'refresh');
             return;
         }
-    
-        if ($this->Notificacion_model->eliminar_notificaciones_leidas($idUsuario, $rol)) {
+        
+        // Verificar el tipo de notificaciones según el rol
+        $tipos_notificacion = [];
+        switch($rol) {
+            case 'encargado':
+                $tipos_notificacion = [
+                    NOTIFICACION_NUEVA_SOLICITUD,
+                    NOTIFICACION_APROBACION_PRESTAMO,
+                    NOTIFICACION_RECHAZO_PRESTAMO
+                ];
+                break;
+            case 'lector':
+                $tipos_notificacion = [
+                    NOTIFICACION_SOLICITUD_PRESTAMO,
+                    NOTIFICACION_APROBACION_PRESTAMO,
+                    NOTIFICACION_RECHAZO_PRESTAMO,
+                    NOTIFICACION_DEVOLUCION
+                ];
+                break;
+            case 'administrador':
+                $tipos_notificacion = [
+                    NOTIFICACION_VENCIMIENTO
+                    // NO incluir NOTIFICACION_NUEVA_SOLICITUD
+                ];
+                break;
+        }
+        
+        if ($this->Notificacion_model->eliminar_notificaciones_leidas($idUsuario, $rol, $tipos_notificacion)) {
             $this->session->set_flashdata('mensaje', 'Las notificaciones leídas han sido eliminadas');
         } else {
             $this->session->set_flashdata('error', 'Hubo un error al eliminar las notificaciones');
         }
-    
+        
         redirect('notificaciones', 'refresh');
     }
     
@@ -211,11 +258,17 @@ class Notificaciones extends CI_Controller {
         $this->_verificar_sesion();
         
         $idUsuario = $this->session->userdata('idUsuario');
+        $rol = $this->session->userdata('rol');
         
-        if ($this->Notificacion_model->eliminar_notificacion($idNotificacion, $idUsuario)) {
-            $this->session->set_flashdata('mensaje', 'Notificación eliminada correctamente');
+        // Verificar que la notificación pertenezca al usuario y sea del tipo correcto según su rol
+        if ($this->Notificacion_model->validar_notificacion($idNotificacion, $idUsuario, $rol)) {
+            if ($this->Notificacion_model->eliminar_notificacion($idNotificacion, $idUsuario)) {
+                $this->session->set_flashdata('mensaje', 'Notificación eliminada correctamente');
+            } else {
+                $this->session->set_flashdata('error', 'Error al eliminar la notificación');
+            }
         } else {
-            $this->session->set_flashdata('error', 'Error al eliminar la notificación');
+            $this->session->set_flashdata('error', 'No tienes permiso para eliminar esta notificación');
         }
         
         redirect('notificaciones', 'refresh');
