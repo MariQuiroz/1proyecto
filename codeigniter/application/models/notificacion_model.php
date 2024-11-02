@@ -16,7 +16,7 @@ class Notificacion_model extends CI_Model {
     }
 
 
-    public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) {
+    /*public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) {
         $data = array(
             'idUsuario' => $idUsuario,
             'idPublicacion' => $idPublicacion,
@@ -39,24 +39,82 @@ class Notificacion_model extends CI_Model {
             return true;
         }
     }
+*/
+public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) {
+    log_message('debug', "\n==================================================");
+    log_message('debug', 'INICIO crear_notificacion()');
+    log_message('debug', '--------------------------------------------------');
+    log_message('debug', 'Parámetros recibidos:');
+    log_message('debug', 'idUsuario: ' . $idUsuario);
+    log_message('debug', 'idPublicacion: ' . $idPublicacion);
+    log_message('debug', 'tipo: ' . $tipo);
+    log_message('debug', 'mensaje: ' . $mensaje);
 
-    public function obtener_notificaciones($idUsuario, $rol) {
-        $this->db->select('idNotificacion, idUsuario, mensaje, tipo, fechaEnvio, leida, idPublicacion');
-        $this->db->from('NOTIFICACION');
+    // Obtener stack trace para identificar origen de la llamada
+    $stack = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+    log_message('debug', 'Llamada desde: ' . $stack[1]['class'] . '::' . $stack[1]['function'] . '()');
     
-        if ($rol == 'administrador' || $rol == 'encargado') {
-            $this->db->group_start()
-                ->where('idUsuario', $idUsuario)
-                ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
-            ->group_end();
-        } else {
-            $this->db->where('idUsuario', $idUsuario);
-            $this->db->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
-        }
-        
-        $this->db->order_by('fechaEnvio', 'DESC');
-        return $this->db->get()->result();
+    // Verificar si ya existe una notificación similar
+    $this->db->where('idUsuario', $idUsuario);
+    $this->db->where('idPublicacion', $idPublicacion);
+    $this->db->where('tipo', $tipo);
+    $this->db->where('fechaEnvio >', date('Y-m-d H:i:s', strtotime('-1 minute')));
+    $existe = $this->db->get('NOTIFICACION')->num_rows() > 0;
+    
+    log_message('debug', 'Verificación de duplicado: ' . ($existe ? 'Existe notificación similar' : 'No existe notificación similar'));
+    
+    if ($existe) {
+        log_message('debug', 'Se evitó crear notificación duplicada');
+        log_message('debug', "==================================================\n");
+        return false;
     }
+
+    $data = array(
+        'idUsuario' => $idUsuario,
+        'idPublicacion' => $idPublicacion,
+        'tipo' => $tipo,
+        'mensaje' => $mensaje,
+        'fechaEnvio' => date('Y-m-d H:i:s'),
+        'leida' => FALSE
+    );
+
+    $this->db->trans_start();
+    $this->db->insert('NOTIFICACION', $data);
+    $insert_id = $this->db->insert_id();
+    
+    log_message('debug', 'Query ejecutado: ' . $this->db->last_query());
+    log_message('debug', 'ID de notificación generado: ' . $insert_id);
+    
+    $this->db->trans_complete();
+
+    if ($this->db->trans_status() === FALSE) {
+        log_message('error', 'Error en transacción al crear notificación');
+        log_message('error', $this->db->error());
+        log_message('debug', "==================================================\n");
+        return false;
+    }
+
+    log_message('info', 'Notificación creada exitosamente - ID: ' . $insert_id);
+    log_message('debug', "==================================================\n");
+    return true;
+}
+public function obtener_notificaciones($idUsuario, $rol) {
+    $this->db->select('idNotificacion, idUsuario, mensaje, tipo, fechaEnvio, leida, idPublicacion');
+    $this->db->from('NOTIFICACION');
+    
+    if ($rol == 'encargado') {
+        $this->db->group_start()
+            ->where('idUsuario', $idUsuario)
+            ->or_where('tipo', NOTIFICACION_NUEVA_SOLICITUD)
+        ->group_end();
+    } else {
+        $this->db->where('idUsuario', $idUsuario);
+        $this->db->where_not_in('tipo', [NOTIFICACION_NUEVA_SOLICITUD]);
+    }
+    
+    $this->db->order_by('fechaEnvio', 'DESC');
+    return $this->db->get()->result();
+}
 
     public function contar_notificaciones_no_leidas($idUsuario, $rol) {
         $this->db->where('leida', 0);

@@ -240,12 +240,32 @@ class Usuario_model extends CI_Model {
         return $this->db->update('USUARIO', $data);
     }
 
-    public function obtener_admins_encargados() {
+    /*public function obtener_admins_encargados() {
         $this->db->select('idUsuario, nombres, apellidoPaterno, email');
         $this->db->from('USUARIO');
         $this->db->where_in('rol', ['administrador', 'encargado']);
         $this->db->where('estado', 1); // Asumiendo que 1 significa activo
         return $this->db->get()->result();
+    }*/
+    public function obtener_admins_encargados() {
+        log_message('debug', '=== INICIO OBTENER_ADMINS_ENCARGADOS ===');
+        
+        $this->db->select('idUsuario, nombres, apellidoPaterno, email, rol');
+        $this->db->from('USUARIO');
+        $this->db->where_in('rol', ['administrador', 'encargado']);
+        $this->db->where('estado', 1);
+        
+        $query = $this->db->get();
+        $resultado = $query->result();
+        
+        log_message('debug', 'Query ejecutado: ' . $this->db->last_query());
+        log_message('debug', 'Número de admins/encargados encontrados: ' . count($resultado));
+        foreach ($resultado as $admin) {
+            log_message('debug', 'Admin/Encargado encontrado - ID: ' . $admin->idUsuario . ', Rol: ' . $admin->rol);
+        }
+        
+        log_message('debug', '=== FIN OBTENER_ADMINS_ENCARGADOS ===');
+        return $resultado;
     }
 
     public function username_existe($username) {
@@ -263,6 +283,13 @@ class Usuario_model extends CI_Model {
         
         $this->db->where('idUsuario', $idUsuario);
         return $this->db->update('USUARIO', $data);
+    }
+    public function obtener_encargados_activos() {
+        $this->db->select('idUsuario, nombres, apellidoPaterno');
+        $this->db->from('USUARIO');
+        $this->db->where('rol', 'encargado');
+        $this->db->where('estado', 1);
+        return $this->db->get()->result();
     }
     
 }
