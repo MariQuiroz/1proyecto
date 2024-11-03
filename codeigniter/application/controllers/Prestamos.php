@@ -203,7 +203,7 @@ private function _enviar_email_disponibilidad($idUsuario, $publicacion) {
 }
 
 
-private function enviar_ficha_por_correo($idPrestamo, $pdf_content) {
+private function enviar_ficha_por_correo($idPrestamo) {
     $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
     
     if (!$datos_prestamo) {

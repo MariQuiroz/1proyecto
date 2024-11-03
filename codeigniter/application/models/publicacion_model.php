@@ -227,11 +227,22 @@ class Publicacion_model extends CI_Model {
         $this->db->order_by('PUBLICACION.fechaCreacion', 'DESC');
         return $this->db->get()->result();
     }
+
+    private function mapear_estado($estado) {
+        $mapeo_estados = [
+            ESTADO_PUBLICACION_DISPONIBLE => 'Disponible',
+            ESTADO_PUBLICACION_EN_CONSULTA => 'En préstamo',
+            ESTADO_PUBLICACION_EN_MANTENIMIENTO => 'En mantenimiento'
+        ];
+
+        return isset($mapeo_estados[$estado]) ? $mapeo_estados[$estado] : 'Estado desconocido';
+    }
     public function obtener_estado_personalizado($idPublicacion, $idUsuario) {
         $this->db->select('
             p.estado,
             sp.idUsuario as usuario_solicitud,
-            pr.estadoPrestamo
+            pr.estadoPrestamo,
+            ds.idSolicitud
         ');
         $this->db->from('PUBLICACION p');
         $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
@@ -239,7 +250,7 @@ class Publicacion_model extends CI_Model {
         $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
         $this->db->where('p.idPublicacion', $idPublicacion);
         $resultado = $this->db->get()->row();
-
+    
         if ($resultado) {
             if ($resultado->estado == ESTADO_PUBLICACION_EN_CONSULTA) {
                 if ($resultado->usuario_solicitud == $idUsuario && $resultado->estadoPrestamo == ESTADO_PRESTAMO_ACTIVO) {
@@ -251,16 +262,4 @@ class Publicacion_model extends CI_Model {
         }
         return 'Estado desconocido';
     }
-
-
-    private function mapear_estado($estado) {
-        $mapeo_estados = [
-            ESTADO_PUBLICACION_DISPONIBLE => 'Disponible',
-            ESTADO_PUBLICACION_EN_CONSULTA => 'En préstamo',
-            ESTADO_PUBLICACION_EN_MANTENIMIENTO => 'En mantenimiento'
-        ];
-
-        return isset($mapeo_estados[$estado]) ? $mapeo_estados[$estado] : 'Estado desconocido';
-    }
-
 }

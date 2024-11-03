@@ -1,4 +1,5 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php 
+defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Solicitudes extends CI_Controller {
 
@@ -67,51 +68,6 @@ class Solicitudes extends CI_Controller {
             $this->load->view('inc/footer');
         }
     
-       /* public function confirmar($idPublicacion) {
-            $this->_verificar_rol(['lector']);
-            
-            $idUsuario = $this->session->userdata('idUsuario');
-            $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
-            
-            if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-                $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
-                redirect('publicaciones/index');
-            }
-            
-            $this->db->trans_start();
-            
-            $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
-            
-            if ($resultado) {
-                // Crear notificación para el lector
-                $mensaje_lector = "Se ha recibido tu solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
-                $this->Notificacion_model->crear_notificacion($idUsuario, $idPublicacion, NOTIFICACION_SOLICITUD_PRESTAMO, $mensaje_lector);
-        
-                // Crear notificación para los administradores y encargados
-                $admins_encargados = $this->Usuario_model->obtener_admins_encargados();
-                foreach ($admins_encargados as $usuario) {
-                    $mensaje_admin = "Nueva solicitud de préstamo para la publicación '{$publicacion->titulo}' del usuario '{$this->session->userdata('nombres')} {$this->session->userdata('apellidoPaterno')}'.";
-                    $this->Notificacion_model->crear_notificacion($usuario->idUsuario, $idPublicacion, NOTIFICACION_NUEVA_SOLICITUD, $mensaje_admin);
-                    log_message('info', 'Notificación creada para admin/encargado: ID=' . $usuario->idUsuario);
-                }
-        
-                
-        
-                $this->db->trans_complete();
-                
-                if ($this->db->trans_status() === FALSE) {
-                    $this->session->set_flashdata('error', 'Error al crear la solicitud. Por favor, intente de nuevo.');
-                } else {
-                    $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
-                }
-            } else {
-                $this->db->trans_rollback();
-                $this->session->set_flashdata('error', 'Error al crear la solicitud.');
-            }
-            
-            redirect('solicitudes/mis_solicitudes');
-        }
-*/
         
         private function _enviar_email($to, $subject, $message) {
             $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
@@ -146,269 +102,7 @@ class Solicitudes extends CI_Controller {
             $this->load->view('inc/footer');
         }
         
-        
-        /*public function crear($idPublicacion) {
-            $this->_verificar_rol(['lector']);
-        
-            $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
-        
-            if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-                $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
-                redirect('publicaciones/index');
-            }
-        
-            if ($this->input->post()) {
-                $this->db->trans_start();
-        
-                $idUsuario = $this->session->userdata('idUsuario');
-                $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
-        
-                if ($resultado) {
-                    // Crear notificación de confirmación de solicitud
-                    $this->load->model('Notificacion_model');
-                    $mensaje = "Se ha recibido tu solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
-                    $this->Notificacion_model->crear_notificacion($idUsuario, $idPublicacion, 'solicitud_prestamo', $mensaje);
-        
-                    // Enviar email si el usuario lo prefiere
-                    $preferencias = $this->Notificacion_model->obtener_preferencias($idUsuario);
-                    if ($preferencias && $preferencias->notificarEmail) {
-                        $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
-                        $this->_enviar_email($usuario->email, 'Confirmación de solicitud de préstamo', $mensaje);
-                    }
-                    // Crear notificación para administradores y encargados
-                    $this->load->model('Usuario_model');
-                    $admins_encargados = $this->Usuario_model->obtener_admins_encargados();
-                    foreach ($admins_encargados as $usuario) {
-                        $mensaje = "Nueva solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
-                        $this->Notificacion_model->crear_notificacion_admin($usuario->idUsuario, $idPublicacion, 'nueva_solicitud', $mensaje);
-                    }
-        
-                    $this->db->trans_complete();
-                    if ($this->db->trans_status() === FALSE) {
-                        $this->session->set_flashdata('error', 'Error al crear la solicitud. Por favor, intente de nuevo.');
-                    } else {
-                        $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
-                        redirect('solicitudes/mis_solicitudes');
-                    }
-                } else {
-                    $this->db->trans_rollback();
-                    $this->session->set_flashdata('error', 'Error al crear la solicitud.');
-                }
-            }
-        
-            $data['publicacion'] = $publicacion;
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('solicitudes/crear', $data);
-            $this->load->view('inc/footer');
-        }
-    */
-    /*public function crear($idPublicacion) {
-        log_message('debug', '=== INICIO MÉTODO CREAR ===');
-        $this->_verificar_rol(['lector']);
-    
-        $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
-        log_message('debug', 'Publicación obtenida: ' . $idPublicacion);
-    
-        if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-            log_message('debug', 'Publicación no disponible');
-            $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
-            redirect('publicaciones/index');
-        }
-    
-        if ($this->input->post()) {
-            log_message('debug', 'Procesando POST request');
-            $this->db->trans_start();
-    
-            $idUsuario = $this->session->userdata('idUsuario');
-            log_message('debug', 'ID Usuario solicitante: ' . $idUsuario);
-            
-            $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
-            log_message('debug', 'Resultado crear_solicitud: ' . ($resultado ? 'true' : 'false'));
-    
-            if ($resultado) {
-                log_message('debug', 'Solicitud creada exitosamente, procediendo a crear notificaciones');
-                
-                // Crear notificación para el lector
-                $mensaje = "Se ha recibido tu solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
-                $this->Notificacion_model->crear_notificacion($idUsuario, $idPublicacion, 'solicitud_prestamo', $mensaje);
-                
-                // Obtener admins y encargados
-                $admins_encargados = $this->Usuario_model->obtener_admins_encargados();
-                log_message('debug', 'Número de admins/encargados encontrados: ' . count($admins_encargados));
-    
-                foreach ($admins_encargados as $usuario) {
-                    log_message('debug', 'Creando notificación para admin/encargado ID: ' . $usuario->idUsuario);
-                    $mensaje = "Nueva solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
-                    $this->Notificacion_model->crear_notificacion($usuario->idUsuario, $idPublicacion, 'nueva_solicitud', $mensaje);
-                }
-    
-                $this->db->trans_complete();
-                
-                if ($this->db->trans_status() === FALSE) {
-                    log_message('error', 'Error en la transacción');
-                    $this->session->set_flashdata('error', 'Error al crear la solicitud. Por favor, intente de nuevo.');
-                } else {
-                    log_message('debug', 'Transacción completada exitosamente');
-                    $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
-                    redirect('solicitudes/mis_solicitudes');
-                }
-            }
-        }
-    
-        log_message('debug', 'Cargando vista de creación');
-        $data['publicacion'] = $publicacion;
-        $this->load->view('inc/header');
-        $this->load->view('inc/nabvar');
-        $this->load->view('inc/aside');
-        $this->load->view('solicitudes/crear', $data);
-        $this->load->view('inc/footer');
-        log_message('debug', '=== FIN MÉTODO CREAR ===');
-    }*/
-    
-    /*public function confirmar($idPublicacion) {
-        log_message('debug', 'INICIO Solicitudes::confirmar()');
-        $this->_verificar_rol(['lector']);
-        
-        $idUsuario = $this->session->userdata('idUsuario');
-        $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
-        
-        if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-            $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
-            redirect('publicaciones/index');
-        }
-        
-        $this->db->trans_start();
-        
-        $resultado = $this->Solicitud_model->crear_solicitud($idUsuario, $idPublicacion);
-        
-        if ($resultado) {
-            $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
-            
-            // Notificación para el lector
-            $mensaje_lector = "Se ha recibido tu solicitud de préstamo para la publicación '{$publicacion->titulo}'.";
-            $this->Notificacion_model->crear_notificacion(
-                $idUsuario, 
-                $idPublicacion, 
-                NOTIFICACION_SOLICITUD_PRESTAMO, 
-                $mensaje_lector
-            );
-    
-            // Obtener solo encargados activos
-            $encargados = $this->Usuario_model->obtener_encargados_activos();
-            foreach ($encargados as $encargado) {
-                $mensaje = "Nueva solicitud de préstamo para la publicación '{$publicacion->titulo}' del usuario '{$usuario->nombres} {$usuario->apellidoPaterno}'.";
-                $this->Notificacion_model->crear_notificacion(
-                    $encargado->idUsuario,
-                    $idPublicacion,
-                    NOTIFICACION_NUEVA_SOLICITUD,
-                    $mensaje
-                );
-            }
-            
-            $this->db->trans_complete();
-            
-            if ($this->db->trans_status() === FALSE) {
-                $this->session->set_flashdata('error', 'Error al crear la solicitud. Por favor, intente de nuevo.');
-            } else {
-                $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
-            }
-        } else {
-            $this->db->trans_rollback();
-            $this->session->set_flashdata('error', 'Error al crear la solicitud.');
-        }
-        
-        redirect('solicitudes/mis_solicitudes');
-    }*/
-    /**
- * Confirma una solicitud de préstamo de publicación
- * @param int $idPublicacion ID de la publicación solicitada
- * @return void
- */
-/* public function confirmar($idPublicacion) {
-    log_message('debug', "\n==== INICIO Solicitudes::confirmar() ====");
-    $this->_verificar_rol(['lector']);
-    
-    $idUsuario = $this->session->userdata('idUsuario');
-    log_message('debug', 'Usuario solicitante ID: ' . $idUsuario);
-    
-    // Obtener todas las publicaciones seleccionadas
-    $publicaciones = $this->input->post('publicaciones') ?: array($idPublicacion);
-    
-    // Verificar disponibilidad de todas las publicaciones
-    foreach ($publicaciones as $idPub) {
-        $publicacion = $this->Publicacion_model->obtener_publicacion($idPub);
-        if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-            log_message('debug', 'Publicación no disponible: ' . $idPub);
-            $this->session->set_flashdata('error', 'Una o más publicaciones no están disponibles para préstamo.');
-            redirect('publicaciones/index');
-            return;
-        }
-    }
-    
-    $this->db->trans_start();
-    
-    try {
-        // Crear la solicitud múltiple
-        $resultado = $this->Solicitud_model->crear_solicitud_multiple($idUsuario, $publicaciones);
-        
-        if ($resultado) {
-            $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
-            log_message('debug', 'Creando solicitud múltiple para usuario: ' . $usuario->nombres);
-            
-            // Obtener detalles de las publicaciones
-            $titulos_publicaciones = array();
-            foreach ($publicaciones as $idPub) {
-                $pub = $this->Publicacion_model->obtener_publicacion($idPub);
-                $titulos_publicaciones[] = $pub->titulo;
-            }
-            
-            // Notificación para el lector
-            $mensaje_lector = "Se ha recibido tu solicitud de préstamo para las siguientes publicaciones: " . 
-                            implode(", ", $titulos_publicaciones);
-            $this->Notificacion_model->crear_notificacion(
-                $idUsuario, 
-                null, 
-                NOTIFICACION_SOLICITUD_PRESTAMO, 
-                $mensaje_lector
-            );
-    
-            // Notificaciones para encargados
-            $encargados = $this->Usuario_model->obtener_encargados_activos();
-            log_message('debug', 'Encargados encontrados: ' . count($encargados));
-            
-            foreach ($encargados as $encargado) {
-                log_message('debug', 'Procesando notificación para encargado ID: ' . $encargado->idUsuario);
-                $mensaje = "Nueva solicitud múltiple de préstamo del usuario '{$usuario->nombres} {$usuario->apellidoPaterno}' " .
-                          "para las publicaciones: " . implode(", ", $titulos_publicaciones);
-                $this->Notificacion_model->crear_notificacion(
-                    $encargado->idUsuario,
-                    null,
-                    NOTIFICACION_NUEVA_SOLICITUD,
-                    $mensaje
-                );
-            }
-            
-            $this->db->trans_complete();
-            
-            if ($this->db->trans_status() === FALSE) {
-                throw new Exception('Error en la transacción de base de datos');
-            }
-            
-            $this->session->set_flashdata('mensaje', 'Solicitud de préstamo creada con éxito.');
-        } else {
-            throw new Exception('Error al crear la solicitud múltiple');
-        }
-    } catch (Exception $e) {
-        $this->db->trans_rollback();
-        log_message('error', 'Error al crear solicitud: ' . $e->getMessage());
-        $this->session->set_flashdata('error', 'Error al crear la solicitud.');
-    }
-    
-    log_message('debug', "==== FIN Solicitudes::confirmar() ====\n");
-    redirect('solicitudes/mis_solicitudes');
-}*/
+  
 public function crear($idPublicacion) {
     $this->_verificar_rol(['lector']);
 
@@ -517,52 +211,146 @@ public function confirmar() {
 
     redirect('solicitudes/mis_solicitudes');
 }
-        public function aprobar($idSolicitud) {
-            $this->_verificar_rol(['administrador', 'encargado']);
+public function aprobar($idSolicitud) {
+    $this->_verificar_rol(['administrador', 'encargado']);
+    
+    $this->db->trans_start();
+    
+    try {
+        $idEncargado = $this->session->userdata('idUsuario');
+        // Obtener detalles de la solicitud
+        $solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
         
-            $this->db->trans_start();
+        if (!$solicitud) {
+            throw new Exception('Solicitud no encontrada');
+        }
+
+        // Verificar disponibilidad de publicaciones
+        foreach ($solicitud as $pub) {
+            $publicacion = $this->Publicacion_model->obtener_publicacion($pub->idPublicacion);
+            if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                throw new Exception('Una o más publicaciones no están disponibles');
+            }
+        }
+
+        // Aprobar solicitud
+        $resultado = $this->Solicitud_model->aprobar_solicitud($idSolicitud, $idEncargado);
         
-            $idEncargado = $this->session->userdata('idUsuario');
-            $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
+        if ($resultado) {
+            // Crear notificación
+            $titulos = array_map(function($pub) {
+                return $pub->titulo;
+            }, $solicitud);
             
-            if (!$solicitud || $solicitud->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
-                $this->session->set_flashdata('error', 'La solicitud no es válida para ser aprobada.');
-                redirect('solicitudes/pendientes');
-                return;
+            $mensaje = "Tu solicitud de préstamo para las siguientes publicaciones ha sido aprobada: " . 
+                      implode(", ", $titulos);
+
+            $this->Notificacion_model->crear_notificacion(
+                $solicitud[0]->idUsuario,
+                $solicitud[0]->idPublicacion,
+                NOTIFICACION_APROBACION_PRESTAMO,
+                $mensaje
+            );
+
+            // Generar PDF
+            $datos_ficha = [
+                'nombreCompletoLector' => $solicitud[0]->nombres . ' ' . $solicitud[0]->apellidoPaterno,
+                'carnet' => $solicitud[0]->carnet,
+                'profesion' => $solicitud[0]->profesion,
+                'fechaPrestamo' => date('Y-m-d H:i:s'),
+                'nombreCompletoEncargado' => $this->session->userdata('nombres') . ' ' . 
+                                           $this->session->userdata('apellidoPaterno'),
+                'publicaciones' => $solicitud
+            ];
+
+            $pdfUrl = $this->generar_pdf_ficha_prestamo($datos_ficha, $idSolicitud);
+            
+            $this->db->trans_complete();
+            
+            if ($this->db->trans_status() === FALSE) {
+                throw new Exception('Error en la transacción');
             }
-        
-            $resultado = $this->Solicitud_model->aprobar_solicitud($idSolicitud, $idEncargado);
-        
-            if ($resultado) {
-                // Crear una única notificación de aprobación para el lector
-                $mensaje = "Tu solicitud de préstamo para la publicación '{$solicitud->titulo}' ha sido aprobada.";
-                $this->Notificacion_model->crear_notificacion(
-                    $solicitud->idUsuario,
-                    $solicitud->idPublicacion,
-                    NOTIFICACION_APROBACION_PRESTAMO,
-                    $mensaje
-                );
-        
-                // Generar el PDF y obtener la URL
-                $pdfUrl = $this->generar_pdf_ficha_prestamo($resultado, $idSolicitud);
-        
-                $this->db->trans_complete();
-        
-                if ($this->db->trans_status() === FALSE) {
-                    $this->session->set_flashdata('error', 'Error al aprobar la solicitud. Por favor, intente de nuevo.');
-                } else {
-                    $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamo registrado con éxito.');
-                    redirect('solicitudes/pendientes?pdf=' . urlencode($pdfUrl));
-                }
-            } else {
-                $this->db->trans_rollback();
-                $this->session->set_flashdata('error', 'Error al aprobar la solicitud.');
-            }
-        
-            redirect('solicitudes/pendientes');
+
+            $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamos registrados con éxito.');
+            redirect('solicitudes/pendientes' . ($pdfUrl ? '?pdf=' . urlencode($pdfUrl) : ''));
+            return;
         }
         
+    } catch (Exception $e) {
+        $this->db->trans_rollback();
+        log_message('error', 'Error al aprobar solicitud: ' . $e->getMessage());
+        $this->session->set_flashdata('error', $e->getMessage());
+    }
+
+    redirect('solicitudes/pendientes');
+}
+
+public function rechazar($idSolicitud) {
+    $this->_verificar_rol(['administrador', 'encargado']);
+
+    $this->db->trans_start();
+
+    try {
+        $idEncargado = $this->session->userdata('idUsuario');
+        $solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
+
+        if (empty($solicitud)) {
+            throw new Exception('Solicitud no encontrada');
+        }
+
+        if ($this->Solicitud_model->rechazar_solicitud($idSolicitud, $idEncargado)) {
+            // Obtener datos del usuario
+            $usuario_lector = $this->Usuario_model->obtener_usuario($solicitud[0]->idUsuario);
+
+            // Preparar mensaje con los títulos de las publicaciones
+            $titulos = array_map(function($pub) {
+                return $pub->titulo;
+            }, $solicitud);
+
+            $mensaje = "Tu solicitud de préstamo ha sido rechazada para las siguientes publicaciones: " . 
+                      implode(", ", $titulos);
+
+            // Crear notificación para el lector
+            $this->Notificacion_model->crear_notificacion(
+                $usuario_lector->idUsuario,
+                null,
+                NOTIFICACION_RECHAZO_PRESTAMO,
+                $mensaje
+            );
+
+            $this->db->trans_complete();
+            
+            if ($this->db->trans_status() === FALSE) {
+                throw new Exception('Error en la transacción');
+            }
+
+            $this->session->set_flashdata('mensaje', 'Solicitud rechazada correctamente');
+        } else {
+            throw new Exception('Error al rechazar la solicitud');
+        }
+
+    } catch (Exception $e) {
+        $this->db->trans_rollback();
+        log_message('error', 'Error al rechazar solicitud: ' . $e->getMessage());
+        $this->session->set_flashdata('error', $e->getMessage());
+    }
+
+    redirect('solicitudes/pendientes');
+}
+        
         private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
+            // Cargar el modelo de solicitudes si no está cargado
+            if (!isset($this->solicitud_model)) {
+                $this->load->model('Solicitud_model');
+            }
+            
+            // Obtener detalles completos de la solicitud y sus publicaciones
+            $detalles_solicitud = $this->solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
+            if (empty($detalles_solicitud)) {
+                log_message('error', 'No se encontraron detalles para la solicitud ID: ' . $idSolicitud);
+                return false;
+            }
+        
             $this->load->library('pdf');
             $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
         
@@ -570,102 +358,111 @@ public function confirmar() {
             $pdf->SetCreator(PDF_CREATOR);
             $pdf->SetAuthor('Hemeroteca UMSS');
             $pdf->SetTitle('Ficha de Préstamo');
+            $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, 'Hemeroteca UMSS', 'Ficha de Préstamo');
+            $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+            $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
         
             // Configuración de márgenes
             $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
             $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
             $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+            $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
         
             $pdf->AddPage();
         
-            // Datos del usuario
+            // Datos del usuario y encabezado
             $html = '
             <h1 style="text-align: center;">U.M.S.S. BIBLIOTECAS - EN SALA</h1>
             <h4 style="text-align: center;">FICHA DE PRÉSTAMO</h4>
             <br>
             <table cellpadding="5" style="width: 100%;">
-                <tr><td width="30%"><strong>Nombre del Lector:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td></tr>
-                <tr><td><strong>Carnet del Lector:</strong></td><td>' . $this->sanitize_for_pdf($datos['carnet']) . '</td></tr>
-                <tr><td><strong>Profesión:</strong></td><td>' . $this->sanitize_for_pdf($datos['profesion']) . '</td></tr>
-                <tr><td><strong>Fecha de Préstamo:</strong></td><td>' . $this->sanitize_for_pdf($datos['fechaPrestamo']) . '</td></tr>
-                <tr><td><strong>Prestado por:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreCompletoEncargado']) . '</td></tr>
+                <tr>
+                    <td width="30%"><strong>Nombre del Lector:</strong></td>
+                    <td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td>
+                </tr>
+                <tr>
+                    <td><strong>Carnet del Lector:</strong></td>
+                    <td>' . $this->sanitize_for_pdf($datos['carnet']) . '</td>
+                </tr>
+                <tr>
+                    <td><strong>Profesión:</strong></td>
+                    <td>' . $this->sanitize_for_pdf($datos['profesion']) . '</td>
+                </tr>
+                <tr>
+                    <td><strong>Fecha de Préstamo:</strong></td>
+                    <td>' . date('d/m/Y H:i:s', strtotime($datos['fechaPrestamo'])) . '</td>
+                </tr>
+                <tr>
+                    <td><strong>Prestado por:</strong></td>
+                    <td>' . $this->sanitize_for_pdf($datos['nombreCompletoEncargado']) . '</td>
+                </tr>
             </table>
             <br>
             <h4>Publicaciones Prestadas:</h4>
             <table cellpadding="5" style="width: 100%; border: 1px solid #000;">
                 <thead>
                     <tr style="background-color: #f2f2f2;">
-                        <th style="border: 1px solid #000;">N°</th>
-                        <th style="border: 1px solid #000;">Editorial</th>
-                        <th style="border: 1px solid #000;">Fecha de Publicación</th>
-                        <th style="border: 1px solid #000;">Ubicación</th>
-                        <th style="border: 1px solid #000;">Título</th>
+                        <th style="border: 1px solid #000; width: 5%;">N°</th>
+                        <th style="border: 1px solid #000; width: 20%;">Editorial</th>
+                        <th style="border: 1px solid #000; width: 15%;">Fecha de Public.</th>
+                        <th style="border: 1px solid #000; width: 15%;">Ubicación</th>
+                        <th style="border: 1px solid #000; width: 45%;">Título</th>
                     </tr>
                 </thead>
                 <tbody>';
         
-            foreach ($datos['publicaciones'] as $index => $pub) {
+            foreach ($detalles_solicitud as $index => $pub) {
                 $html .= '
                     <tr>
-                        <td style="border: 1px solid #000;">' . ($index + 1) . '</td>
+                        <td style="border: 1px solid #000; text-align: center;">' . ($index + 1) . '</td>
                         <td style="border: 1px solid #000;">' . $this->sanitize_for_pdf($pub->nombreEditorial) . '</td>
-                        <td style="border: 1px solid #000;">' . date('d/m/Y', strtotime($pub->fechaPublicacion)) . '</td>
+                        <td style="border: 1px solid #000; text-align: center;">' . date('d/m/Y', strtotime($pub->fechaPublicacion)) . '</td>
                         <td style="border: 1px solid #000;">' . $this->sanitize_for_pdf($pub->ubicacionFisica) . '</td>
                         <td style="border: 1px solid #000;">' . $this->sanitize_for_pdf($pub->titulo) . '</td>
                     </tr>';
             }
         
             $html .= '</tbody></table>
-            <br><br><br>
+            <br><br>
             <div style="text-align: center;">
-                <p>_________________________</p>
-                <p>Firma del Lector</p>
+                <p style="border-top: 1px solid #000; width: 200px; margin: 0 auto; padding-top: 5px;">Firma del Lector</p>
+            </div>
+            <br>
+            <div style="text-align: right; font-size: 8pt;">
+                <p>Fecha y hora de impresión: ' . date('d/m/Y H:i:s') . '</p>
+                <p>ID Solicitud: ' . $idSolicitud . '</p>
             </div>';
         
             $pdf->writeHTML($html, true, false, true, false, '');
             
+            // Generar nombre único para el archivo
             $pdfFileName = 'ficha_prestamo_' . $idSolicitud . '_' . time() . '.pdf';
             $pdfPath = FCPATH . 'uploads/' . $pdfFileName;
             
-            $pdf->Output($pdfPath, 'F');
-            return base_url('uploads/' . $pdfFileName);
+            // Verificar y crear el directorio si no existe
+            $uploadDir = FCPATH . 'uploads/';
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+        
+            // Guardar el PDF y retornar la URL
+            try {
+                $pdf->Output($pdfPath, 'F');
+                return base_url('uploads/' . $pdfFileName);
+            } catch (Exception $e) {
+                log_message('error', 'Error al generar PDF: ' . $e->getMessage());
+                return false;
+            }
         }
         
-        
-        // Función auxiliar para sanitizar texto para PDF
         private function sanitize_for_pdf($text) {
+            if (empty($text)) {
+                return '';
+            }
             // Convertir caracteres especiales a entidades HTML
             $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
             // Convertir entidades HTML a sus equivalentes Unicode
             return html_entity_decode($text, ENT_QUOTES, 'UTF-8');
-        }
-        
-        public function rechazar($idSolicitud) {
-            $this->_verificar_rol(['administrador', 'encargado']);
-            
-            $this->db->trans_start();
-            
-            $idEncargado = $this->session->userdata('idUsuario');
-            $resultado = $this->Solicitud_model->rechazar_solicitud($idSolicitud, $idEncargado);
-            
-            if ($resultado) {
-                // Crear notificación de rechazo
-                $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
-                $mensaje = "Tu solicitud de préstamo para la publicación '{$solicitud->titulo}' ha sido rechazada.";
-                $this->Notificacion_model->crear_notificacion($solicitud->idUsuario, $solicitud->idPublicacion, NOTIFICACION_RECHAZO_PRESTAMO, $mensaje);
-                
-                $this->db->trans_complete();
-                if ($this->db->trans_status() === FALSE) {
-                    $this->session->set_flashdata('error', 'Error al rechazar la solicitud. Por favor, intente de nuevo.');
-                } else {
-                    $this->session->set_flashdata('mensaje', 'Solicitud rechazada con éxito.');
-                }
-            } else {
-                $this->db->trans_rollback();
-                $this->session->set_flashdata('error', 'Error al rechazar la solicitud.');
-            }
-            
-            redirect('solicitudes/pendientes');
         }
         
         public function aprobadas() {

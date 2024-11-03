@@ -287,44 +287,36 @@ class Solicitud_model extends CI_Model {
    
     public function aprobar_solicitud($idSolicitud, $idEncargado) {
         $this->db->trans_start();
-
+    
         try {
-            // Obtener detalles completos
+            // Obtener todas las publicaciones de la solicitud
             $this->db->select('
                 sp.idSolicitud,
                 sp.idUsuario,
                 sp.estadoSolicitud,
                 ds.idPublicacion,
                 ds.observaciones,
-                u.nombres as nombresLector,
-                u.apellidoPaterno as apellidoLector,
-                u.carnet,
-                u.profesion,
                 p.titulo,
                 p.fechaPublicacion,
                 p.ubicacionFisica,
-                e.nombreEditorial,
-                enc.nombres as nombresEncargado,
-                enc.apellidoPaterno as apellidoEncargado
+                e.nombreEditorial
             ');
             $this->db->from('SOLICITUD_PRESTAMO sp');
             $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
-            $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
             $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
             $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
-            $this->db->join('USUARIO enc', 'enc.idUsuario = ' . $idEncargado);
             $this->db->where('sp.idSolicitud', $idSolicitud);
             
-            $solicitud = $this->db->get()->row();
-
-            if (!$solicitud || $solicitud->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
+            $publicaciones = $this->db->get()->result();
+    
+            if (empty($publicaciones)) {
                 $this->db->trans_rollback();
                 return false;
             }
-
+    
             $fechaActual = date('Y-m-d H:i:s');
-
-            // Actualizar solicitud
+    
+            // Actualizar estado de la solicitud
             $this->db->where('idSolicitud', $idSolicitud);
             $this->db->update('SOLICITUD_PRESTAMO', [
                 'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
@@ -332,51 +324,38 @@ class Solicitud_model extends CI_Model {
                 'fechaActualizacion' => $fechaActual,
                 'idUsuarioCreador' => $idEncargado
             ]);
-
-            // Crear préstamo
-            $data_prestamo = [
-                'idSolicitud' => $idSolicitud,
-                'idEncargadoPrestamo' => $idEncargado,
-                'fechaPrestamo' => $fechaActual,
-                'horaInicio' => date('H:i:s'),
-                'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
-                'estado' => 1,
-                'fechaCreacion' => $fechaActual,
-                'idUsuarioCreador' => $idEncargado
-            ];
-
-            $this->db->insert('PRESTAMO', $data_prestamo);
-            $idPrestamo = $this->db->insert_id();
-
-            // Actualizar publicación
-            $this->db->where('idPublicacion', $solicitud->idPublicacion);
-            $this->db->update('PUBLICACION', [
-                'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
-                'fechaActualizacion' => $fechaActual,
-                'idUsuarioCreador' => $idEncargado
-            ]);
-
-            // Preparar datos para la ficha
-            $datos_ficha = [
-                'idPrestamo' => $idPrestamo,
-                'nombreEditorial' => $solicitud->nombreEditorial,
-                'fechaPublicacion' => $solicitud->fechaPublicacion,
-                'ubicacionFisica' => $solicitud->ubicacionFisica,
-                'titulo' => $solicitud->titulo,
-                'nombreCompletoLector' => $solicitud->nombresLector . ' ' . $solicitud->apellidoLector,
-                'carnet' => $solicitud->carnet,
-                'profesion' => $solicitud->profesion,
-                'fechaPrestamo' => $fechaActual,
-                'nombreCompletoEncargado' => $solicitud->nombresEncargado . ' ' . $solicitud->apellidoEncargado,
-                'observaciones' => $solicitud->observaciones
-            ];
-
+    
+            // Crear préstamo para cada publicación
+            foreach ($publicaciones as $publicacion) {
+                // Crear registro de préstamo
+                $data_prestamo = [
+                    'idSolicitud' => $idSolicitud,
+                    'idEncargadoPrestamo' => $idEncargado,
+                    'fechaPrestamo' => $fechaActual,
+                    'horaInicio' => date('H:i:s'),
+                    'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
+                    'estado' => 1,
+                    'fechaCreacion' => $fechaActual,
+                    'idUsuarioCreador' => $idEncargado
+                ];
+    
+                $this->db->insert('PRESTAMO', $data_prestamo);
+    
+                // Actualizar estado de la publicación
+                $this->db->where('idPublicacion', $publicacion->idPublicacion);
+                $this->db->update('PUBLICACION', [
+                    'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
+                    'fechaActualizacion' => $fechaActual
+                ]);
+            }
+    
             $this->db->trans_complete();
-            return $this->db->trans_status() ? $datos_ficha : false;
-
+            
+            return $this->db->trans_status() ? $publicaciones : false;
+    
         } catch (Exception $e) {
             $this->db->trans_rollback();
-            log_message('error', 'Error al aprobar solicitud: ' . $e->getMessage());
+            log_message('error', 'Error al aprobar solicitud múltiple: ' . $e->getMessage());
             return false;
         }
     }
@@ -434,31 +413,7 @@ class Solicitud_model extends CI_Model {
             return ['success' => false, 'message' => 'Error interno del servidor'];
         }
     }
-    public function obtener_detalle_solicitud_multiple($idSolicitud) {
-        $this->db->select('
-            sp.idSolicitud,
-            sp.fechaSolicitud,
-            sp.estadoSolicitud,
-            u.nombres,
-            u.apellidoPaterno,
-            u.carnet,
-            p.titulo,
-            p.ubicacionFisica,
-            e.nombreEditorial,
-            t.nombreTipo,
-            ds.observaciones
-        ');
-        $this->db->from('SOLICITUD_PRESTAMO sp');
-        $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
-        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
-        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
-        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
-        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
-        $this->db->where('sp.idSolicitud', $idSolicitud);
-        
-        return $this->db->get()->result();
-    }
-    
+
     public function verificar_disponibilidad_multiple($publicaciones) {
         $this->db->select('idPublicacion, estado');
         $this->db->from('PUBLICACION');
@@ -475,6 +430,122 @@ class Solicitud_model extends CI_Model {
         return $no_disponibles;
     }
     
+    public function obtener_detalle_solicitud_multiple($idSolicitud) {
+        $this->db->select('
+            sp.idSolicitud,
+            sp.fechaSolicitud, 
+            sp.estadoSolicitud,
+            sp.fechaAprobacionRechazo,
+            sp.idUsuario,
+            u.nombres,
+            u.apellidoPaterno,
+            u.carnet,
+            u.profesion,
+            p.idPublicacion,
+            p.titulo,
+            p.fechaPublicacion,
+            p.ubicacionFisica,
+            e.nombreEditorial
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
+        $this->db->where('sp.idSolicitud', $idSolicitud);
+        $this->db->where('sp.estado', 1);
+        
+        $query = $this->db->get();
+        
+        if ($query->num_rows() === 0) {
+            log_message('error', 'No se encontraron detalles para la solicitud ID: ' . $idSolicitud);
+            return false;
+        }
+        
+        return $query->result();
+    }
     
-
+    public function obtener_resumen_solicitud_multiple($idSolicitud) {
+        $detalles = $this->obtener_detalle_solicitud_multiple($idSolicitud);
+        
+        if (empty($detalles)) {
+            return false;
+        }
+        
+        // Obtener información del encargado que procesa la solicitud
+        $idEncargado = $this->session->userdata('idUsuario');
+        $encargado = $this->db->select('nombres, apellidoPaterno')
+                             ->from('USUARIO')
+                             ->where('idUsuario', $idEncargado)
+                             ->get()
+                             ->row();
+        
+        // Formatear datos para la ficha de préstamo
+        $resumen = [
+            'idSolicitud' => $idSolicitud,
+            'fechaSolicitud' => $detalles[0]->fechaSolicitud,
+            'estadoSolicitud' => $detalles[0]->estadoSolicitud,
+            'nombreCompletoLector' => $detalles[0]->nombres . ' ' . $detalles[0]->apellidoPaterno,
+            'carnet' => $detalles[0]->carnet,
+            'profesion' => $detalles[0]->profesion,
+            'fechaPrestamo' => date('Y-m-d H:i:s'),
+            'nombreCompletoEncargado' => $encargado ? ($encargado->nombres . ' ' . $encargado->apellidoPaterno) : 'No especificado',
+            'publicaciones' => $detalles
+        ];
+        
+        // Agregar información de seguimiento
+        log_message('info', 'Generando resumen de solicitud múltiple ID: ' . $idSolicitud . 
+                    ' para lector: ' . $resumen['nombreCompletoLector'] . 
+                    ' con ' . count($detalles) . ' publicaciones');
+        
+        return $resumen;
+    }
+    public function verificar_disponibilidad_solicitud($idSolicitud) {
+        $this->db->select('p.estado, p.idPublicacion');
+        $this->db->from('DETALLE_SOLICITUD ds');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->where('ds.idSolicitud', $idSolicitud);
+        
+        $publicaciones = $this->db->get()->result();
+        
+        foreach ($publicaciones as $pub) {
+            if ($pub->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                log_message('warning', 'Publicación ID: ' . $pub->idPublicacion . 
+                           ' no está disponible para la solicitud ID: ' . $idSolicitud);
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    public function actualizar_estado_publicaciones_solicitud($idSolicitud, $nuevoEstado) {
+        $this->db->trans_start();
+        
+        try {
+            // Obtener todas las publicaciones de la solicitud
+            $this->db->select('p.idPublicacion');
+            $this->db->from('DETALLE_SOLICITUD ds');
+            $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+            $this->db->where('ds.idSolicitud', $idSolicitud);
+            
+            $publicaciones = $this->db->get()->result();
+            
+            foreach ($publicaciones as $pub) {
+                $this->db->where('idPublicacion', $pub->idPublicacion);
+                $this->db->update('PUBLICACION', [
+                    'estado' => $nuevoEstado,
+                    'fechaActualizacion' => date('Y-m-d H:i:s'),
+                    'idUsuarioCreador' => $this->session->userdata('idUsuario')
+                ]);
+            }
+            
+            $this->db->trans_complete();
+            return $this->db->trans_status();
+            
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Error al actualizar estado de publicaciones: ' . $e->getMessage());
+            return false;
+        }
+    }    
 }
