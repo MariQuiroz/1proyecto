@@ -835,7 +835,7 @@ public function reenviar_verificacion()
             } else {
                 $this->session->set_flashdata('error', 'Hubo un problema al actualizar tu contraseña. Por favor, intenta de nuevo.');
             }
-            redirect('usuarios/login');
+            redirect('usuarios/index');
         }
     }
 
