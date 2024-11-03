@@ -77,11 +77,11 @@ class Prestamo_model extends CI_Model {
         $this->db->trans_start();
 
         try {
-            // Obtener información del préstamo
             $this->db->select('
                 p.idPrestamo,
+                p.estadoPrestamo,
                 ds.idPublicacion,
-                p.estadoPrestamo
+                sp.idUsuario
             ');
             $this->db->from('PRESTAMO p');
             $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
@@ -116,7 +116,7 @@ class Prestamo_model extends CI_Model {
             ]);
 
             $this->db->trans_complete();
-            return $this->db->trans_status();
+            return $prestamo;
 
         } catch (Exception $e) {
             $this->db->trans_rollback();
@@ -144,6 +144,7 @@ class Prestamo_model extends CI_Model {
         $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
         $this->db->join('EDITORIAL e', 'pub.idEditorial = e.idEditorial');
         $this->db->where('p.estadoPrestamo', ESTADO_PRESTAMO_ACTIVO);
+        $this->db->where('p.estado', 1);
         $this->db->order_by('p.fechaPrestamo', 'DESC');
         return $this->db->get()->result();
     }
@@ -185,8 +186,26 @@ class Prestamo_model extends CI_Model {
     }
 
     public function obtener_prestamo($idPrestamo) {
-        return $this->db->get_where('PRESTAMO', ['idPrestamo' => $idPrestamo])->row();
+        $this->db->select('
+            p.idPrestamo,
+            p.idSolicitud,
+            p.fechaPrestamo,
+            p.horaInicio,
+            p.horaDevolucion,
+            p.estadoPrestamo,
+            sp.idUsuario,
+            pub.titulo,
+            pub.idPublicacion,
+            ds.observaciones
+        ');
+        $this->db->from('PRESTAMO p');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+        $this->db->where('p.idPrestamo', $idPrestamo);
+        return $this->db->get()->row();
     }
+
     public function obtener_prestamo_detallado($idPrestamo) {
         $this->db->select('P.*, PUB.titulo, PUB.fechaPublicacion, PUB.ubicacionFisica, PUB.signatura_topografica, U.carnet, U.profesion, E.nombres AS nombres_encargado, E.apellidoPaterno AS apellidoPaterno_encargado');
         $this->db->from('PRESTAMO P');
@@ -208,7 +227,7 @@ class Prestamo_model extends CI_Model {
         return $this->db->get()->row_array(); // Cambiamos row() por row_array()
     }
 
-    public function obtener_datos_ficha_devolucion($idPrestamo) {
+   public function obtener_datos_ficha_devolucion($idPrestamo) {
         $this->db->select('
             p.idPrestamo,
             p.fechaPrestamo,
@@ -218,8 +237,8 @@ class Prestamo_model extends CI_Model {
             u.nombres as nombreLector,
             u.apellidoPaterno as apellidoLector,
             u.email,
-            e.nombres as nombreEncargado,
-            e.apellidoPaterno as apellidoEncargado,
+            enc.nombres as nombreEncargado,
+            enc.apellidoPaterno as apellidoEncargado,
             ds.observaciones,
             ed.nombreEditorial
         ');
@@ -229,10 +248,11 @@ class Prestamo_model extends CI_Model {
         $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
         $this->db->join('EDITORIAL ed', 'pub.idEditorial = ed.idEditorial');
         $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
-        $this->db->join('USUARIO e', 'p.idEncargadoPrestamo = e.idUsuario');
+        $this->db->join('USUARIO enc', 'p.idEncargadoPrestamo = enc.idUsuario');
         $this->db->where('p.idPrestamo', $idPrestamo);
         return $this->db->get()->row_array();
     }
+
     public function get_prestamos_activos() {
         $this->db->select('
             p.idPrestamo,
