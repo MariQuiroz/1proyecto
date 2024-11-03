@@ -8,10 +8,12 @@ class Publicaciones extends CI_Controller {
         $this->load->model('publicacion_model');
         $this->load->model('tipo_model');
         $this->load->model('editorial_model');
+        $this->load->model('Notificacion_model');
         $this->load->library('session');
         $this->load->helper('url');
         $this->load->library('form_validation');
         $this->load->library('upload');
+        
     }
 
     private function _verificar_sesion() {

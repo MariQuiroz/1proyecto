@@ -88,6 +88,27 @@ class Publicacion_model extends CI_Model {
         $this->db->where('p.idPublicacion', $idPublicacion);
         return $this->db->get()->row();
     }
+    public function obtener_publicaciones_disponibles() {
+        $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas') ?: array();
+    
+        $this->db->select('
+            p.idPublicacion,
+            p.titulo,
+            p.fechaPublicacion,
+            p.portada,
+            p.ubicacionFisica,
+            e.nombreEditorial,
+            t.nombreTipo
+        ');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+        $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+        $this->db->where('p.estado', ESTADO_PUBLICACION_DISPONIBLE);
+        if (!empty($publicaciones_seleccionadas)) {
+            $this->db->where_not_in('p.idPublicacion', $publicaciones_seleccionadas);
+        }
+        return $this->db->get()->result();
+    }
 
     public function listar_publicaciones() {
         $this->db->select('
@@ -150,25 +171,6 @@ class Publicacion_model extends CI_Model {
         return $this->db->get()->row();
     }
 
-    public function obtener_publicaciones_disponibles() {
-        $this->db->select('
-            p.idPublicacion,
-            p.titulo,
-            p.fechaPublicacion,
-            p.portada,
-            p.ubicacionFisica,
-            e.nombreEditorial,
-            t.nombreTipo
-        ');
-        $this->db->from('PUBLICACION p');
-        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
-        $this->db->join('TIPO t', 't.idTipo = p.idTipo');
-        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
-        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
-        $this->db->where('p.estado', ESTADO_PUBLICACION_DISPONIBLE);
-        $this->db->where('sp.idSolicitud IS NULL');
-        return $this->db->get()->result();
-    }
 
     public function cambiar_estado_publicacion($idPublicacion, $nuevoEstado) {
         $this->db->trans_start();

@@ -227,30 +227,50 @@ class Prestamo_model extends CI_Model {
         return $this->db->get()->row_array(); // Cambiamos row() por row_array()
     }
 
-   public function obtener_datos_ficha_devolucion($idPrestamo) {
+    public function obtener_datos_ficha_devolucion($idPrestamo) {
         $this->db->select('
             p.idPrestamo,
             p.fechaPrestamo,
             p.horaInicio,
             p.horaDevolucion,
-            pub.titulo,
             u.nombres as nombreLector,
             u.apellidoPaterno as apellidoLector,
             u.email,
             enc.nombres as nombreEncargado,
-            enc.apellidoPaterno as apellidoEncargado,
-            ds.observaciones,
-            ed.nombreEditorial
+            enc.apellidoPaterno as apellidoEncargado
         ');
         $this->db->from('PRESTAMO p');
-        $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
-        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
-        $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
-        $this->db->join('EDITORIAL ed', 'pub.idEditorial = ed.idEditorial');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = p.idSolicitud');
         $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
         $this->db->join('USUARIO enc', 'p.idEncargadoPrestamo = enc.idUsuario');
         $this->db->where('p.idPrestamo', $idPrestamo);
-        return $this->db->get()->row_array();
+        
+        $prestamo = $this->db->get()->row_array();
+        
+        if ($prestamo) {
+            // Obtener las publicaciones asociadas a esta solicitud
+            $this->db->select('
+                pub.titulo,
+                pub.fechaPublicacion,
+                pub.ubicacionFisica,
+                ed.nombreEditorial,
+                ds.observaciones,
+                CASE 
+                    WHEN p.estadoDevolucion IS NULL THEN "Bueno"
+                    ELSE p.estadoDevolucion 
+                END as estadoDevolucion
+            ');
+            $this->db->from('PRESTAMO p');
+            $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
+            $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+            $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+            $this->db->join('EDITORIAL ed', 'pub.idEditorial = ed.idEditorial');
+            $this->db->where('p.idPrestamo', $idPrestamo);
+            
+            $prestamo['publicaciones'] = $this->db->get()->result();
+        }
+        
+        return $prestamo;
     }
 
     public function get_prestamos_activos() {

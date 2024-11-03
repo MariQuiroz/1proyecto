@@ -80,8 +80,7 @@ public function finalizar($idPrestamo) {
     
     if ($resultado) {
         // Generar la ficha de devolución y enviar por correo
-        $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
-        $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
+        $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo);
         
         // Crear notificación de devolución
         $mensaje = "El préstamo de la publicación '{$prestamo->titulo}' ha sido finalizado.";
@@ -203,58 +202,10 @@ private function _enviar_email_disponibilidad($idUsuario, $publicacion) {
     }
 }
 
-private function generar_ficha_devolucion($idPrestamo) {
-    $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
-
-    if (!$datos_prestamo) {
-        return false;
-    }
-
-    $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-
-    $pdf->SetCreator(PDF_CREATOR);
-    $pdf->SetAuthor('Hemeroteca UMSS');
-    $pdf->SetTitle('Ficha de Devolución');
-    $pdf->SetSubject('Comprobante de Devolución');
-    $pdf->SetKeywords('UMSS, Biblioteca, Devolución');
-
-    $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, 'Hemeroteca UMSS', 'Comprobante de Devolución', array(0,64,255), array(0,64,128));
-    $pdf->setFooterData(array(0,64,0), array(0,64,128));
-
-    $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-    $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-
-    $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-
-    $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-    $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-    $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-
-    $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-
-    $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
-
-    $pdf->AddPage();
-
-    $pdf->SetFont('helvetica', '', 12);
-
-    $html = '
-    <h1>U.M.S.S. BIBLIOTECAS - COMPROBANTE DE DEVOLUCIÓN</h1>
-    <p><strong>Título de la publicación:</strong> '.$datos_prestamo['titulo'].'</p>
-    <p><strong>Lector:</strong> '.$datos_prestamo['nombreLector'].' '.$datos_prestamo['apellidoLector'].'</p>
-    <p><strong>Fecha de préstamo:</strong> '.$datos_prestamo['fechaPrestamo'].'</p>
-    <p><strong>Fecha de devolución:</strong> '.date('Y-m-d H:i:s').'</p>
-    <p><strong>Encargado que recibió:</strong> '.$datos_prestamo['nombreEncargado'].' '.$datos_prestamo['apellidoEncargado'].'</p>
-    ';
-
-    $pdf->writeHTML($html, true, false, true, false, '');
-
-    return $pdf->Output('ficha_devolucion.pdf', 'S');
-}
 
 private function enviar_ficha_por_correo($idPrestamo, $pdf_content) {
     $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
-
+    
     if (!$datos_prestamo) {
         return false;
     }
@@ -277,20 +228,55 @@ private function enviar_ficha_por_correo($idPrestamo, $pdf_content) {
     $this->email->to($datos_prestamo['email']);
     $this->email->subject('Comprobante de Devolución - Hemeroteca UMSS');
 
+    // Preparar la lista de publicaciones para el correo
+    $publicaciones_lista = '';
+    foreach ($datos_prestamo['publicaciones'] as $index => $pub) {
+        $publicaciones_lista .= ($index + 1) . '. ' . $pub->titulo . "\n";
+    }
+
     $mensaje = "
     <html>
     <head>
         <title>Comprobante de Devolución</title>
+        <style>
+            table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+        </style>
     </head>
     <body>
         <h2>Comprobante de Devolución - Hemeroteca UMSS</h2>
         <p>Estimado/a {$datos_prestamo['nombreLector']} {$datos_prestamo['apellidoLector']},</p>
-        <p>Adjunto encontrará el comprobante de devolución de la publicación '{$datos_prestamo['titulo']}'.</p>
+        <p>Adjunto encontrará el comprobante de devolución de las siguientes publicaciones:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Título</th>
+                    <th>Editorial</th>
+                    <th>Ubicación</th>
+                </tr>
+            </thead>
+            <tbody>";
+
+    foreach ($datos_prestamo['publicaciones'] as $index => $pub) {
+        $mensaje .= "
+                <tr>
+                    <td>" . ($index + 1) . "</td>
+                    <td>{$pub->titulo}</td>
+                    <td>{$pub->nombreEditorial}</td>
+                    <td>{$pub->ubicacionFisica}</td>
+                </tr>";
+    }
+
+    $mensaje .= "
+            </tbody>
+        </table>
+        <p>Fecha de devolución: " . date('d/m/Y H:i:s') . "</p>
         <p>Gracias por utilizar nuestros servicios.</p>
         <p>Atentamente,<br>Hemeroteca UMSS</p>
     </body>
-    </html>
-    ";
+    </html>";
 
     $this->email->message($mensaje);
     $this->email->attach($pdf_content, 'attachment', 'comprobante_devolucion.pdf', 'application/pdf');
@@ -440,40 +426,6 @@ private function enviar_ficha_por_correo($idPrestamo, $pdf_content) {
         $pdf->Output('comprobantes_devolucion.pdf', 'D');
     }
 
-    private function generar_ficha_devolucion2($idPrestamo) {
-        $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
-        
-        if (!$datos_prestamo) {
-            return false;
-        }
-        
-        // Configurar PDF
-        $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-        $pdf->SetCreator(PDF_CREATOR);
-        $pdf->SetAuthor('Hemeroteca UMSS');
-        $pdf->SetTitle('Ficha de Devolución');
-        
-        $pdf->AddPage();
-        
-        // Generar contenido HTML
-        $html = $this->load->view('prestamos/plantilla_comprobante', $datos_prestamo, true);
-        $pdf->writeHTML($html, true, false, true, false, '');
-        
-        return $pdf->Output('', 'S');
-    }
-
-    public function ver_prestamos_usuario($idUsuario) {
-        $this->_verificar_rol(['administrador', 'encargado']);
-        
-        $data['prestamos_activos'] = $this->Prestamo_model->obtener_prestamos_activos_usuario($idUsuario);
-        $data['usuario'] = $this->Usuario_model->obtener_usuario($idUsuario);
-        
-        $this->load->view('inc/header');
-        $this->load->view('inc/nabvar');
-        $this->load->view('inc/aside');
-        $this->load->view('prestamos/lista_usuario', $data);
-        $this->load->view('inc/footer');
-    }
     public function generar_formulario_prestamo($idSolicitud) {
         $this->_verificar_rol(['administrador', 'encargado']);
         

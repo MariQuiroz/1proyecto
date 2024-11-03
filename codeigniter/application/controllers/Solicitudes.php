@@ -563,70 +563,74 @@ public function confirmar() {
         }
         
         private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
-            // Asegurarse de que la librería TCPDF esté cargada
             $this->load->library('pdf');
-        
-            // Crear nueva instancia de TCPDF
             $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
         
-            // Configurar el documento
+            // Configuración del documento
             $pdf->SetCreator(PDF_CREATOR);
             $pdf->SetAuthor('Hemeroteca UMSS');
             $pdf->SetTitle('Ficha de Préstamo');
-            $pdf->SetSubject('Ficha de Préstamo');
-            $pdf->SetKeywords('UMSS, Biblioteca, Préstamo');
         
-            // Configurar fuentes
-            $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-        
-            // Configurar márgenes
+            // Configuración de márgenes
             $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
             $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
             $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
         
-            // Configurar saltos de página automáticos
-            $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-        
-            // Configurar factor de escala de imagen
-            $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
-        
-            // Agregar una página
             $pdf->AddPage();
         
-            // Preparar el contenido HTML
+            // Datos del usuario
             $html = '
             <h1 style="text-align: center;">U.M.S.S. BIBLIOTECAS - EN SALA</h1>
-            <table cellpadding="5">
-                <tr><td width="30%"><strong>Editorial:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreEditorial']) . '</td></tr>
-                <tr><td><strong>Fecha de Publicación:</strong></td><td>' . $this->sanitize_for_pdf($datos['fechaPublicacion']) . '</td></tr>
-                <tr><td><strong>Ubicación:</strong></td><td>' . $this->sanitize_for_pdf($datos['ubicacionFisica']) . '</td></tr>
-                <tr><td><strong>Título:</strong></td><td>' . $this->sanitize_for_pdf($datos['titulo']) . '</td></tr>
-                <tr><td><strong>Nombre del Lector:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td></tr>
+            <h4 style="text-align: center;">FICHA DE PRÉSTAMO</h4>
+            <br>
+            <table cellpadding="5" style="width: 100%;">
+                <tr><td width="30%"><strong>Nombre del Lector:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td></tr>
                 <tr><td><strong>Carnet del Lector:</strong></td><td>' . $this->sanitize_for_pdf($datos['carnet']) . '</td></tr>
                 <tr><td><strong>Profesión:</strong></td><td>' . $this->sanitize_for_pdf($datos['profesion']) . '</td></tr>
                 <tr><td><strong>Fecha de Préstamo:</strong></td><td>' . $this->sanitize_for_pdf($datos['fechaPrestamo']) . '</td></tr>
                 <tr><td><strong>Prestado por:</strong></td><td>' . $this->sanitize_for_pdf($datos['nombreCompletoEncargado']) . '</td></tr>
             </table>
+            <br>
+            <h4>Publicaciones Prestadas:</h4>
+            <table cellpadding="5" style="width: 100%; border: 1px solid #000;">
+                <thead>
+                    <tr style="background-color: #f2f2f2;">
+                        <th style="border: 1px solid #000;">N°</th>
+                        <th style="border: 1px solid #000;">Editorial</th>
+                        <th style="border: 1px solid #000;">Fecha de Publicación</th>
+                        <th style="border: 1px solid #000;">Ubicación</th>
+                        <th style="border: 1px solid #000;">Título</th>
+                    </tr>
+                </thead>
+                <tbody>';
+        
+            foreach ($datos['publicaciones'] as $index => $pub) {
+                $html .= '
+                    <tr>
+                        <td style="border: 1px solid #000;">' . ($index + 1) . '</td>
+                        <td style="border: 1px solid #000;">' . $this->sanitize_for_pdf($pub->nombreEditorial) . '</td>
+                        <td style="border: 1px solid #000;">' . date('d/m/Y', strtotime($pub->fechaPublicacion)) . '</td>
+                        <td style="border: 1px solid #000;">' . $this->sanitize_for_pdf($pub->ubicacionFisica) . '</td>
+                        <td style="border: 1px solid #000;">' . $this->sanitize_for_pdf($pub->titulo) . '</td>
+                    </tr>';
+            }
+        
+            $html .= '</tbody></table>
             <br><br><br>
             <div style="text-align: center;">
                 <p>_________________________</p>
                 <p>Firma del Lector</p>
-            </div>
-            ';
+            </div>';
         
-            // Escribir el HTML en el PDF
             $pdf->writeHTML($html, true, false, true, false, '');
-        
-            // Generar un nombre único para el archivo PDF
+            
             $pdfFileName = 'ficha_prestamo_' . $idSolicitud . '_' . time() . '.pdf';
             $pdfPath = FCPATH . 'uploads/' . $pdfFileName;
-        
-            // Guardar el PDF en el servidor
+            
             $pdf->Output($pdfPath, 'F');
-        
-            // Devolver la URL del PDF
             return base_url('uploads/' . $pdfFileName);
         }
+        
         
         // Función auxiliar para sanitizar texto para PDF
         private function sanitize_for_pdf($text) {
