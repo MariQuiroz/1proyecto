@@ -204,7 +204,7 @@ class Solicitudes extends CI_Controller {
             $this->load->view('inc/footer');
         }
     */
-    public function crear($idPublicacion) {
+    /*public function crear($idPublicacion) {
         log_message('debug', '=== INICIO MÉTODO CREAR ===');
         $this->_verificar_rol(['lector']);
     
@@ -265,7 +265,7 @@ class Solicitudes extends CI_Controller {
         $this->load->view('solicitudes/crear', $data);
         $this->load->view('inc/footer');
         log_message('debug', '=== FIN MÉTODO CREAR ===');
-    }
+    }*/
     
     /*public function confirmar($idPublicacion) {
         log_message('debug', 'INICIO Solicitudes::confirmar()');
@@ -326,7 +326,7 @@ class Solicitudes extends CI_Controller {
  * @param int $idPublicacion ID de la publicación solicitada
  * @return void
  */
-public function confirmar($idPublicacion) {
+/* public function confirmar($idPublicacion) {
     log_message('debug', "\n==== INICIO Solicitudes::confirmar() ====");
     $this->_verificar_rol(['lector']);
     
@@ -407,6 +407,114 @@ public function confirmar($idPublicacion) {
     }
     
     log_message('debug', "==== FIN Solicitudes::confirmar() ====\n");
+    redirect('solicitudes/mis_solicitudes');
+}*/
+public function crear($idPublicacion) {
+    $this->_verificar_rol(['lector']);
+
+    // Inicializar array de publicaciones seleccionadas en sesión si no existe
+    if (!$this->session->userdata('publicaciones_seleccionadas')) {
+        $this->session->set_userdata('publicaciones_seleccionadas', array());
+    }
+
+    // Obtener publicaciones seleccionadas actuales
+    $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
+
+    // Añadir la nueva publicación si no está ya seleccionada
+    if (!in_array($idPublicacion, $publicaciones_seleccionadas)) {
+        // Verificar límite de 5 publicaciones
+        if (count($publicaciones_seleccionadas) >= 5) {
+            $this->session->set_flashdata('error', 'Solo puede solicitar hasta 5 publicaciones a la vez.');
+            redirect('publicaciones');
+            return;
+        }
+
+        $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
+        if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+            $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
+            redirect('publicaciones');
+            return;
+        }
+
+        $publicaciones_seleccionadas[] = $idPublicacion;
+        $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
+    }
+
+    // Obtener todas las publicaciones seleccionadas
+    $data['publicaciones'] = array();
+    foreach ($publicaciones_seleccionadas as $id) {
+        $data['publicaciones'][] = $this->Publicacion_model->obtener_publicacion($id);
+    }
+
+    $this->load->view('inc/header');
+    $this->load->view('inc/nabvar');
+    $this->load->view('inc/aside');
+    $this->load->view('solicitudes/crear', $data);
+    $this->load->view('inc/footer');
+}
+
+public function confirmar() {
+    $this->_verificar_rol(['lector']);
+    $idUsuario = $this->session->userdata('idUsuario');
+    
+    // Obtener publicaciones seleccionadas de la sesión
+    $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
+    
+    if (empty($publicaciones_seleccionadas)) {
+        $this->session->set_flashdata('error', 'No hay publicaciones seleccionadas.');
+        redirect('publicaciones');
+        return;
+    }
+
+    $this->db->trans_start();
+
+    try {
+        $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
+
+        // Crear una única solicitud con todas las publicaciones
+        $resultado = $this->Solicitud_model->crear_solicitud_multiple($idUsuario, $publicaciones_seleccionadas);
+        
+        if ($resultado) {
+            // Notificar al lector
+            $titulos = array();
+            foreach ($publicaciones_seleccionadas as $idPub) {
+                $pub = $this->Publicacion_model->obtener_publicacion($idPub);
+                $titulos[] = $pub->titulo;
+            }
+
+            $mensaje_lector = "Se ha recibido tu solicitud de préstamo para las siguientes publicaciones: " . implode(", ", $titulos);
+            $this->Notificacion_model->crear_notificacion(
+                $idUsuario,
+                null,
+                NOTIFICACION_SOLICITUD_PRESTAMO,
+                $mensaje_lector
+            );
+
+            // Notificar a encargados
+            $encargados = $this->Usuario_model->obtener_encargados_activos();
+            foreach ($encargados as $encargado) {
+                $mensaje = "Nueva solicitud de préstamo del usuario '{$usuario->nombres} {$usuario->apellidoPaterno}'";
+                $this->Notificacion_model->crear_notificacion(
+                    $encargado->idUsuario,
+                    null,
+                    NOTIFICACION_NUEVA_SOLICITUD,
+                    $mensaje
+                );
+            }
+
+            // Limpiar las publicaciones seleccionadas de la sesión
+            $this->session->unset_userdata('publicaciones_seleccionadas');
+
+            $this->session->set_flashdata('mensaje', 'Solicitud creada con éxito.');
+        }
+
+        $this->db->trans_complete();
+        
+    } catch (Exception $e) {
+        $this->db->trans_rollback();
+        $this->session->set_flashdata('error', 'Error al crear la solicitud.');
+    }
+
     redirect('solicitudes/mis_solicitudes');
 }
         public function aprobar($idSolicitud) {
