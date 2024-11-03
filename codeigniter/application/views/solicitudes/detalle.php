@@ -17,7 +17,7 @@
                             
                             <div class="form-group">
                                 <label>Publicación:</label>
-                                <p><?php echo $solicitud->titulo_publicacion; ?></p>
+                                <p><?php echo $solicitud->titulo; ?></p>
                             </div>
                             
                             <div class="form-group">

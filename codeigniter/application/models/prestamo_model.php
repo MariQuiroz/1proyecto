@@ -413,5 +413,82 @@ class Prestamo_model extends CI_Model {
         ]);
         return $this->db->get()->row()->total;
     }
+    public function finalizar_prestamo_multiple($devoluciones, $idEncargado) {
+        $this->db->trans_start();
 
+        try {
+            $fechaActual = date('Y-m-d H:i:s');
+            $horaActual = date('H:i:s');
+            
+            foreach ($devoluciones as $idPrestamo => $devolucion) {
+                // Verificar que el préstamo esté activo
+                $prestamo = $this->obtener_prestamo($idPrestamo);
+                if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
+                    $this->db->trans_rollback();
+                    return [
+                        'success' => false,
+                        'message' => 'Uno o más préstamos no están activos'
+                    ];
+                }
+
+                // Actualizar préstamo
+                $data_prestamo = [
+                    'estadoPrestamo' => ESTADO_PRESTAMO_FINALIZADO,
+                    'estadoDevolucion' => $devolucion['estado'],
+                    'idEncargadoDevolucion' => $idEncargado,
+                    'horaDevolucion' => $horaActual,
+                    'fechaActualizacion' => $fechaActual,
+                    'idUsuarioCreador' => $idEncargado
+                ];
+
+                if (!empty($devolucion['observaciones'])) {
+                    $data_prestamo['observacionesDevolucion'] = $devolucion['observaciones'];
+                }
+
+                $this->db->where('idPrestamo', $idPrestamo);
+                $this->db->update('PRESTAMO', $data_prestamo);
+
+                // Actualizar estado de la publicación según el estado de devolución
+                $estado_publicacion = ESTADO_PUBLICACION_DISPONIBLE;
+                if ($devolucion['estado'] == 'dañado' || $devolucion['estado'] == 'perdido') {
+                    $estado_publicacion = ESTADO_PUBLICACION_EN_MANTENIMIENTO;
+                }
+
+                $this->db->where('idPublicacion', $prestamo->idPublicacion);
+                $this->db->update('PUBLICACION', [
+                    'estado' => $estado_publicacion,
+                    'fechaActualizacion' => $fechaActual
+                ]);
+
+                // Crear notificación de devolución
+                $this->load->model('Notificacion_model');
+                $mensaje = "Se ha registrado la devolución de la publicación '{$prestamo->titulo}' en estado {$devolucion['estado']}.";
+                $this->Notificacion_model->crear_notificacion(
+                    $prestamo->idUsuario,
+                    $prestamo->idPublicacion,
+                    NOTIFICACION_DEVOLUCION,
+                    $mensaje
+                );
+
+                // Notificar a usuarios interesados si la publicación queda disponible
+                if ($estado_publicacion == ESTADO_PUBLICACION_DISPONIBLE) {
+                    $this->_notificar_disponibilidad($prestamo->idPublicacion);
+                }
+            }
+
+            $this->db->trans_complete();
+            return [
+                'success' => $this->db->trans_status(),
+                'message' => $this->db->trans_status() ? 'Devoluciones procesadas con éxito' : 'Error al procesar las devoluciones'
+            ];
+
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Error al procesar devoluciones múltiples: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error interno del servidor'
+            ];
+        }
+    }
 }

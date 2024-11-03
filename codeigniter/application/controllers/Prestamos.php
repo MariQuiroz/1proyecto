@@ -62,50 +62,7 @@ class Prestamos extends CI_Controller {
     }
     
    
-/*public function finalizar($idPrestamo) {
-    $this->_verificar_rol(['administrador', 'encargado']);
-    
-    $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
-    if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
-        $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
-        redirect('prestamos/activos');
-        return;
-    }
-    
-    $this->db->trans_start();
-    
-    $idEncargado = $this->session->userdata('idUsuario');
-    $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado);
-    
-    if ($resultado) {
-        // Generar la ficha de devolución y enviar por correo
-        $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
-        $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
-        
-        // Crear notificación de devolución
-        $mensaje = "El préstamo de la publicación '{$prestamo->titulo}' ha sido finalizado.";
-        $this->Notificacion_model->crear_notificacion($prestamo->idUsuario, $prestamo->idPublicacion, NOTIFICACION_DEVOLUCION, $mensaje);
-        
-        $this->db->trans_complete();
-        
-        if ($this->db->trans_status() === FALSE) {
-            $this->session->set_flashdata('error', 'Hubo un error al finalizar el préstamo. Por favor, intente de nuevo.');
-        } else {
-            $mensaje = 'Préstamo finalizado con éxito.';
-            if ($envio_exitoso) {
-                $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico al lector.';
-            } else {
-                $mensaje .= ' Sin embargo, hubo un problema al enviar el correo electrónico.';
-            }
-            $this->session->set_flashdata('mensaje', $mensaje);
-        }
-    } else {
-        $this->db->trans_rollback();
-        $this->session->set_flashdata('error', 'No se pudo finalizar el préstamo. Por favor, intente de nuevo.');
-    }
-    
-    redirect('prestamos/activos');
-}*/
+
 public function finalizar($idPrestamo) {
     $this->_verificar_rol(['administrador', 'encargado']);
     
@@ -377,4 +334,244 @@ private function enviar_ficha_por_correo($idPrestamo, $pdf_content) {
         $this->load->view('prestamos/mis_prestamos', $data);
         $this->load->view('inc/footer');
     }
+    public function devolver_multiple() {
+        $this->_verificar_rol(['administrador', 'encargado']);
+        
+        $idUsuario = $this->input->get('idUsuario');
+        $data['prestamos'] = $this->Prestamo_model->obtener_prestamos_activos_usuario($idUsuario);
+        
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('prestamos/devolucion_multiple', $data);
+        $this->load->view('inc/footer');
+    }
+    public function procesar_devolucion_multiple() {
+        $this->_verificar_rol(['administrador', 'encargado']);
+
+        $prestamos = $this->input->post('prestamos');
+        $estados = $this->input->post('estado_devolucion');
+        $observaciones = $this->input->post('observaciones');
+
+        if (empty($prestamos)) {
+            $this->session->set_flashdata('error', 'Debe seleccionar al menos un préstamo para devolver');
+            redirect('prestamos/devolver_multiple');
+            return;
+        }
+
+        $devoluciones = [];
+        foreach ($prestamos as $idPrestamo) {
+            if (!isset($estados[$idPrestamo]) || empty($estados[$idPrestamo])) {
+                $this->session->set_flashdata('error', 'Debe especificar el estado de devolución para todas las publicaciones');
+                redirect('prestamos/devolver_multiple');
+                return;
+            }
+
+            $devoluciones[$idPrestamo] = [
+                'estado' => $estados[$idPrestamo],
+                'observaciones' => $observaciones[$idPrestamo] ?? ''
+            ];
+        }
+
+        $resultado = $this->Prestamo_model->finalizar_prestamo_multiple(
+            $devoluciones,
+            $this->session->userdata('idUsuario')
+        );
+
+        if ($resultado['success']) {
+            // Generar comprobantes de devolución
+            $comprobantes = [];
+            foreach ($prestamos as $idPrestamo) {
+                $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
+                if ($pdf_content) {
+                    $comprobantes[] = $pdf_content;
+                }
+                // Enviar correo con comprobante
+                $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
+            }
+
+            $this->session->set_flashdata('mensaje', 'Devoluciones procesadas correctamente');
+            
+            // Si hay comprobantes, redirigir con parámetros para descargarlos
+            if (!empty($comprobantes)) {
+                $ids = implode(',', array_keys($devoluciones));
+                redirect('prestamos/descargar_comprobantes/' . $ids);
+            } else {
+                redirect('prestamos/activos');
+            }
+        } else {
+            $this->session->set_flashdata('error', $resultado['message']);
+            redirect('prestamos/devolver_multiple');
+        }
+    }
+
+    public function descargar_comprobantes($ids) {
+        $this->_verificar_rol(['administrador', 'encargado']);
+        
+        // Crear PDF consolidado con todos los comprobantes
+        $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('Hemeroteca UMSS');
+        $pdf->SetTitle('Comprobantes de Devolución');
+        
+        // Configuración básica del PDF
+        $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, 'Hemeroteca UMSS', 'Comprobantes de Devolución');
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+        
+        $idPrestamos = explode(',', $ids);
+        foreach ($idPrestamos as $idPrestamo) {
+            $pdf->AddPage();
+            
+            $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
+            if ($datos_prestamo) {
+                // Agregar contenido al PDF
+                $html = $this->load->view('prestamos/plantilla_comprobante', $datos_prestamo, true);
+                $pdf->writeHTML($html, true, false, true, false, '');
+            }
+        }
+        
+        // Generar y descargar el PDF
+        $pdf->Output('comprobantes_devolucion.pdf', 'D');
+    }
+
+    private function generar_ficha_devolucion2($idPrestamo) {
+        $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
+        
+        if (!$datos_prestamo) {
+            return false;
+        }
+        
+        // Configurar PDF
+        $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('Hemeroteca UMSS');
+        $pdf->SetTitle('Ficha de Devolución');
+        
+        $pdf->AddPage();
+        
+        // Generar contenido HTML
+        $html = $this->load->view('prestamos/plantilla_comprobante', $datos_prestamo, true);
+        $pdf->writeHTML($html, true, false, true, false, '');
+        
+        return $pdf->Output('', 'S');
+    }
+
+    public function ver_prestamos_usuario($idUsuario) {
+        $this->_verificar_rol(['administrador', 'encargado']);
+        
+        $data['prestamos_activos'] = $this->Prestamo_model->obtener_prestamos_activos_usuario($idUsuario);
+        $data['usuario'] = $this->Usuario_model->obtener_usuario($idUsuario);
+        
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('prestamos/lista_usuario', $data);
+        $this->load->view('inc/footer');
+    }
+    public function generar_formulario_prestamo($idSolicitud) {
+        $this->_verificar_rol(['administrador', 'encargado']);
+        
+        $solicitud = $this->Solicitud_model->obtener_solicitud_completa($idSolicitud);
+        if (!$solicitud) {
+            show_error('Solicitud no encontrada');
+        }
+
+        // Crear nueva instancia de PDF
+        $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // Configurar información del documento
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('Hemeroteca UMSS');
+        $pdf->SetTitle('Formulario de Préstamo EN SALA');
+
+        // Establecer información del encabezado
+        $pdf->SetHeaderData(
+            PDF_HEADER_LOGO, 
+            PDF_HEADER_LOGO_WIDTH, 
+            'BIBLIOTECA CENTRAL - UMSS', 
+            'FORMULARIO DE PRÉSTAMO EN SALA'
+        );
+
+        // Establecer fuentes del encabezado y pie de página
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', 12));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // Establecer márgenes
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP + 10, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // Establece el salto de página automático
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // Establecer la escala de imagen
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // Agregar una página
+        $pdf->AddPage();
+
+        // Contenido del formulario
+        $html = $this->load->view('prestamos/plantillas/formulario_prestamo_multiple', [
+            'solicitud' => $solicitud,
+            'fecha_actual' => date('d/m/Y'),
+            'hora_actual' => date('H:i')
+        ], true);
+
+        // Escribir el HTML en el PDF
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        // Generar el PDF
+        $pdf->Output('formulario_prestamo_' . $idSolicitud . '.pdf', 'I');
+    }
+
+    public function generar_formulario_devolucion_multiple($prestamoIds) {
+        $this->_verificar_rol(['administrador', 'encargado']);
+        
+        $prestamos = $this->Prestamo_model->obtener_prestamos_por_ids(explode(',', $prestamoIds));
+        if (empty($prestamos)) {
+            show_error('Préstamos no encontrados');
+        }
+
+        $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('Hemeroteca UMSS');
+        $pdf->SetTitle('Formulario de Devolución');
+        
+        $pdf->SetHeaderData(
+            PDF_HEADER_LOGO, 
+            PDF_HEADER_LOGO_WIDTH, 
+            'BIBLIOTECA CENTRAL - UMSS', 
+            'FORMULARIO DE DEVOLUCIÓN'
+        );
+        
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', 12));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+        
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP + 10, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+        
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+        
+        $pdf->AddPage();
+        
+        $html = $this->load->view('prestamos/plantillas/formulario_devolucion_multiple', [
+            'prestamos' => $prestamos,
+            'fecha_actual' => date('d/m/Y'),
+            'hora_actual' => date('H:i')
+        ], true);
+        
+        $pdf->writeHTML($html, true, false, true, false, '');
+        
+        $pdf->Output('formulario_devolucion_multiple.pdf', 'I');
+    }
+
 }

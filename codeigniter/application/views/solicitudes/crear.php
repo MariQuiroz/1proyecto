@@ -1,58 +1,60 @@
-<!-- Vista: application/views/solicitudes/crear.php -->
 <div class="content-page">
     <div class="content">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-12">
-                    <div class="page-title-box">
-                        <h4 class="page-title">Crear Solicitud de Préstamo</h4>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="header-title">Detalles de la Publicación</h4>
-                            <?php if(isset($publicacion)): ?>
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <?php if (!empty($publicacion->portada)): ?>
-                                            <img src="<?php echo base_url('uploads/portadas/' . $publicacion->portada); ?>" alt="Portada" class="img-fluid">
-                                        <?php else: ?>
-                                            <div class="text-center p-3 bg-light">
-                                                <span class="text-muted">Sin portada</span>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="form-group">
-                                            <label>Título:</label>
-                                            <p class="form-control-static"><?php echo $publicacion->titulo; ?></p>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Editorial:</label>
-                                            <p class="form-control-static"><?php echo isset($publicacion->nombreEditorial) ? $publicacion->nombreEditorial : 'No especificada'; ?></p>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Tipo:</label>
-                                            <p class="form-control-static"><?php echo isset($publicacion->nombreTipo) ? $publicacion->nombreTipo : 'No especificado'; ?></p>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Fecha de Publicación:</label>
-                                            <p class="form-control-static"><?php echo date('d/m/Y', strtotime($publicacion->fechaPublicacion)); ?></p>
-                                        </div>
-                                                                                <?php echo form_open('solicitudes/confirmar/' . $publicacion->idPublicacion); ?>
-                                            <button type="submit" class="btn btn-primary">Confirmar Solicitud</button>
-                                            <a href="<?php echo site_url('publicaciones/index'); ?>" class="btn btn-secondary">Cancelar</a>
-                                        <?php echo form_close(); ?>
-                                    </div>
-                                </div>
-                            <?php else: ?>
-                                <p>No se ha seleccionado ninguna publicación. Por favor, seleccione una publicación de la lista.</p>
-                                <a href="<?php echo site_url('publicaciones/index'); ?>" class="btn btn-secondary">Volver a la lista de publicaciones</a>
-                            <?php endif; ?>
+                            <h4 class="header-title">Confirmar Solicitud de Préstamo</h4>
+                            
+                            <div class="alert alert-info">
+                                <i class="mdi mdi-information-outline mr-2"></i>
+                                Verifique los detalles de la publicación antes de confirmar la solicitud.
+                            </div>
+                            
+                            <!-- Detalles de la publicación -->
+                            <div class="table-responsive mb-3">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Portada</th>
+                                            <th>Título</th>
+                                            <th>Editorial</th>
+                                            <th>Tipo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <?php if (!empty($publicacion->portada)): ?>
+                                                    <img src="<?php echo base_url('uploads/portadas/' . $publicacion->portada); ?>" 
+                                                         alt="Portada" class="img-thumbnail" style="max-width: 50px;">
+                                                <?php else: ?>
+                                                    <span class="text-muted">Sin portada</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?php echo $publicacion->titulo; ?></td>
+                                            <td><?php echo $publicacion->nombreEditorial; ?></td>
+                                            <td><?php echo $publicacion->nombreTipo; ?></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Botones de acción -->
+                            <div class="mt-3">
+                                <a href="<?php echo site_url('solicitudes/confirmar/' . $publicacion->idPublicacion); ?>" class="btn btn-primary">
+                                    <i class="mdi mdi-check-circle mr-1"></i>Confirmar Solicitud
+                                </a>
+                                
+                                <a href="<?php echo site_url('publicaciones'); ?>" class="btn btn-info">
+                                    <i class="mdi mdi-plus mr-1"></i>Añadir Más Publicaciones
+                                </a>
+
+                                <a href="<?php echo site_url('publicaciones'); ?>" class="btn btn-secondary">
+                                    <i class="mdi mdi-close-circle mr-1"></i>Cancelar
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

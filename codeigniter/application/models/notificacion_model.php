@@ -26,15 +26,13 @@ class Notificacion_model extends CI_Model {
 
 
     public function obtener_notificaciones($idUsuario, $rol) {
-        log_message('debug', "\n==== INICIO obtener_notificaciones() ====");
-        
         $this->db->select('
             idNotificacion,
             idUsuario,
-            mensaje,
             tipo,
-            fechaEnvio,
-            leida
+            mensaje,
+            leida,
+            fechaEnvio
         ');
         $this->db->from('NOTIFICACION');
         
@@ -48,11 +46,9 @@ class Notificacion_model extends CI_Model {
         }
         
         $this->db->order_by('fechaEnvio', 'DESC');
-        $notificaciones = $this->db->get()->result();
-        
-        log_message('debug', 'Notificaciones encontradas: ' . count($notificaciones));
-        return $notificaciones;
+        return $this->db->get()->result();
     }
+    
 
     public function crear_notificacion($idUsuario, $idPublicacion, $tipo, $mensaje) {
         $this->db->trans_start();
@@ -100,14 +96,14 @@ class Notificacion_model extends CI_Model {
     }
 
 
-     public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
+    public function obtener_ultimas_notificaciones($idUsuario, $rol, $limite = 5) {
         $this->db->select('
             idNotificacion,
             idUsuario,
-            mensaje,
             tipo,
-            fechaEnvio,
-            leida
+            mensaje,
+            leida,
+            fechaEnvio
         ');
         $this->db->from('NOTIFICACION');
         $this->db->where('idUsuario', $idUsuario);
@@ -121,10 +117,19 @@ class Notificacion_model extends CI_Model {
         return $this->db->get()->result();
     }
 
-
-public function obtener_notificacion($idNotificacion) {
-    return $this->db->get_where('NOTIFICACION', ['idNotificacion' => $idNotificacion])->row();
-}
+    public function obtener_notificacion($idNotificacion) {
+        $this->db->select('
+            idNotificacion,
+            idUsuario,
+            tipo,
+            mensaje,
+            leida,
+            fechaEnvio
+        ');
+        $this->db->from('NOTIFICACION');
+        $this->db->where('idNotificacion', $idNotificacion);
+        return $this->db->get()->row();
+    }
 
 public function marcar_como_leida($idNotificacion) {
     $this->db->trans_start();

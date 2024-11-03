@@ -25,7 +25,7 @@
                                 <thead>
                                     <tr>
                                         <th>Portada</th>
-                                        <th>Titular</th>
+                                        <th>Título</th>
                                         <th>Editorial</th>
                                         <th>Tipo</th>
                                         <th>Fecha de Publicación</th>

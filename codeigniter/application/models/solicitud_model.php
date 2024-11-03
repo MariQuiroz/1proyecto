@@ -79,17 +79,20 @@ class Solicitud_model extends CI_Model {
             sp.idSolicitud,
             sp.fechaSolicitud,
             sp.estadoSolicitud,
-            sp.estado,
+            sp.idUsuario,
             u.nombres,
             u.apellidoPaterno,
+            ds.idPublicacion,
             p.titulo,
             p.ubicacionFisica,
-            ds.observaciones
+            ds.observaciones,
+            e.nombreEditorial
         ');
         $this->db->from('SOLICITUD_PRESTAMO sp');
         $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
         $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
         $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
         $this->db->where([
             'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
             'sp.estado' => 1
@@ -144,14 +147,28 @@ class Solicitud_model extends CI_Model {
         return $query->result();
     }
     public function contar_solicitudes_pendientes() {
-        $this->db->where('estado', 'pendiente');
-        return $this->db->count_all_results('SOLICITUD_PRESTAMO');
+        if (!$this->_verificar_rol(['administrador', 'encargado'])) {
+            return 0;
+        }
+
+        $this->db->select('COUNT(sp.idSolicitud) as total');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->where([
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1
+        ]);
+        return $this->db->get()->row()->total;
     }
 
     public function contar_solicitudes_pendientes_usuario($idUsuario) {
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where('estado', 'pendiente');
-        return $this->db->count_all_results('SOLICITUD_PRESTAMO');
+        $this->db->select('COUNT(sp.idSolicitud) as total');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->where([
+            'sp.idUsuario' => $idUsuario,
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1
+        ]);
+        return $this->db->get()->row()->total;
     }
    /* public function actualizar_estado_solicitud($idSolicitud, $nuevoEstado) {
         $this->db->where('idSolicitud', $idSolicitud);
@@ -171,10 +188,16 @@ class Solicitud_model extends CI_Model {
         return $query->result();
     }
     public function obtener_solicitudes_usuario($idUsuario) {
+        if (!$this->_verificar_rol(['lector'])) {
+            return [];
+        }
+
         $this->db->select('
             sp.idSolicitud,
             sp.fechaSolicitud,
             sp.estadoSolicitud,
+            sp.idUsuario,
+            ds.idPublicacion,
             p.titulo,
             p.ubicacionFisica,
             ds.observaciones,
@@ -191,13 +214,57 @@ class Solicitud_model extends CI_Model {
         return $this->db->get()->result();
     }
     public function obtener_detalle_solicitud($idSolicitud) {
-        $this->db->select('s.*, p.titulo as titulo_publicacion, u.nombres, u.apellidoPaterno');
-        $this->db->from('SOLICITUD_PRESTAMO s');
-        $this->db->join('PUBLICACION p', 'p.idPublicacion = s.idPublicacion');
-        $this->db->join('USUARIO u', 'u.idUsuario = s.idUsuario');
-        $this->db->where('s.idSolicitud', $idSolicitud);
+        $this->db->select('
+            sp.idSolicitud,
+            sp.fechaSolicitud,
+            sp.estadoSolicitud,
+            sp.idUsuario,
+            sp.fechaAprobacionRechazo,
+            u.nombres,
+            u.apellidoPaterno,
+            u.carnet,
+            p.titulo,
+            p.fechaPublicacion,
+            p.ubicacionFisica,
+            e.nombreEditorial,
+            ds.observaciones,
+            t.nombreTipo
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
+        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
+        $this->db->where([
+            'sp.idSolicitud' => $idSolicitud,
+            'sp.estado' => 1
+        ]);
+        
         return $this->db->get()->row();
     }
+
+    public function obtener_solicitud($idSolicitud) {
+        $this->db->select('
+            sp.idSolicitud,
+            sp.fechaSolicitud,
+            sp.estadoSolicitud,
+            sp.idUsuario,
+            p.idPublicacion,
+            p.titulo,
+            ds.observaciones
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->where([
+            'sp.idSolicitud' => $idSolicitud,
+            'sp.estado' => 1
+        ]);
+        
+        return $this->db->get()->row();
+    }
+
     public function obtener_solicitudes_por_estado($estado) {
         $this->db->select('SP.*, U.nombres, U.apellidoPaterno, P.titulo');
         $this->db->from('SOLICITUD_PRESTAMO SP');
@@ -314,21 +381,100 @@ class Solicitud_model extends CI_Model {
         }
     }
 
-    public function obtener_solicitud($idSolicitud) {
+    public function crear_solicitud_multiple($idUsuario, $publicaciones) {
+        $this->db->trans_start();
+        
+        try {
+            // Crear la solicitud principal
+            $data_solicitud = array(
+                'idUsuario' => $idUsuario,
+                'fechaSolicitud' => date('Y-m-d H:i:s'),
+                'estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+                'estado' => 1,
+                'fechaCreacion' => date('Y-m-d H:i:s'),
+                'idUsuarioCreador' => $idUsuario
+            );
+            
+            $this->db->insert('SOLICITUD_PRESTAMO', $data_solicitud);
+            $idSolicitud = $this->db->insert_id();
+            
+            // Insertar cada publicación en el detalle
+            foreach ($publicaciones as $idPublicacion) {
+                // Verificar que la publicación esté disponible
+                $publicacion = $this->db->get_where('PUBLICACION', [
+                    'idPublicacion' => $idPublicacion,
+                    'estado' => ESTADO_PUBLICACION_DISPONIBLE
+                ])->row();
+                
+                if (!$publicacion) {
+                    $this->db->trans_rollback();
+                    return ['success' => false, 'message' => 'Una o más publicaciones no están disponibles'];
+                }
+                
+                $data_detalle = array(
+                    'idSolicitud' => $idSolicitud,
+                    'idPublicacion' => $idPublicacion,
+                    'observaciones' => '' // Opcional, puede ser NULL
+                );
+                
+                $this->db->insert('DETALLE_SOLICITUD', $data_detalle);
+            }
+            
+            $this->db->trans_complete();
+            
+            if ($this->db->trans_status() === FALSE) {
+                return ['success' => false, 'message' => 'Error al procesar la solicitud'];
+            }
+            
+            return ['success' => true, 'idSolicitud' => $idSolicitud];
+            
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Error al crear solicitud múltiple: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Error interno del servidor'];
+        }
+    }
+    public function obtener_detalle_solicitud_multiple($idSolicitud) {
         $this->db->select('
-            sp.*,
-            p.titulo,
+            sp.idSolicitud,
+            sp.fechaSolicitud,
+            sp.estadoSolicitud,
             u.nombres,
             u.apellidoPaterno,
-            ds.idPublicacion,
+            u.carnet,
+            p.titulo,
+            p.ubicacionFisica,
+            e.nombreEditorial,
+            t.nombreTipo,
             ds.observaciones
         ');
         $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
         $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
-        $this->db->join('PUBLICACION p', 'p.idPublicacion = ds.idPublicacion');
-        $this->db->join('USUARIO u', 'u.idUsuario = sp.idUsuario');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
+        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
         $this->db->where('sp.idSolicitud', $idSolicitud);
-        return $this->db->get()->row();
+        
+        return $this->db->get()->result();
     }
     
+    public function verificar_disponibilidad_multiple($publicaciones) {
+        $this->db->select('idPublicacion, estado');
+        $this->db->from('PUBLICACION');
+        $this->db->where_in('idPublicacion', $publicaciones);
+        $result = $this->db->get()->result();
+        
+        $no_disponibles = [];
+        foreach ($result as $publicacion) {
+            if ($publicacion->estado !== ESTADO_PUBLICACION_DISPONIBLE) {
+                $no_disponibles[] = $publicacion->idPublicacion;
+            }
+        }
+        
+        return $no_disponibles;
+    }
+    
+    
+
 }
