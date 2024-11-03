@@ -285,7 +285,7 @@ private function _enviar_email_bienvenida($email, $username, $contrasena_tempora
 
     $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca "José Antonio Arze"');
     $this->email->to($email);
-    $this->email->subject('Bienvenido a la Hemeroteca "José Antonio Arze"- Información de tu cuenta');
+    $this->email->subject('Información de tu cuenta');
 
     $mensaje = "
     <html>
@@ -293,7 +293,7 @@ private function _enviar_email_bienvenida($email, $username, $contrasena_tempora
         <title>Bienvenido a la Hemeroteca José Antonio Arze</title>
     </head>
     <body>
-        <h2>Bienvenido a la Hemeroteca José Antonio Arze</h2>
+        <h2>Bienvenido!!</h2>
         <p>Tu cuenta ha sido creada exitosamente. Aquí están tus credenciales de acceso:</p>
         <p><strong>Usuario:</strong> $username</p>
         <p><strong>Contraseña temporal:</strong> $contrasena_temporal</p>
@@ -397,7 +397,7 @@ private function _enviar_email_bienvenida($email, $username, $contrasena_tempora
                 <title>Verificación de cuenta</title>
             </head>
             <body>
-                <h2>Bienvenido a la Hemeroteca</h2>
+                <h2>Bienvenido!!</h2>
                 <p>Gracias por registrarte. Para completar tu registro y activar tu cuenta, por favor haz clic en el siguiente botón:</p>
                 <p style="text-align: center;">
                     <a href="' . site_url('usuarios/verificar/' . $token) . '" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer;">Verificar mi cuenta</a>
@@ -801,7 +801,7 @@ public function reenviar_verificacion()
                 } else {
                     $this->session->set_flashdata('error', 'Ocurrió un error al procesar tu solicitud. Por favor, intenta de nuevo.');
                 }
-                redirect('usuarios/login');
+                redirect('usuarios/index');
             } else {
                 $this->session->set_flashdata('error', 'No se encontró ninguna cuenta con ese correo electrónico.');
                 redirect('usuarios/recuperar_contrasena');
@@ -854,7 +854,7 @@ public function reenviar_verificacion()
 
         $this->email->initialize($config);
 
-        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca');
+        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca "José Antonio Arze"');
         $this->email->to($email);
         $this->email->subject('Recuperación de contraseña');
 
