@@ -63,6 +63,8 @@ class Publicacion_model extends CI_Model {
     public function obtener_publicacion($idPublicacion) {
         $this->db->select('
             p.idPublicacion,
+            p.idEditorial,
+            p.idTipo,
             p.titulo,
             p.fechaPublicacion,
             p.numeroPaginas,

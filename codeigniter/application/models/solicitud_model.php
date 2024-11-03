@@ -315,11 +315,19 @@ class Solicitud_model extends CI_Model {
     }
 
     public function obtener_solicitud($idSolicitud) {
-        $this->db->select('s.*, p.titulo, u.nombres, u.apellidoPaterno');
-        $this->db->from('SOLICITUD_PRESTAMO s');
-        $this->db->join('PUBLICACION p', 'p.idPublicacion = s.idPublicacion');
-        $this->db->join('USUARIO u', 'u.idUsuario = s.idUsuario');
-        $this->db->where('s.idSolicitud', $idSolicitud);
+        $this->db->select('
+            sp.*,
+            p.titulo,
+            u.nombres,
+            u.apellidoPaterno,
+            ds.idPublicacion,
+            ds.observaciones
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION p', 'p.idPublicacion = ds.idPublicacion');
+        $this->db->join('USUARIO u', 'u.idUsuario = sp.idUsuario');
+        $this->db->where('sp.idSolicitud', $idSolicitud);
         return $this->db->get()->row();
     }
     
