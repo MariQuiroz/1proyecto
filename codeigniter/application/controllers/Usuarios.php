@@ -283,17 +283,17 @@ private function _enviar_email_bienvenida($email, $username, $contrasena_tempora
 
     $this->email->initialize($config);
 
-    $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca');
+    $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca "José Antonio Arze"');
     $this->email->to($email);
     $this->email->subject('Bienvenido a la Hemeroteca "José Antonio Arze"- Información de tu cuenta');
 
     $mensaje = "
     <html>
     <head>
-        <title>Bienvenido a la Hemeroteca</title>
+        <title>Bienvenido a la Hemeroteca José Antonio Arze</title>
     </head>
     <body>
-        <h2>Bienvenido a la Hemeroteca</h2>
+        <h2>Bienvenido a la Hemeroteca José Antonio Arze</h2>
         <p>Tu cuenta ha sido creada exitosamente. Aquí están tus credenciales de acceso:</p>
         <p><strong>Usuario:</strong> $username</p>
         <p><strong>Contraseña temporal:</strong> $contrasena_temporal</p>

@@ -3,10 +3,27 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Usuario_model extends CI_Model {
 
-    public function obtener_por_username($username)
-    {
+   
+    /**
+     * Obtiene un usuario por su nombre de usuario
+     * @param string $username
+     * @return object|null
+     */
+    public function obtener_por_username($username) {
+        $this->db->select('
+            idUsuario, 
+            username, 
+            password, 
+            nombres, 
+            apellidoPaterno, 
+            rol, 
+            estado, 
+            verificado, 
+            cambioPasswordRequerido
+        ');
         return $this->db->get_where('USUARIO', ['username' => $username])->row();
     }
+
 
     public function registrarUsuario($data)
     {
@@ -26,12 +43,26 @@ class Usuario_model extends CI_Model {
     }
     
 
-    public function listaUsuarios()
-{
-    $this->db->select('idUsuario, nombres, apellidoPaterno, email, rol, profesion, estado');
-    $this->db->where('estado', 1);
-    return $this->db->get('USUARIO')->result();
-}
+    public function listaUsuarios() {
+        $this->db->select('
+            u.idUsuario,
+            u.nombres,
+            u.apellidoPaterno,
+            u.email,
+            u.rol,
+            u.profesion,
+            u.estado,
+            COUNT(DISTINCT sp.idSolicitud) as solicitudes_activas
+        ');
+        $this->db->from('USUARIO u');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 
+            'u.idUsuario = sp.idUsuario AND sp.estado = 1', 
+            'left');
+        $this->db->where('u.estado', 1);
+        $this->db->group_by('u.idUsuario');
+        $this->db->order_by('u.nombres');
+        return $this->db->get()->result();
+    }
 
 
     public function obtener_usuario($idUsuario)
@@ -167,39 +198,67 @@ class Usuario_model extends CI_Model {
         return $this->db->get_where('USUARIO', ['idUsuario' => $id_cambio_password])->row();
     }
 
-    public function obtener_prestamos_activos_usuario($idUsuario)
-    {
-        $this->db->select('PRESTAMO.*');
-        $this->db->from('PRESTAMO');
-        $this->db->join('SOLICITUD_PRESTAMO', 'PRESTAMO.idSolicitud = SOLICITUD_PRESTAMO.idSolicitud');
-        $this->db->where('SOLICITUD_PRESTAMO.idUsuario', $idUsuario);
-        $this->db->where('PRESTAMO.estadoPrestamo', 'activo');
-        return $this->db->count_all_results();
+    public function obtener_prestamos_activos_usuario($idUsuario) {
+        $this->db->select('COUNT(DISTINCT p.idPrestamo) as total');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PRESTAMO p', 'p.idSolicitud = sp.idSolicitud');
+        $this->db->where([
+            'sp.idUsuario' => $idUsuario,
+            'p.estadoPrestamo' => 1,
+            'sp.estado' => 1
+        ]);
+        return $this->db->get()->row()->total;
     }
 
 
-    public function obtener_proximas_devoluciones_usuario($idUsuario)
-    {
-        // Asumiendo que tienes una tabla PRESTAMO
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where('estadoPrestamo', 'activo');
-        $this->db->where('fechaDevolucion <=', date('Y-m-d', strtotime('+7 days')));
-        $this->db->order_by('fechaDevolucion', 'ASC');
-        return $this->db->get('PRESTAMO')->result();
-    }
-
-
-    public function obtener_historial_prestamos($idUsuario)
-    {
-        $this->db->select('PRESTAMO.*, PUBLICACION.titulo');
-        $this->db->from('PRESTAMO');
-        $this->db->join('SOLICITUD_PRESTAMO', 'PRESTAMO.idSolicitud = SOLICITUD_PRESTAMO.idSolicitud');
-        $this->db->join('DETALLE_PRESTAMO', 'SOLICITUD_PRESTAMO.idSolicitud = DETALLE_PRESTAMO.idSolicitud');
-        $this->db->join('PUBLICACION', 'DETALLE_PRESTAMO.idPublicacion = PUBLICACION.idPublicacion');
-        $this->db->where('SOLICITUD_PRESTAMO.idUsuario', $idUsuario);
-        $this->db->order_by('PRESTAMO.fechaCreacion', 'DESC');
+    public function obtener_proximas_devoluciones_usuario($idUsuario) {
+        $this->db->select('
+            p.idPrestamo,
+            p.fechaPrestamo,
+            p.horaInicio,
+            pub.titulo,
+            pub.idPublicacion,
+            ds.observaciones
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PRESTAMO p', 'p.idSolicitud = sp.idSolicitud');
+        $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+        $this->db->where([
+            'sp.idUsuario' => $idUsuario,
+            'p.estadoPrestamo' => 1,
+            'p.horaDevolucion IS NULL'
+        ]);
+        $this->db->order_by('p.fechaPrestamo', 'ASC');
         return $this->db->get()->result();
     }
+
+
+    public function obtener_historial_prestamos($idUsuario) {
+        $this->db->select('
+            p.idPrestamo,
+            p.fechaPrestamo,
+            p.horaInicio,
+            p.horaDevolucion,
+            p.estadoPrestamo,
+            p.estadoDevolucion,
+            pub.titulo,
+            pub.idPublicacion,
+            e.nombreEditorial,
+            t.nombreTipo
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PRESTAMO p', 'p.idSolicitud = sp.idSolicitud');
+        $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+        $this->db->join('EDITORIAL e', 'pub.idEditorial = e.idEditorial');
+        $this->db->join('TIPO t', 'pub.idTipo = t.idTipo');
+        $this->db->where('sp.idUsuario', $idUsuario);
+        $this->db->order_by('p.fechaPrestamo', 'DESC');
+        return $this->db->get()->result();
+    }
+
     public function actualizar_usuario($idUsuario, $datos)
     {
         $this->db->where('idUsuario', $idUsuario);
