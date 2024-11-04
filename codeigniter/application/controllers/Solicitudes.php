@@ -472,48 +472,77 @@ private function _notificar_disponibilidad($idPublicacion) {
     }
 }
 private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
-    // Cargar el modelo de solicitudes si no está cargado
+    // Validación de datos y carga de modelos necesarios
     if (!isset($this->solicitud_model)) {
         $this->load->model('Solicitud_model');
     }
     
-    // Obtener detalles completos de la solicitud y sus publicaciones
     $detalles_solicitud = $this->solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
     if (empty($detalles_solicitud)) {
         log_message('error', 'No se encontraron detalles para la solicitud ID: ' . $idSolicitud);
         return false;
     }
 
-    // Obtener datos del encargado (usuario actual)
     $idEncargado = $this->session->userdata('idUsuario');
     $this->load->model('Usuario_model');
     $encargado = $this->Usuario_model->obtener_usuario($idEncargado);
 
+    // Configuración del PDF
     $this->load->library('pdf');
     $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-
-    // Configuración del documento
     $pdf->SetCreator(PDF_CREATOR);
     $pdf->SetAuthor('Hemeroteca UMSS');
     $pdf->SetTitle('Ficha de Préstamo');
     $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, 'Hemeroteca UMSS', 'Ficha de Préstamo');
     $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
     $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-
-    // Configuración de márgenes
     $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
     $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
     $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
     $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-
     $pdf->AddPage();
 
-    // Datos del usuario y encabezado
+    // Construcción del HTML con estilos mejorados
     $html = '
-    <h1 style="text-align: center;">U.M.S.S. BIBLIOTECAS - EN SALA</h1>
-    <h4 style="text-align: center;">FICHA DE PRÉSTAMO</h4>
-    <br>
-    <table cellpadding="5" style="width: 100%;">
+    <style>
+        table.main-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        table.main-table td, table.main-table th {
+            border: 1px solid #000;
+            padding: 8px;
+        }
+        table.main-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: center;
+        }
+        .header {
+            text-align: center;
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .subheader {
+            text-align: center;
+            font-size: 12pt;
+            margin-bottom: 15px;
+        }
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 200px;
+            text-align: center;
+            margin: 0 auto;
+            padding-top: 5px;
+        }
+    </style>
+    
+    <div class="header">U.M.S.S. BIBLIOTECAS - EN SALA</div>
+    <div class="subheader">FICHA DE PRÉSTAMO</div>
+
+    <table class="main-table">
         <tr>
             <td width="30%"><strong>Nombre del Lector:</strong></td>
             <td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td>
@@ -535,16 +564,16 @@ private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
             <td>' . $this->sanitize_for_pdf($encargado->nombres . ' ' . $encargado->apellidoPaterno) . '</td>
         </tr>
     </table>
-    <br>
+
     <h4>Publicaciones Prestadas:</h4>
-    <table cellpadding="5" style="width: 100%; border: 1px solid #000;">
+    <table class="main-table">
         <thead>
-            <tr style="background-color: #f2f2f2;">
-                <th style="border: 1px solid #000; text-align: center; width: 8%;">N°</th>
-                <th style="border: 1px solid #000; text-align: center; width: 40%;">Título</th>
-                <th style="border: 1px solid #000; text-align: center; width: 22%;">Editorial</th>
-                <th style="border: 1px solid #000; text-align: center; width: 15%;">Fecha Public.</th>
-                <th style="border: 1px solid #000; text-align: center; width: 15%;">Ubicación</th>
+            <tr>
+                <th width="8%">N°</th>
+                <th width="40%">Título</th>
+                <th width="22%">Editorial</th>
+                <th width="15%">Fecha Public.</th>
+                <th width="15%">Ubicación</th>
             </tr>
         </thead>
         <tbody>';
@@ -552,45 +581,43 @@ private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
     foreach ($detalles_solicitud as $index => $pub) {
         $html .= '
             <tr>
-                <td style="border: 1px solid #000; text-align: center;">' . ($index + 1) . '</td>
-                <td style="border: 1px solid #000; padding: 5px;">' . $this->sanitize_for_pdf($pub->titulo) . '</td>
-                <td style="border: 1px solid #000; text-align: center;">' . $this->sanitize_for_pdf($pub->nombreEditorial) . '</td>
-                <td style="border: 1px solid #000; text-align: center;">' . date('d/m/Y', strtotime($pub->fechaPublicacion)) . '</td>
-                <td style="border: 1px solid #000; text-align: center;">' . $this->sanitize_for_pdf($pub->ubicacionFisica) . '</td>
+                <td style="text-align: center;">' . ($index + 1) . '</td>
+                <td>' . $this->sanitize_for_pdf($pub->titulo) . '</td>
+                <td style="text-align: center;">' . $this->sanitize_for_pdf($pub->nombreEditorial) . '</td>
+                <td style="text-align: center;">' . date('d/m/Y', strtotime($pub->fechaPublicacion)) . '</td>
+                <td style="text-align: center;">' . $this->sanitize_for_pdf($pub->ubicacionFisica) . '</td>
             </tr>';
     }
 
     $html .= '</tbody></table>
-    <br><br>
-    <table style="width: 100%;">
+    
+    <table style="width: 100%; margin-top: 50px;">
         <tr>
-            <td style="width: 50%; text-align: center;">
-                <p style="border-top: 1px solid #000; width: 200px; display: inline-block; padding-top: 5px;">Firma del Lector</p>
+            <td width="50%" style="text-align: center;">
+                <div class="signature-line">Firma del Lector</div>
             </td>
-            <td style="width: 50%; text-align: center;">
-                <p style="border-top: 1px solid #000; width: 200px; display: inline-block; padding-top: 5px;">Firma del Encargado</p>
+            <td width="50%" style="text-align: center;">
+                <div class="signature-line">Firma del Encargado</div>
             </td>
         </tr>
     </table>
-    <br>
-    <div style="text-align: right; font-size: 8pt;">
+    
+    <div style="text-align: right; font-size: 8pt; margin-top: 30px;">
         <p>Fecha y hora de impresión: ' . date('d/m/Y H:i:s') . '</p>
         <p>ID Solicitud: ' . $idSolicitud . '</p>
     </div>';
 
+    // Generar el PDF
     $pdf->writeHTML($html, true, false, true, false, '');
     
-    // Generar nombre único para el archivo
+    // Generar nombre único y guardar el archivo
     $pdfFileName = 'ficha_prestamo_' . $idSolicitud . '_' . time() . '.pdf';
     $pdfPath = FCPATH . 'uploads/' . $pdfFileName;
     
-    // Verificar y crear el directorio si no existe
-    $uploadDir = FCPATH . 'uploads/';
-    if (!file_exists($uploadDir)) {
-        mkdir($uploadDir, 0777, true);
+    if (!file_exists(FCPATH . 'uploads/')) {
+        mkdir(FCPATH . 'uploads/', 0777, true);
     }
 
-    // Guardar el PDF y retornar la URL
     try {
         $pdf->Output($pdfPath, 'F');
         return base_url('uploads/' . $pdfFileName);
