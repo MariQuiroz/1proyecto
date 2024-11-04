@@ -63,55 +63,85 @@ class Prestamos extends CI_Controller {
     
    
 
-public function finalizar($idPrestamo) {
-    $this->_verificar_rol(['administrador', 'encargado']);
-    
-    $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
-    if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
-        $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
-        redirect('prestamos/activos');
-        return;
-    }
-    
-    $this->db->trans_start();
-    
-    $idEncargado = $this->session->userdata('idUsuario');
-    $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado);
-    
-    if ($resultado) {
-        // Generar la ficha de devolución y enviar por correo
-        $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo);
+    public function finalizar($idPrestamo) {
+        $this->_verificar_rol(['administrador', 'encargado']);
         
-        // Crear notificación de devolución
-        $mensaje = "El préstamo de la publicación '{$prestamo->titulo}' ha sido finalizado.";
-        $this->Notificacion_model->crear_notificacion($prestamo->idUsuario, $prestamo->idPublicacion, NOTIFICACION_DEVOLUCION, $mensaje);
-        
-        // Actualizar el estado de la publicación a disponible
-        $this->Publicacion_model->cambiar_estado_publicacion($prestamo->idPublicacion, ESTADO_PUBLICACION_DISPONIBLE);
-        
-        // Notificar a los usuarios interesados
-        $this->_notificar_disponibilidad($prestamo->idPublicacion);
-        
-        $this->db->trans_complete();
-        
-        if ($this->db->trans_status() === FALSE) {
-            $this->session->set_flashdata('error', 'Hubo un error al finalizar el préstamo. Por favor, intente de nuevo.');
-        } else {
-            $mensaje = 'Préstamo finalizado con éxito.';
-            if ($envio_exitoso) {
-                $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico al lector.';
-            } else {
-                $mensaje .= ' Sin embargo, hubo un problema al enviar el correo electrónico.';
-            }
-            $this->session->set_flashdata('mensaje', $mensaje);
+        // Validar estado del préstamo
+        $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
+        if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
+            $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
+            redirect('prestamos/activos');
+            return;
         }
-    } else {
-        $this->db->trans_rollback();
-        $this->session->set_flashdata('error', 'No se pudo finalizar el préstamo. Por favor, intente de nuevo.');
-    }
+        
+        $this->db->trans_start();
+        
+        $idEncargado = $this->session->userdata('idUsuario');
+        $estadoDevolucion = $this->input->post('estadoDevolucion');
     
-    redirect('prestamos/activos');
-}
+        // Validar estado de devolución
+        if (!in_array($estadoDevolucion, [
+            ESTADO_DEVOLUCION_BUENO, 
+            ESTADO_DEVOLUCION_DAÑADO, 
+            ESTADO_DEVOLUCION_PERDIDO
+        ])) {
+            $this->session->set_flashdata('error', 'Estado de devolución no válido');
+            redirect('prestamos/activos');
+            return;
+        }
+        
+        $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion);
+        
+        if ($resultado) {
+            // Generar la ficha de devolución y enviar por correo
+            $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo);
+            
+            // Crear notificación de devolución con el estado
+            $mensaje = "El préstamo de la publicación '{$prestamo->titulo}' ha sido finalizado. Estado de devolución: {$estadoDevolucion}";
+            $this->Notificacion_model->crear_notificacion(
+                $prestamo->idUsuario, 
+                $prestamo->idPublicacion, 
+                NOTIFICACION_DEVOLUCION, 
+                $mensaje
+            );
+            
+            // Determinar el estado final de la publicación según el estado de devolución
+            $estado_publicacion = ESTADO_PUBLICACION_DISPONIBLE;
+            if ($estadoDevolucion == ESTADO_DEVOLUCION_DAÑADO || $estadoDevolucion == ESTADO_DEVOLUCION_PERDIDO) {
+                $estado_publicacion = ESTADO_PUBLICACION_EN_MANTENIMIENTO;
+            }
+            
+            // Actualizar el estado de la publicación
+            $this->Publicacion_model->cambiar_estado_publicacion($prestamo->idPublicacion, $estado_publicacion);
+            
+            // Notificar a usuarios interesados solo si la publicación queda disponible
+            if ($estado_publicacion == ESTADO_PUBLICACION_DISPONIBLE) {
+                $this->_notificar_disponibilidad($prestamo->idPublicacion);
+            }
+            
+            $this->db->trans_complete();
+            
+            if ($this->db->trans_status() === FALSE) {
+                $this->session->set_flashdata('error', 'Hubo un error al finalizar el préstamo. Por favor, intente de nuevo.');
+            } else {
+                $mensaje = 'Préstamo finalizado con éxito.';
+                if ($estado_publicacion == ESTADO_PUBLICACION_EN_MANTENIMIENTO) {
+                    $mensaje .= ' La publicación ha sido enviada a mantenimiento.';
+                }
+                if ($envio_exitoso) {
+                    $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico al lector.';
+                } else {
+                    $mensaje .= ' Sin embargo, hubo un problema al enviar el correo electrónico.';
+                }
+                $this->session->set_flashdata('mensaje', $mensaje);
+            }
+        } else {
+            $this->db->trans_rollback();
+            $this->session->set_flashdata('error', 'No se pudo finalizar el préstamo. Por favor, intente de nuevo.');
+        }
+        
+        redirect('prestamos/activos');
+    }
 
 private function _notificar_disponibilidad($idPublicacion) {
     // Obtener la publicación

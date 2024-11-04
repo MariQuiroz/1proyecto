@@ -54,18 +54,72 @@
                                         <td><?php echo htmlspecialchars($prestamo->titulo); ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
                                         <td>
-                                            <a href="<?php echo site_url('prestamos/finalizar/' . $prestamo->idPrestamo); ?>" class="btn btn-success btn-sm finalizar-prestamo">Finalizar</a>
-                                            <a href="<?php echo site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" class="btn btn-info btn-sm">Detalles</a>
+                                            <button onclick="abrirModalDevolucion(<?php echo $prestamo->idPrestamo; ?>)" 
+                                                    class="btn btn-success btn-sm">
+                                                Finalizar
+                                            </button>
+                                            <a href="<?php echo site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" 
+                                               class="btn btn-info btn-sm">
+                                                Detalles
+                                            </a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
-                        </div> <!-- end card body-->
-                    </div> <!-- end card -->
-                </div><!-- end col-->
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!-- end row-->
         </div>
     </div>
 </div>
+
+<!-- Modal de Devolución -->
+<div class="modal fade" id="modalDevolucion" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Registrar Estado de Devolución</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="<?php echo site_url('prestamos/finalizar/'); ?>" method="POST" id="formDevolucion">
+                <div class="modal-body">
+                    <input type="hidden" name="idPrestamo" id="idPrestamoDevolucion">
+                    <div class="form-group">
+                        <label for="estadoDevolucion">Estado de la Devolución</label>
+                        <select class="form-control" name="estadoDevolucion" required>
+                            <option value="bueno">Bueno</option>
+                            <option value="dañado">Dañado</option>
+                            <option value="perdido">Perdido</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Script para el modal -->
+<script>
+function abrirModalDevolucion(idPrestamo) {
+    document.getElementById('idPrestamoDevolucion').value = idPrestamo;
+    $('#modalDevolucion').modal('show');
+}
+
+// Inicializar DataTable
+$(document).ready(function() {
+    $('#prestamos-activos-table').DataTable({
+        responsive: true,
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
+        }
+    });
+});
+</script>

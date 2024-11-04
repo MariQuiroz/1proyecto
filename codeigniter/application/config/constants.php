@@ -108,7 +108,10 @@ defined('ESTADO_PRESTAMO_ACTIVO') OR define('ESTADO_PRESTAMO_ACTIVO', 1);
 defined('ESTADO_PRESTAMO_FINALIZADO') OR define('ESTADO_PRESTAMO_FINALIZADO', 2);
 
 
-
+// Estados para devolución de préstamos
+defined('ESTADO_DEVOLUCION_BUENO') OR define('ESTADO_DEVOLUCION_BUENO', 'bueno');
+defined('ESTADO_DEVOLUCION_DAÑADO') OR define('ESTADO_DEVOLUCION_DAÑADO', 'dañado');
+defined('ESTADO_DEVOLUCION_PERDIDO') OR define('ESTADO_DEVOLUCION_PERDIDO', 'perdido');
 
 // Estados para la tabla NOTIFICACION
 /// Tipos de notificaciones
