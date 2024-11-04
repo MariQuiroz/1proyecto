@@ -211,6 +211,7 @@ public function confirmar() {
 
     redirect('solicitudes/mis_solicitudes');
 }
+  
 public function aprobar($idSolicitud) {
     $this->_verificar_rol(['administrador', 'encargado']);
     
@@ -218,6 +219,7 @@ public function aprobar($idSolicitud) {
     
     try {
         $idEncargado = $this->session->userdata('idUsuario');
+        $fechaActual = date('Y-m-d H:i:s');
         
         // Verificar si la solicitud ya fue procesada
         $solicitud_actual = $this->Solicitud_model->obtener_solicitud($idSolicitud);
@@ -231,58 +233,120 @@ public function aprobar($idSolicitud) {
             throw new Exception('No se encontraron detalles de la solicitud');
         }
 
-        // Verificar disponibilidad de publicaciones en una sola transacción
+        // Clasificar publicaciones según disponibilidad
+        $publicaciones_disponibles = [];
         $publicaciones_no_disponibles = [];
+        
         foreach ($solicitud as $pub) {
             $publicacion = $this->Publicacion_model->obtener_publicacion($pub->idPublicacion);
-            if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-                $publicaciones_no_disponibles[] = $pub->titulo;
+            if ($publicacion && $publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE) {
+                $publicaciones_disponibles[] = $pub;
+            } else {
+                $publicaciones_no_disponibles[] = $pub;
             }
         }
-        
+
+        if (empty($publicaciones_disponibles)) {
+            throw new Exception('Ninguna publicación está disponible actualmente');
+        }
+
+        // Procesar publicaciones disponibles
+        foreach ($publicaciones_disponibles as $pub) {
+            // Crear registro de préstamo
+            $data_prestamo = [
+                'idSolicitud' => $idSolicitud,
+                'idEncargadoPrestamo' => $idEncargado,
+                'fechaPrestamo' => $fechaActual,
+                'horaInicio' => date('H:i:s'),
+                'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
+                'estado' => 1,
+                'fechaCreacion' => $fechaActual,
+                'idUsuarioCreador' => $idEncargado
+            ];
+            
+            $this->db->insert('PRESTAMO', $data_prestamo);
+
+            // Actualizar estado de la publicación
+            $this->db->where('idPublicacion', $pub->idPublicacion)
+                    ->update('PUBLICACION', [
+                        'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
+                        'fechaActualizacion' => $fechaActual,
+                        'idUsuarioCreador' => $idEncargado
+                    ]);
+
+            // Actualizar detalle de solicitud
+            $this->db->where([
+                'idSolicitud' => $idSolicitud,
+                'idPublicacion' => $pub->idPublicacion
+            ])->update('DETALLE_SOLICITUD', [
+                'observaciones' => 'Préstamo aprobado y procesado'
+            ]);
+        }
+
+        // Determinar estado general de la solicitud
+        $estadoGeneral = empty($publicaciones_no_disponibles) ? 
+                        ESTADO_SOLICITUD_APROBADA : 
+                        ESTADO_SOLICITUD_APROBADA_PARCIAL;
+
+        // Actualizar estado de la solicitud
+        $this->db->where('idSolicitud', $idSolicitud)
+                ->update('SOLICITUD_PRESTAMO', [
+                    'estadoSolicitud' => $estadoGeneral,
+                    'fechaAprobacionRechazo' => $fechaActual,
+                    'fechaActualizacion' => $fechaActual,
+                    'idUsuarioCreador' => $idEncargado
+                ]);
+
+        // Crear notificaciones según disponibilidad
+        if (!empty($publicaciones_disponibles)) {
+            $mensaje_aprobadas = "Se han aprobado las siguientes publicaciones:\n" . 
+                               implode("\n", array_map(function($pub) {
+                                   return $pub->titulo;
+                               }, $publicaciones_disponibles)) . 
+                               "\nPuede pasar a recogerlas a la hemeroteca.";
+
+            $this->Notificacion_model->crear_notificacion(
+                $solicitud[0]->idUsuario,
+                null,
+                NOTIFICACION_APROBACION_PRESTAMO,
+                $mensaje_aprobadas
+            );
+        }
+
         if (!empty($publicaciones_no_disponibles)) {
-            throw new Exception('Las siguientes publicaciones no están disponibles: ' . implode(', ', $publicaciones_no_disponibles));
+            $mensaje_pendientes = "Las siguientes publicaciones están pendientes de disponibilidad:\n" . 
+                                implode("\n", array_map(function($pub) {
+                                    return $pub->titulo;
+                                }, $publicaciones_no_disponibles)) . 
+                                "\nSerá notificado cuando estén disponibles.";
+
+            $this->Notificacion_model->crear_notificacion(
+                $solicitud[0]->idUsuario,
+                null,
+                NOTIFICACION_SOLICITUD_PRESTAMO,
+                $mensaje_pendientes
+            );
+
+            // Actualizar observaciones para publicaciones pendientes
+            foreach ($publicaciones_no_disponibles as $pub) {
+                $this->db->where([
+                    'idSolicitud' => $idSolicitud,
+                    'idPublicacion' => $pub->idPublicacion
+                ])->update('DETALLE_SOLICITUD', [
+                    'observaciones' => 'Pendiente por disponibilidad'
+                ]);
+            }
         }
 
-        // Aprobar solicitud y crear préstamos
-        $resultado = $this->Solicitud_model->aprobar_solicitud($idSolicitud, $idEncargado);
-        
-        if (!$resultado) {
-            throw new Exception('Error al aprobar la solicitud');
-        }
-
-        // Crear notificación
-        $titulos = array_map(function($pub) {
-            return $pub->titulo;
-        }, $solicitud);
-        
-        $mensaje = "Tu solicitud de préstamo ha sido aprobada para: " . implode(", ", $titulos);
-
-        // Crear una sola notificación para todas las publicaciones
-        $notificacion_creada = $this->Notificacion_model->crear_notificacion(
-            $solicitud[0]->idUsuario,
-            null, // No asociamos a una publicación específica ya que son varias
-            NOTIFICACION_APROBACION_PRESTAMO,
-            $mensaje
-        );
-
-        if (!$notificacion_creada) {
-            log_message('warning', 'No se pudo crear la notificación para la solicitud ' . $idSolicitud);
-        }
-
-        // Generar datos para la ficha de préstamo
+        // Preparar datos para la ficha de préstamo
         $datos_ficha = [
             'nombreCompletoLector' => $solicitud[0]->nombres . ' ' . $solicitud[0]->apellidoPaterno,
             'carnet' => $solicitud[0]->carnet,
             'profesion' => $solicitud[0]->profesion,
-            'fechaPrestamo' => date('Y-m-d H:i:s'),
-            'nombreCompletoEncargado' => $this->session->userdata('nombres') . ' ' . 
-                                       $this->session->userdata('apellidoPaterno'),
-            'publicaciones' => $solicitud,
-            'idSolicitud' => $idSolicitud
+            'fechaPrestamo' => $fechaActual
         ];
 
-        // Generar PDF
+        // Generar PDF usando el método privado existente
         $pdfUrl = $this->generar_pdf_ficha_prestamo($datos_ficha, $idSolicitud);
         
         $this->db->trans_complete();
@@ -292,9 +356,15 @@ public function aprobar($idSolicitud) {
         }
 
         // Registrar la acción exitosa
-        log_message('info', 'Solicitud ' . $idSolicitud . ' aprobada exitosamente por el usuario ' . $idEncargado);
+        log_message('info', 'Solicitud ' . $idSolicitud . ' procesada con ' . 
+                   count($publicaciones_disponibles) . ' publicaciones aprobadas y ' . 
+                   count($publicaciones_no_disponibles) . ' pendientes');
         
-        $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamos registrados con éxito.');
+        $mensaje = "Solicitud procesada: " . count($publicaciones_disponibles) . " publicaciones aprobadas";
+        if (!empty($publicaciones_no_disponibles)) {
+            $mensaje .= " y " . count($publicaciones_no_disponibles) . " pendientes de disponibilidad";
+        }
+        $this->session->set_flashdata('mensaje', $mensaje);
         
         // Redirigir con el PDF si está disponible
         if ($pdfUrl) {

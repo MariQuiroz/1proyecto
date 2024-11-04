@@ -287,9 +287,10 @@ class Solicitud_model extends CI_Model {
    
     public function aprobar_solicitud($idSolicitud, $idEncargado) {
         $this->db->trans_start();
+        log_message('debug', "=== Iniciando aprobación de solicitud {$idSolicitud} ===");
     
         try {
-            // Verificar si la solicitud existe y está pendiente
+            // Verificar solicitud existente
             $solicitud = $this->db->get_where('SOLICITUD_PRESTAMO', [
                 'idSolicitud' => $idSolicitud,
                 'estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
@@ -297,54 +298,69 @@ class Solicitud_model extends CI_Model {
             ])->row();
     
             if (!$solicitud) {
-                log_message('error', 'Solicitud no encontrada o no está pendiente. ID: ' . $idSolicitud);
+                log_message('error', "Solicitud {$idSolicitud} no encontrada o no pendiente");
                 return false;
             }
-    
-            // Obtener detalles de la solicitud
+            
+            // Obtener detalles con logging
             $this->db->select('
                 sp.idSolicitud,
                 sp.idUsuario,
                 sp.estadoSolicitud,
                 ds.idPublicacion,
+                ds.idDetalleSolicitud,
                 ds.observaciones,
                 pub.titulo,
-                pub.fechaPublicacion,
-                pub.estado as estado_publicacion,
-                pub.ubicacionFisica,
-                e.nombreEditorial,
-                u.nombres,
-                u.apellidoPaterno,
-                u.carnet,
-                u.profesion
-            ', FALSE);
+                pub.estado as estado_publicacion
+            ');
             $this->db->from('SOLICITUD_PRESTAMO sp');
             $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
             $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
-            $this->db->join('EDITORIAL e', 'pub.idEditorial = e.idEditorial');
-            $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
             $this->db->where('sp.idSolicitud', $idSolicitud);
             
             $publicaciones = $this->db->get()->result();
-    
-            if (empty($publicaciones)) {
-                log_message('error', 'No se encontraron publicaciones para la solicitud ID: ' . $idSolicitud);
-                return false;
-            }
-    
-            $fechaActual = date('Y-m-d H:i:s');
-            $horaActual = date('H:i:s');
-    
-            // Verificar disponibilidad de todas las publicaciones
+            log_message('debug', "Publicaciones encontradas para solicitud {$idSolicitud}: " . count($publicaciones));
+            
+            // Rastrear publicaciones únicas
+            $publicacionesProcesadas = [];
+            $publicacionesUnicas = [];
+            
             foreach ($publicaciones as $publicacion) {
+                log_message('debug', "Procesando publicación ID: {$publicacion->idPublicacion}, Título: {$publicacion->titulo}");
+                
+                if (isset($publicacionesProcesadas[$publicacion->idPublicacion])) {
+                    log_message('warning', "Publicación duplicada encontrada - ID: {$publicacion->idPublicacion}");
+                    continue;
+                }
+
+                // Verificar si ya existe un préstamo activo
+                $prestamoExistente = $this->db->get_where('PRESTAMO', [
+                    'idSolicitud' => $idSolicitud,
+                    'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO
+                ])->row();
+
+                if ($prestamoExistente) {
+                    log_message('warning', "Préstamo existente encontrado para solicitud {$idSolicitud}");
+                    continue;
+                }
+                
                 if ($publicacion->estado_publicacion != ESTADO_PUBLICACION_DISPONIBLE) {
+                    log_message('error', "Publicación {$publicacion->idPublicacion} no disponible");
                     $this->db->trans_rollback();
-                    log_message('error', 'Publicación no disponible ID: ' . $publicacion->idPublicacion);
                     return false;
                 }
+                
+                $publicacionesProcesadas[$publicacion->idPublicacion] = true;
+                $publicacionesUnicas[] = $publicacion;
+                
+                log_message('debug', "Publicación {$publicacion->idPublicacion} agregada a lista única");
             }
-    
-            // Actualizar estado de la solicitud
+            
+            log_message('info', "Total publicaciones únicas a procesar: " . count($publicacionesUnicas));
+            
+            $fechaActual = date('Y-m-d H:i:s');
+            
+            // Actualizar estado de solicitud
             $this->db->where('idSolicitud', $idSolicitud);
             $this->db->update('SOLICITUD_PRESTAMO', [
                 'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
@@ -352,37 +368,43 @@ class Solicitud_model extends CI_Model {
                 'fechaActualizacion' => $fechaActual,
                 'idUsuarioCreador' => $idEncargado
             ]);
-    
-            // Crear préstamos para cada publicación
-            foreach ($publicaciones as $publicacion) {
+            
+            // Procesar cada publicación única
+            foreach ($publicacionesUnicas as $pub) {
+                log_message('debug', "Creando préstamo para publicación {$pub->idPublicacion}");
+                
                 $data_prestamo = [
                     'idSolicitud' => $idSolicitud,
                     'idEncargadoPrestamo' => $idEncargado,
                     'fechaPrestamo' => $fechaActual,
-                    'horaInicio' => $horaActual,
+                    'horaInicio' => date('H:i:s'),
                     'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
                     'estado' => 1,
                     'fechaCreacion' => $fechaActual,
                     'idUsuarioCreador' => $idEncargado
                 ];
-    
+                
                 $this->db->insert('PRESTAMO', $data_prestamo);
-    
-                // Actualizar estado de la publicación
-                $this->db->where('idPublicacion', $publicacion->idPublicacion);
+                log_message('debug', "Préstamo creado para publicación {$pub->idPublicacion}");
+                
+                // Actualizar estado publicación
+                $this->db->where('idPublicacion', $pub->idPublicacion);
                 $this->db->update('PUBLICACION', [
                     'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
                     'fechaActualizacion' => $fechaActual,
                     'idUsuarioCreador' => $idEncargado
                 ]);
+                log_message('debug', "Estado de publicación {$pub->idPublicacion} actualizado");
             }
-    
+            
             $this->db->trans_complete();
-            return $this->db->trans_status() ? $publicaciones : false;
-    
+            log_message('info', "=== Finalizada aprobación de solicitud {$idSolicitud} ===");
+            
+            return $this->db->trans_status() ? $publicacionesUnicas : false;
+            
         } catch (Exception $e) {
             $this->db->trans_rollback();
-            log_message('error', 'Error al aprobar solicitud: ' . $e->getMessage());
+            log_message('error', "Error en aprobación de solicitud {$idSolicitud}: " . $e->getMessage());
             return false;
         }
     }

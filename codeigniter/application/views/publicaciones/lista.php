@@ -112,7 +112,7 @@
                                                     <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>" class="btn btn-success btn-sm" title="Solicitar préstamo">
                                                         <i class="mdi mdi-book-open-page-variant"></i> Solicitar
                                                     </a>
-                                                <?php elseif ($estado_texto != 'En préstamo por ti'): ?>
+                                                    <?php elseif ($estado_texto != 'En préstamo por ti'): ?>
                                                     <?php 
                                                     $estado_interes = $this->Notificacion_model->obtener_estado_interes($this->session->userdata('idUsuario'), $publicacion->idPublicacion);
                                                     if ($estado_interes == ESTADO_INTERES_SOLICITADO): 
