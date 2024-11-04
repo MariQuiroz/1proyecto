@@ -47,22 +47,21 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                <?php foreach($prestamos as $prestamo): ?>
+                                    <?php foreach ($prestamos as $prestamo): ?>
                                     <tr>
-                                        <td><?php echo $prestamo->idPrestamo; ?></td>
-                                        <td><?php echo $prestamo->nombres . ' ' . $prestamo->apellidoPaterno; ?></td>
+                                        <td><?php echo htmlspecialchars($prestamo->idPrestamo); ?></td>
+                                        <td><?php echo htmlspecialchars($prestamo->nombres . ' ' . $prestamo->apellidoPaterno); ?></td>
+                                        <td><?php echo htmlspecialchars($prestamo->titulo); ?></td>
+                                        <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
                                         <td>
-                                            <?php foreach($prestamo->titulos as $titulo): ?>
-                                                <div><?php echo $titulo; ?></div>
-                                            <?php endforeach; ?>
-                                        </td>
-                                        <td><?php echo $prestamo->fechaPrestamo; ?></td>
-                                        <td><?php echo $prestamo->horaInicio; ?></td>
-                                        <td>
-                                            <button class="btn btn-success btn-sm" 
-                                                    onclick="finalizarPrestamo(<?php echo $prestamo->idPrestamo; ?>)">
-                                                Finalizar Préstamo
+                                            <button onclick="abrirModalDevolucion(<?php echo $prestamo->idPrestamo; ?>)" 
+                                                    class="btn btn-success btn-sm">
+                                                Finalizar
                                             </button>
+                                            <a href="<?php echo site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" 
+                                            class="btn btn-info btn-sm">
+                                                Detalles
+                                            </a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
