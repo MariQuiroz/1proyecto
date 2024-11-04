@@ -253,77 +253,7 @@ private function _enviar_email_disponibilidad($idUsuario, $publicacion) {
         $this->load->view('prestamos/mis_prestamos', $data);
         $this->load->view('inc/footer');
     }
-    public function devolver_multiple() {
-        $this->_verificar_rol(['administrador', 'encargado']);
-        
-        $idUsuario = $this->input->get('idUsuario');
-        $data['prestamos'] = $this->Prestamo_model->obtener_prestamos_activos_usuario($idUsuario);
-        
-        $this->load->view('inc/header');
-        $this->load->view('inc/nabvar');
-        $this->load->view('inc/aside');
-        $this->load->view('prestamos/devolucion_multiple', $data);
-        $this->load->view('inc/footer');
-    }
-    public function procesar_devolucion_multiple() {
-        $this->_verificar_rol(['administrador', 'encargado']);
-
-        $prestamos = $this->input->post('prestamos');
-        $estados = $this->input->post('estado_devolucion');
-        $observaciones = $this->input->post('observaciones');
-
-        if (empty($prestamos)) {
-            $this->session->set_flashdata('error', 'Debe seleccionar al menos un préstamo para devolver');
-            redirect('prestamos/devolver_multiple');
-            return;
-        }
-
-        $devoluciones = [];
-        foreach ($prestamos as $idPrestamo) {
-            if (!isset($estados[$idPrestamo]) || empty($estados[$idPrestamo])) {
-                $this->session->set_flashdata('error', 'Debe especificar el estado de devolución para todas las publicaciones');
-                redirect('prestamos/devolver_multiple');
-                return;
-            }
-
-            $devoluciones[$idPrestamo] = [
-                'estado' => $estados[$idPrestamo],
-                'observaciones' => $observaciones[$idPrestamo] ?? ''
-            ];
-        }
-
-        $resultado = $this->Prestamo_model->finalizar_prestamo_multiple(
-            $devoluciones,
-            $this->session->userdata('idUsuario')
-        );
-
-        if ($resultado['success']) {
-            // Generar comprobantes de devolución
-            $comprobantes = [];
-            foreach ($prestamos as $idPrestamo) {
-                $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
-                if ($pdf_content) {
-                    $comprobantes[] = $pdf_content;
-                }
-                // Enviar correo con comprobante
-                $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
-            }
-
-            $this->session->set_flashdata('mensaje', 'Devoluciones procesadas correctamente');
-            
-            // Si hay comprobantes, redirigir con parámetros para descargarlos
-            if (!empty($comprobantes)) {
-                $ids = implode(',', array_keys($devoluciones));
-                redirect('prestamos/descargar_comprobantes/' . $ids);
-            } else {
-                redirect('prestamos/activos');
-            }
-        } else {
-            $this->session->set_flashdata('error', $resultado['message']);
-            redirect('prestamos/devolver_multiple');
-        }
-    }
-
+    
     
     
     private function generar_ficha_devolucion($idPrestamo) {
