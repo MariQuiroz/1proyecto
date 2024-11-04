@@ -287,47 +287,69 @@ public function aprobar($idSolicitud) {
 
 public function rechazar($idSolicitud) {
     $this->_verificar_rol(['administrador', 'encargado']);
-
+    
     $this->db->trans_start();
-
+    
     try {
         $idEncargado = $this->session->userdata('idUsuario');
+        
+        // Obtener detalles de la solicitud
         $solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
-
-        if (empty($solicitud)) {
+        
+        if (!$solicitud) {
             throw new Exception('Solicitud no encontrada');
         }
 
-        if ($this->Solicitud_model->rechazar_solicitud($idSolicitud, $idEncargado)) {
-            // Obtener datos del usuario
-            $usuario_lector = $this->Usuario_model->obtener_usuario($solicitud[0]->idUsuario);
-
-            // Preparar mensaje con los títulos de las publicaciones
-            $titulos = array_map(function($pub) {
-                return $pub->titulo;
-            }, $solicitud);
-
-            $mensaje = "Tu solicitud de préstamo ha sido rechazada para las siguientes publicaciones: " . 
-                      implode(", ", $titulos);
-
-            // Crear notificación para el lector
-            $this->Notificacion_model->crear_notificacion(
-                $usuario_lector->idUsuario,
-                null,
-                NOTIFICACION_RECHAZO_PRESTAMO,
-                $mensaje
-            );
-
-            $this->db->trans_complete();
-            
-            if ($this->db->trans_status() === FALSE) {
-                throw new Exception('Error en la transacción');
-            }
-
-            $this->session->set_flashdata('mensaje', 'Solicitud rechazada correctamente');
-        } else {
-            throw new Exception('Error al rechazar la solicitud');
+        // Verificar que la solicitud esté en estado pendiente
+        if ($solicitud[0]->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
+            throw new Exception('La solicitud no está en estado pendiente');
         }
+
+        // Actualizar el estado de la solicitud a rechazada
+        $data_solicitud = array(
+            'estadoSolicitud' => ESTADO_SOLICITUD_RECHAZADA,
+            'fechaAprobacionRechazo' => date('Y-m-d H:i:s'),
+            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $idEncargado
+        );
+
+        $this->db->where('idSolicitud', $idSolicitud);
+        $this->db->update('SOLICITUD_PRESTAMO', $data_solicitud);
+        
+        // Recolectar títulos y crear notificación
+        $titulos = array_map(function($pub) {
+            return $pub->titulo;
+        }, $solicitud);
+        
+        $mensaje = "Tu solicitud de préstamo ha sido rechazada para las siguientes publicaciones: " . 
+                  implode(", ", $titulos);
+
+        // Crear notificación para el usuario
+        $this->Notificacion_model->crear_notificacion(
+            $solicitud[0]->idUsuario,
+            $solicitud[0]->idPublicacion,
+            NOTIFICACION_RECHAZO_PRESTAMO,
+            $mensaje
+        );
+
+        // Asegurar que las publicaciones estén disponibles
+        foreach ($solicitud as $pub) {
+            $this->Publicacion_model->cambiar_estado_publicacion(
+                $pub->idPublicacion,
+                ESTADO_PUBLICACION_DISPONIBLE
+            );
+            
+            // Notificar a usuarios en lista de espera
+            $this->_notificar_disponibilidad($pub->idPublicacion);
+        }
+
+        $this->db->trans_complete();
+        
+        if ($this->db->trans_status() === FALSE) {
+            throw new Exception('Error en la transacción');
+        }
+
+        $this->session->set_flashdata('mensaje', 'Solicitud rechazada correctamente.');
 
     } catch (Exception $e) {
         $this->db->trans_rollback();
@@ -337,124 +359,150 @@ public function rechazar($idSolicitud) {
 
     redirect('solicitudes/pendientes');
 }
-        
-        private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
-            // Cargar el modelo de solicitudes si no está cargado
-            if (!isset($this->solicitud_model)) {
-                $this->load->model('Solicitud_model');
-            }
-            
-            // Obtener detalles completos de la solicitud y sus publicaciones
-            $detalles_solicitud = $this->solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
-            if (empty($detalles_solicitud)) {
-                log_message('error', 'No se encontraron detalles para la solicitud ID: ' . $idSolicitud);
-                return false;
-            }
-        
-            $this->load->library('pdf');
-            $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-        
-            // Configuración del documento
-            $pdf->SetCreator(PDF_CREATOR);
-            $pdf->SetAuthor('Hemeroteca UMSS');
-            $pdf->SetTitle('Ficha de Préstamo');
-            $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, 'Hemeroteca UMSS', 'Ficha de Préstamo');
-            $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-            $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-        
-            // Configuración de márgenes
-            $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-            $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-            $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-            $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-        
-            $pdf->AddPage();
-        
-            // Datos del usuario y encabezado
-            $html = '
-            <h1 style="text-align: center;">U.M.S.S. BIBLIOTECAS - EN SALA</h1>
-            <h4 style="text-align: center;">FICHA DE PRÉSTAMO</h4>
-            <br>
-            <table cellpadding="5" style="width: 100%;">
-                <tr>
-                    <td width="30%"><strong>Nombre del Lector:</strong></td>
-                    <td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td>
-                </tr>
-                <tr>
-                    <td><strong>Carnet del Lector:</strong></td>
-                    <td>' . $this->sanitize_for_pdf($datos['carnet']) . '</td>
-                </tr>
-                <tr>
-                    <td><strong>Profesión:</strong></td>
-                    <td>' . $this->sanitize_for_pdf($datos['profesion']) . '</td>
-                </tr>
-                <tr>
-                    <td><strong>Fecha de Préstamo:</strong></td>
-                    <td>' . date('d/m/Y H:i:s', strtotime($datos['fechaPrestamo'])) . '</td>
-                </tr>
-                <tr>
-                    <td><strong>Prestado por:</strong></td>
-                    <td>' . $this->sanitize_for_pdf($datos['nombreCompletoEncargado']) . '</td>
-                </tr>
-            </table>
-            <br>
-            <h4>Publicaciones Prestadas:</h4>
-            <table cellpadding="5" style="width: 100%; border: 1px solid #000;">
-                <thead>
-                    <tr style="background-color: #f2f2f2;">
-                        <th style="border: 1px solid #000; width: 5%;">N°</th>
-                        <th style="border: 1px solid #000; width: 20%;">Editorial</th>
-                        <th style="border: 1px solid #000; width: 15%;">Fecha de Public.</th>
-                        <th style="border: 1px solid #000; width: 15%;">Ubicación</th>
-                        <th style="border: 1px solid #000; width: 45%;">Título</th>
-                    </tr>
-                </thead>
-                <tbody>';
-        
-            foreach ($detalles_solicitud as $index => $pub) {
-                $html .= '
-                    <tr>
-                        <td style="border: 1px solid #000; text-align: center;">' . ($index + 1) . '</td>
-                        <td style="border: 1px solid #000;">' . $this->sanitize_for_pdf($pub->nombreEditorial) . '</td>
-                        <td style="border: 1px solid #000; text-align: center;">' . date('d/m/Y', strtotime($pub->fechaPublicacion)) . '</td>
-                        <td style="border: 1px solid #000;">' . $this->sanitize_for_pdf($pub->ubicacionFisica) . '</td>
-                        <td style="border: 1px solid #000;">' . $this->sanitize_for_pdf($pub->titulo) . '</td>
-                    </tr>';
-            }
-        
-            $html .= '</tbody></table>
-            <br><br>
-            <div style="text-align: center;">
-                <p style="border-top: 1px solid #000; width: 200px; margin: 0 auto; padding-top: 5px;">Firma del Lector</p>
-            </div>
-            <br>
-            <div style="text-align: right; font-size: 8pt;">
-                <p>Fecha y hora de impresión: ' . date('d/m/Y H:i:s') . '</p>
-                <p>ID Solicitud: ' . $idSolicitud . '</p>
-            </div>';
-        
-            $pdf->writeHTML($html, true, false, true, false, '');
-            
-            // Generar nombre único para el archivo
-            $pdfFileName = 'ficha_prestamo_' . $idSolicitud . '_' . time() . '.pdf';
-            $pdfPath = FCPATH . 'uploads/' . $pdfFileName;
-            
-            // Verificar y crear el directorio si no existe
-            $uploadDir = FCPATH . 'uploads/';
-            if (!file_exists($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
-        
-            // Guardar el PDF y retornar la URL
-            try {
-                $pdf->Output($pdfPath, 'F');
-                return base_url('uploads/' . $pdfFileName);
-            } catch (Exception $e) {
-                log_message('error', 'Error al generar PDF: ' . $e->getMessage());
-                return false;
-            }
-        }
-        
+
+// Método auxiliar para notificar disponibilidad
+private function _notificar_disponibilidad($idPublicacion) {
+    $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados($idPublicacion);
+    $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
+
+    foreach ($usuarios_interesados as $usuario) {
+        $mensaje = "La publicación '{$publicacion->titulo}' está nuevamente disponible.";
+        $this->Notificacion_model->crear_notificacion(
+            $usuario->idUsuario,
+            $idPublicacion,
+            NOTIFICACION_DISPONIBILIDAD,
+            $mensaje
+        );
+    }
+}
+private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
+    // Cargar el modelo de solicitudes si no está cargado
+    if (!isset($this->solicitud_model)) {
+        $this->load->model('Solicitud_model');
+    }
+    
+    // Obtener detalles completos de la solicitud y sus publicaciones
+    $detalles_solicitud = $this->solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
+    if (empty($detalles_solicitud)) {
+        log_message('error', 'No se encontraron detalles para la solicitud ID: ' . $idSolicitud);
+        return false;
+    }
+
+    // Obtener datos del encargado (usuario actual)
+    $idEncargado = $this->session->userdata('idUsuario');
+    $this->load->model('Usuario_model');
+    $encargado = $this->Usuario_model->obtener_usuario($idEncargado);
+
+    $this->load->library('pdf');
+    $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+    // Configuración del documento
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('Hemeroteca UMSS');
+    $pdf->SetTitle('Ficha de Préstamo');
+    $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, 'Hemeroteca UMSS', 'Ficha de Préstamo');
+    $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+    $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+    // Configuración de márgenes
+    $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+    $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+    $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+    $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+    $pdf->AddPage();
+
+    // Datos del usuario y encabezado
+    $html = '
+    <h1 style="text-align: center;">U.M.S.S. BIBLIOTECAS - EN SALA</h1>
+    <h4 style="text-align: center;">FICHA DE PRÉSTAMO</h4>
+    <br>
+    <table cellpadding="5" style="width: 100%;">
+        <tr>
+            <td width="30%"><strong>Nombre del Lector:</strong></td>
+            <td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td>
+        </tr>
+        <tr>
+            <td><strong>Carnet del Lector:</strong></td>
+            <td>' . $this->sanitize_for_pdf($datos['carnet']) . '</td>
+        </tr>
+        <tr>
+            <td><strong>Profesión:</strong></td>
+            <td>' . $this->sanitize_for_pdf($datos['profesion']) . '</td>
+        </tr>
+        <tr>
+            <td><strong>Fecha de Préstamo:</strong></td>
+            <td>' . date('d/m/Y H:i:s', strtotime($datos['fechaPrestamo'])) . '</td>
+        </tr>
+        <tr>
+            <td><strong>Encargado:</strong></td>
+            <td>' . $this->sanitize_for_pdf($encargado->nombres . ' ' . $encargado->apellidoPaterno) . '</td>
+        </tr>
+    </table>
+    <br>
+    <h4>Publicaciones Prestadas:</h4>
+    <table cellpadding="5" style="width: 100%; border: 1px solid #000;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th style="border: 1px solid #000; text-align: center; width: 8%;">N°</th>
+                <th style="border: 1px solid #000; text-align: center; width: 40%;">Título</th>
+                <th style="border: 1px solid #000; text-align: center; width: 22%;">Editorial</th>
+                <th style="border: 1px solid #000; text-align: center; width: 15%;">Fecha Public.</th>
+                <th style="border: 1px solid #000; text-align: center; width: 15%;">Ubicación</th>
+            </tr>
+        </thead>
+        <tbody>';
+
+    foreach ($detalles_solicitud as $index => $pub) {
+        $html .= '
+            <tr>
+                <td style="border: 1px solid #000; text-align: center;">' . ($index + 1) . '</td>
+                <td style="border: 1px solid #000; padding: 5px;">' . $this->sanitize_for_pdf($pub->titulo) . '</td>
+                <td style="border: 1px solid #000; text-align: center;">' . $this->sanitize_for_pdf($pub->nombreEditorial) . '</td>
+                <td style="border: 1px solid #000; text-align: center;">' . date('d/m/Y', strtotime($pub->fechaPublicacion)) . '</td>
+                <td style="border: 1px solid #000; text-align: center;">' . $this->sanitize_for_pdf($pub->ubicacionFisica) . '</td>
+            </tr>';
+    }
+
+    $html .= '</tbody></table>
+    <br><br>
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 50%; text-align: center;">
+                <p style="border-top: 1px solid #000; width: 200px; display: inline-block; padding-top: 5px;">Firma del Lector</p>
+            </td>
+            <td style="width: 50%; text-align: center;">
+                <p style="border-top: 1px solid #000; width: 200px; display: inline-block; padding-top: 5px;">Firma del Encargado</p>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <div style="text-align: right; font-size: 8pt;">
+        <p>Fecha y hora de impresión: ' . date('d/m/Y H:i:s') . '</p>
+        <p>ID Solicitud: ' . $idSolicitud . '</p>
+    </div>';
+
+    $pdf->writeHTML($html, true, false, true, false, '');
+    
+    // Generar nombre único para el archivo
+    $pdfFileName = 'ficha_prestamo_' . $idSolicitud . '_' . time() . '.pdf';
+    $pdfPath = FCPATH . 'uploads/' . $pdfFileName;
+    
+    // Verificar y crear el directorio si no existe
+    $uploadDir = FCPATH . 'uploads/';
+    if (!file_exists($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+
+    // Guardar el PDF y retornar la URL
+    try {
+        $pdf->Output($pdfPath, 'F');
+        return base_url('uploads/' . $pdfFileName);
+    } catch (Exception $e) {
+        log_message('error', 'Error al generar PDF: ' . $e->getMessage());
+        return false;
+    }
+}
         private function sanitize_for_pdf($text) {
             if (empty($text)) {
                 return '';
