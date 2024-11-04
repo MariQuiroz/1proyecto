@@ -218,71 +218,97 @@ public function aprobar($idSolicitud) {
     
     try {
         $idEncargado = $this->session->userdata('idUsuario');
-        // Obtener detalles de la solicitud
-        $solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
         
-        if (!$solicitud) {
-            throw new Exception('Solicitud no encontrada');
+        // Verificar si la solicitud ya fue procesada
+        $solicitud_actual = $this->Solicitud_model->obtener_solicitud($idSolicitud);
+        if (!$solicitud_actual || $solicitud_actual->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
+            throw new Exception('La solicitud ya fue procesada o no existe');
         }
 
-        // Verificar disponibilidad de publicaciones
+        // Obtener detalles de la solicitud
+        $solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
+        if (empty($solicitud)) {
+            throw new Exception('No se encontraron detalles de la solicitud');
+        }
+
+        // Verificar disponibilidad de publicaciones en una sola transacción
+        $publicaciones_no_disponibles = [];
         foreach ($solicitud as $pub) {
             $publicacion = $this->Publicacion_model->obtener_publicacion($pub->idPublicacion);
             if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-                throw new Exception('Una o más publicaciones no están disponibles');
+                $publicaciones_no_disponibles[] = $pub->titulo;
             }
         }
+        
+        if (!empty($publicaciones_no_disponibles)) {
+            throw new Exception('Las siguientes publicaciones no están disponibles: ' . implode(', ', $publicaciones_no_disponibles));
+        }
 
-        // Aprobar solicitud
+        // Aprobar solicitud y crear préstamos
         $resultado = $this->Solicitud_model->aprobar_solicitud($idSolicitud, $idEncargado);
         
-        if ($resultado) {
-            // Crear notificación
-            $titulos = array_map(function($pub) {
-                return $pub->titulo;
-            }, $solicitud);
-            
-            $mensaje = "Tu solicitud de préstamo para las siguientes publicaciones ha sido aprobada: " . 
-                      implode(", ", $titulos);
+        if (!$resultado) {
+            throw new Exception('Error al aprobar la solicitud');
+        }
 
-            $this->Notificacion_model->crear_notificacion(
-                $solicitud[0]->idUsuario,
-                $solicitud[0]->idPublicacion,
-                NOTIFICACION_APROBACION_PRESTAMO,
-                $mensaje
-            );
+        // Crear notificación
+        $titulos = array_map(function($pub) {
+            return $pub->titulo;
+        }, $solicitud);
+        
+        $mensaje = "Tu solicitud de préstamo ha sido aprobada para: " . implode(", ", $titulos);
 
-            // Generar PDF
-            $datos_ficha = [
-                'nombreCompletoLector' => $solicitud[0]->nombres . ' ' . $solicitud[0]->apellidoPaterno,
-                'carnet' => $solicitud[0]->carnet,
-                'profesion' => $solicitud[0]->profesion,
-                'fechaPrestamo' => date('Y-m-d H:i:s'),
-                'nombreCompletoEncargado' => $this->session->userdata('nombres') . ' ' . 
-                                           $this->session->userdata('apellidoPaterno'),
-                'publicaciones' => $solicitud
-            ];
+        // Crear una sola notificación para todas las publicaciones
+        $notificacion_creada = $this->Notificacion_model->crear_notificacion(
+            $solicitud[0]->idUsuario,
+            null, // No asociamos a una publicación específica ya que son varias
+            NOTIFICACION_APROBACION_PRESTAMO,
+            $mensaje
+        );
 
-            $pdfUrl = $this->generar_pdf_ficha_prestamo($datos_ficha, $idSolicitud);
-            
-            $this->db->trans_complete();
-            
-            if ($this->db->trans_status() === FALSE) {
-                throw new Exception('Error en la transacción');
-            }
+        if (!$notificacion_creada) {
+            log_message('warning', 'No se pudo crear la notificación para la solicitud ' . $idSolicitud);
+        }
 
-            $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamos registrados con éxito.');
-            redirect('solicitudes/pendientes' . ($pdfUrl ? '?pdf=' . urlencode($pdfUrl) : ''));
-            return;
+        // Generar datos para la ficha de préstamo
+        $datos_ficha = [
+            'nombreCompletoLector' => $solicitud[0]->nombres . ' ' . $solicitud[0]->apellidoPaterno,
+            'carnet' => $solicitud[0]->carnet,
+            'profesion' => $solicitud[0]->profesion,
+            'fechaPrestamo' => date('Y-m-d H:i:s'),
+            'nombreCompletoEncargado' => $this->session->userdata('nombres') . ' ' . 
+                                       $this->session->userdata('apellidoPaterno'),
+            'publicaciones' => $solicitud,
+            'idSolicitud' => $idSolicitud
+        ];
+
+        // Generar PDF
+        $pdfUrl = $this->generar_pdf_ficha_prestamo($datos_ficha, $idSolicitud);
+        
+        $this->db->trans_complete();
+        
+        if ($this->db->trans_status() === FALSE) {
+            throw new Exception('Error en la transacción. Los cambios han sido revertidos.');
+        }
+
+        // Registrar la acción exitosa
+        log_message('info', 'Solicitud ' . $idSolicitud . ' aprobada exitosamente por el usuario ' . $idEncargado);
+        
+        $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamos registrados con éxito.');
+        
+        // Redirigir con el PDF si está disponible
+        if ($pdfUrl) {
+            redirect('solicitudes/pendientes?pdf=' . urlencode($pdfUrl));
+        } else {
+            redirect('solicitudes/pendientes');
         }
         
     } catch (Exception $e) {
         $this->db->trans_rollback();
-        log_message('error', 'Error al aprobar solicitud: ' . $e->getMessage());
+        log_message('error', 'Error al aprobar solicitud ' . $idSolicitud . ': ' . $e->getMessage());
         $this->session->set_flashdata('error', $e->getMessage());
+        redirect('solicitudes/pendientes');
     }
-
-    redirect('solicitudes/pendientes');
 }
 
 public function rechazar($idSolicitud) {

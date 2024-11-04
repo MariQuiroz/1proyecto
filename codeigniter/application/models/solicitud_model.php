@@ -289,15 +289,15 @@ class Solicitud_model extends CI_Model {
         $this->db->trans_start();
     
         try {
-            // Verificar si ya existen préstamos para esta solicitud
-            $prestamos_existentes = $this->db->get_where('PRESTAMO', [
+            // Verificar si la solicitud existe y está pendiente
+            $solicitud = $this->db->get_where('SOLICITUD_PRESTAMO', [
                 'idSolicitud' => $idSolicitud,
-                'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO
-            ])->result();
+                'estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+                'estado' => 1
+            ])->row();
     
-            if (!empty($prestamos_existentes)) {
-                log_message('error', 'Ya existen préstamos activos para la solicitud ID: ' . $idSolicitud);
-                $this->db->trans_rollback();
+            if (!$solicitud) {
+                log_message('error', 'Solicitud no encontrada o no está pendiente. ID: ' . $idSolicitud);
                 return false;
             }
     
@@ -317,25 +317,32 @@ class Solicitud_model extends CI_Model {
                 u.apellidoPaterno,
                 u.carnet,
                 u.profesion
-            ');
+            ', FALSE);
             $this->db->from('SOLICITUD_PRESTAMO sp');
             $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
             $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
             $this->db->join('EDITORIAL e', 'pub.idEditorial = e.idEditorial');
             $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
             $this->db->where('sp.idSolicitud', $idSolicitud);
-            $this->db->where('sp.estadoSolicitud', ESTADO_SOLICITUD_PENDIENTE);
-    
+            
             $publicaciones = $this->db->get()->result();
     
             if (empty($publicaciones)) {
                 log_message('error', 'No se encontraron publicaciones para la solicitud ID: ' . $idSolicitud);
-                $this->db->trans_rollback();
                 return false;
             }
     
             $fechaActual = date('Y-m-d H:i:s');
             $horaActual = date('H:i:s');
+    
+            // Verificar disponibilidad de todas las publicaciones
+            foreach ($publicaciones as $publicacion) {
+                if ($publicacion->estado_publicacion != ESTADO_PUBLICACION_DISPONIBLE) {
+                    $this->db->trans_rollback();
+                    log_message('error', 'Publicación no disponible ID: ' . $publicacion->idPublicacion);
+                    return false;
+                }
+            }
     
             // Actualizar estado de la solicitud
             $this->db->where('idSolicitud', $idSolicitud);
@@ -346,15 +353,8 @@ class Solicitud_model extends CI_Model {
                 'idUsuarioCreador' => $idEncargado
             ]);
     
-            // Crear préstamos y actualizar estados de publicaciones
+            // Crear préstamos para cada publicación
             foreach ($publicaciones as $publicacion) {
-                if ($publicacion->estado_publicacion != ESTADO_PUBLICACION_DISPONIBLE) {
-                    $this->db->trans_rollback();
-                    log_message('error', 'Publicación no disponible ID: ' . $publicacion->idPublicacion);
-                    return false;
-                }
-    
-                // Insertar préstamo
                 $data_prestamo = [
                     'idSolicitud' => $idSolicitud,
                     'idEncargadoPrestamo' => $idEncargado,
@@ -378,13 +378,7 @@ class Solicitud_model extends CI_Model {
             }
     
             $this->db->trans_complete();
-    
-            if ($this->db->trans_status() === FALSE) {
-                log_message('error', 'Error en la transacción al aprobar solicitud ID: ' . $idSolicitud);
-                return false;
-            }
-    
-            return $publicaciones;
+            return $this->db->trans_status() ? $publicaciones : false;
     
         } catch (Exception $e) {
             $this->db->trans_rollback();
@@ -392,7 +386,7 @@ class Solicitud_model extends CI_Model {
             return false;
         }
     }
-
+    
     public function crear_solicitud_multiple($idUsuario, $publicaciones) {
         $this->db->trans_start();
         

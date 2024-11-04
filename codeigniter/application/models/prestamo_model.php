@@ -544,18 +544,12 @@ public function obtener_prestamos_activos() {
         'p.estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
         'p.estado' => 1
     ]);
-    $this->db->group_by('
-        p.idPrestamo, 
-        p.fechaPrestamo,
-        p.horaInicio,
-        p.estadoPrestamo,
-        u.nombres,
-        u.apellidoPaterno,
-        pub.titulo,
-        ds.observaciones,
-        e.nombreEditorial
-    ');
+    
+    // En lugar de usar GROUP BY, usamos DISTINCT
+    $this->db->distinct();
     $this->db->order_by('p.fechaPrestamo', 'DESC');
+    
     return $this->db->get()->result();
 }
+
 }
