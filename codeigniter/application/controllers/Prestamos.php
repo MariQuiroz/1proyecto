@@ -61,51 +61,36 @@ class Prestamos extends CI_Controller {
         redirect('prestamos/activos');
     }
     
-   
-    public function finalizar($idPrestamo) {
-        $this->_verificar_rol(['administrador', 'encargado']);
+public function finalizar() {
+    $this->_verificar_rol(['administrador', 'encargado']);
+    
+    $idPrestamo = $this->input->post('idPrestamo');
+    $estadoDevolucion = $this->input->post('estadoDevolucion');
+    $observaciones = $this->input->post('observaciones');
+    
+    // Validar que exista el préstamo y esté activo
+    $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
+    if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
+        $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
+        redirect('prestamos/activos');
+        return;
+    }
+
+    $this->db->trans_start();
+
+    try {
+        $idEncargado = $this->session->userdata('idUsuario');
         
-        // Verificar token CSRF
-        if ($this->input->post()) {
-            if (!$this->security->get_csrf_hash() || 
-                $this->input->post('csrf_test_name') != $this->security->get_csrf_hash()) {
-                $this->session->set_flashdata('error', 'Error de validación del formulario.');
-                redirect('prestamos/activos');
-                return;
-            }
-        }
-    
-        // Validar estado del préstamo
-        $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
-        if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
-            $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
-            redirect('prestamos/activos');
-            return;
-        }
-    
-        $this->db->trans_start();
+        // Finalizar el préstamo
+        $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion);
         
-        try {
-            $idEncargado = $this->session->userdata('idUsuario');
-            $estadoDevolucion = $this->input->post('estadoDevolucion');
-            
-            // Validar estado de devolución
-            if (!in_array($estadoDevolucion, [
-                ESTADO_DEVOLUCION_BUENO, 
-                ESTADO_DEVOLUCION_DAÑADO, 
-                ESTADO_DEVOLUCION_PERDIDO
-            ])) {
-                $estadoDevolucion = ESTADO_DEVOLUCION_BUENO; // Valor por defecto si no es válido
-            }
-    
-            // 1. Finalizar el préstamo y registrar estado de devolución
-            $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion);
-            
-            if (!$resultado) {
-                throw new Exception('Error al finalizar el préstamo en la base de datos');
-            }
-    
-            // 2. Generar ficha de devolución
+        if ($resultado) {
+            // Actualizar la publicación a disponible
+            $this->Publicacion_model->cambiar_estado_publicacion(
+                $prestamo->idPublicacion,
+                ESTADO_PUBLICACION_DISPONIBLE
+            );
+	   // 2. Generar ficha de devolución
             $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
             
             // 3. Enviar ficha por correo solo si se generó correctamente
@@ -114,39 +99,19 @@ class Prestamos extends CI_Controller {
                 $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
             }
     
-            // 4. Actualizar estado de la publicación siempre a disponible
-            $actualizacion_publicacion = $this->Publicacion_model->cambiar_estado_publicacion(
-                $prestamo->idPublicacion, 
-                ESTADO_PUBLICACION_DISPONIBLE
-            );
-            
-            if (!$actualizacion_publicacion) {
-                throw new Exception('Error al actualizar el estado de la publicación');
-            }
-    
-            // 5. Crear notificación de devolución
-            $texto_estado = 'en estado ' . strtolower($estadoDevolucion);
-            
-            $mensaje = "El préstamo de la publicación '{$prestamo->titulo}' ha sido finalizado. " . 
-                      "La publicación fue registrada {$texto_estado}.";
-            
+            // Crear notificación
             $this->Notificacion_model->crear_notificacion(
                 $prestamo->idUsuario,
                 $prestamo->idPublicacion,
                 NOTIFICACION_DEVOLUCION,
-                $mensaje
+                "El préstamo ha sido finalizado. Estado: $estadoDevolucion"
             );
-    
-            // 6. Notificar a usuarios interesados que la publicación está disponible
+
+            // Notificar disponibilidad
             $this->_notificar_disponibilidad($prestamo->idPublicacion);
-    
-            $this->db->trans_complete();
             
-            if ($this->db->trans_status() === FALSE) {
-                throw new Exception('Error en la transacción de la base de datos');
-            }
-    
-            // Mensaje de éxito
+            $this->db->trans_complete();
+             // Mensaje de éxito
             $mensaje = 'Préstamo finalizado con éxito.';
             if ($envio_exitoso) {
                 $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico al lector.';
@@ -156,15 +121,17 @@ class Prestamos extends CI_Controller {
             }
             
             $this->session->set_flashdata('mensaje', $mensaje);
-            
-        } catch (Exception $e) {
-            $this->db->trans_rollback();
-            log_message('error', 'Error en finalizar préstamo ID ' . $idPrestamo . ': ' . $e->getMessage());
-            $this->session->set_flashdata('error', 'Hubo un error al procesar la devolución: ' . $e->getMessage());
-        }
+               }
         
-        redirect('prestamos/activos');
+    } catch (Exception $e) {
+        $this->db->trans_rollback();
+        log_message('error', 'Error al finalizar préstamo: ' . $e->getMessage());
+        $this->session->set_flashdata('error', 'Error al procesar la devolución.');
     }
+    
+    redirect('prestamos/activos');
+}
+
 
 private function _notificar_disponibilidad($idPublicacion) {
     // Obtener la publicación
@@ -357,40 +324,7 @@ private function _enviar_email_disponibilidad($idUsuario, $publicacion) {
         }
     }
 
-    public function descargar_comprobantes($ids) {
-        $this->_verificar_rol(['administrador', 'encargado']);
-        
-        // Crear PDF consolidado con todos los comprobantes
-        $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-        
-        $pdf->SetCreator(PDF_CREATOR);
-        $pdf->SetAuthor('Hemeroteca UMSS');
-        $pdf->SetTitle('Comprobantes de Devolución');
-        
-        // Configuración básica del PDF
-        $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, 'Hemeroteca UMSS', 'Comprobantes de Devolución');
-        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-        
-        $idPrestamos = explode(',', $ids);
-        foreach ($idPrestamos as $idPrestamo) {
-            $pdf->AddPage();
-            
-            $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
-            if ($datos_prestamo) {
-                // Agregar contenido al PDF
-                $html = $this->load->view('prestamos/plantilla_comprobante', $datos_prestamo, true);
-                $pdf->writeHTML($html, true, false, true, false, '');
-            }
-        }
-        
-        // Generar y descargar el PDF
-        $pdf->Output('comprobantes_devolucion.pdf', 'D');
-    }
+    
     
     private function generar_ficha_devolucion($idPrestamo) {
         $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);

@@ -75,22 +75,26 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalDevolucion" tabindex="-1" role="dialog" aria-labelledby="modalDevolucionLabel" aria-hidden="true">
+<!-- Modal simplificado -->
+<div class="modal fade" id="modalDevolucion" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalDevolucionLabel">Registrar Devolución</h5>
+                <h5 class="modal-title">Registrar Devolución</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form action="<?php echo site_url('prestamos/finalizar/'); ?>" method="POST" id="formDevolucion">
-                <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
-                <input type="hidden" name="idPrestamo" id="idPrestamoDevolucion">
+            <?php 
+            $attributes = array('id' => 'formDevolucion');
+            echo form_open('prestamos/finalizar', $attributes); 
+            ?>
+                <!-- Campo oculto para el ID del préstamo -->
+                <input type="hidden" name="idPrestamo" id="idPrestamoInput">
+                
                 <div class="modal-body">
-                    <input type="hidden" name="idPrestamo" id="idPrestamoDevolucion">
                     <div class="form-group">
-                        <label for="estadoDevolucion">Estado de la Devolución</label>
+                        <label>Estado de la Devolución</label>
                         <select class="form-control" id="estadoDevolucion" name="estadoDevolucion" required>
                             <option value="">Seleccione el estado de devolución</option>
                             <option value="<?php echo ESTADO_DEVOLUCION_BUENO; ?>">En buen estado</option>
@@ -98,24 +102,21 @@
                             <option value="<?php echo ESTADO_DEVOLUCION_PERDIDO; ?>">Perdido</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="observaciones">Observaciones</label>
-                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
-                    </div>
+              
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Registrar Devolución</button>
                 </div>
-            </form>
+            <?php echo form_close(); ?>
         </div>
     </div>
 </div>
+
 <script>
 function abrirModalDevolucion(idPrestamo) {
-    // Actualizar la URL del formulario con el ID del préstamo
-    var form = document.getElementById('formDevolucion');
-    form.action = '<?php echo site_url("prestamos/finalizar/"); ?>' + idPrestamo;
+    // Asignar el ID del préstamo al campo oculto
+    document.getElementById('idPrestamoInput').value = idPrestamo;
     $('#modalDevolucion').modal('show');
 }
 </script>
