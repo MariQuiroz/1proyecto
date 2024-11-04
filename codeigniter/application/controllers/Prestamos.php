@@ -61,76 +61,81 @@ class Prestamos extends CI_Controller {
         redirect('prestamos/activos');
     }
     
-public function finalizar() {
-    $this->_verificar_rol(['administrador', 'encargado']);
-    
-    $idPrestamo = $this->input->post('idPrestamo');
-    $estadoDevolucion = $this->input->post('estadoDevolucion');
-    $observaciones = $this->input->post('observaciones');
-    
-    // Validar que exista el préstamo y esté activo
-    $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
-    if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
-        $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
-        redirect('prestamos/activos');
-        return;
-    }
-
-    $this->db->trans_start();
-
-    try {
-        $idEncargado = $this->session->userdata('idUsuario');
+    public function finalizar() {
+        $this->_verificar_rol(['administrador', 'encargado']);
         
-        // Finalizar el préstamo
-        $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion);
+        $idPrestamo = $this->input->post('idPrestamo');
+        $estadoDevolucion = $this->input->post('estadoDevolucion');
         
-        if ($resultado) {
+        // Validar que exista el préstamo y esté activo
+        $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
+        if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
+            $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
+            redirect('prestamos/activos');
+            return;
+        }
+    
+        $this->db->trans_start();
+    
+        try {
+            $idEncargado = $this->session->userdata('idUsuario');
+            
+            // Actualizar el préstamo
+            $this->db->where('idPrestamo', $idPrestamo);
+            $this->db->update('PRESTAMO', [
+                'idEncargadoDevolucion' => $idEncargado,
+                'horaDevolucion' => date('H:i:s'),
+                'estadoPrestamo' => ESTADO_PRESTAMO_FINALIZADO,
+                'estadoDevolucion' => $estadoDevolucion,
+                'fechaActualizacion' => date('Y-m-d H:i:s')
+            ]);
+    
             // Actualizar la publicación a disponible
-            $this->Publicacion_model->cambiar_estado_publicacion(
-                $prestamo->idPublicacion,
-                ESTADO_PUBLICACION_DISPONIBLE
-            );
-	   // 2. Generar ficha de devolución
-            $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
-            
-            // 3. Enviar ficha por correo solo si se generó correctamente
-            $envio_exitoso = false;
-            if ($pdf_content) {
-                $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
-            }
+            $this->db->where('idPublicacion', $prestamo->idPublicacion);
+            $this->db->update('PUBLICACION', [
+                'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                'fechaActualizacion' => date('Y-m-d H:i:s')
+            ]);
     
-            // Crear notificación
-            $this->Notificacion_model->crear_notificacion(
-                $prestamo->idUsuario,
-                $prestamo->idPublicacion,
-                NOTIFICACION_DEVOLUCION,
-                "El préstamo ha sido finalizado. Estado: $estadoDevolucion"
-            );
-
-            // Notificar disponibilidad
-            $this->_notificar_disponibilidad($prestamo->idPublicacion);
-            
-            $this->db->trans_complete();
-             // Mensaje de éxito
-            $mensaje = 'Préstamo finalizado con éxito.';
-            if ($envio_exitoso) {
-                $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico al lector.';
+            if ($this->db->affected_rows() > 0) {
+                // Generar ficha de devolución
+                $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
+                
+                if ($pdf_content) {
+                    $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
+                }
+    
+                // Crear notificación
+                $this->Notificacion_model->crear_notificacion(
+                    $prestamo->idUsuario,
+                    $prestamo->idPublicacion,
+                    NOTIFICACION_DEVOLUCION,
+                    "Se ha devuelto la publicación. Estado: $estadoDevolucion"
+                );
+    
+                // Notificar disponibilidad de la publicación
+                $this->_notificar_disponibilidad($prestamo->idPublicacion);
+    
+                $mensaje = 'Préstamo finalizado con éxito.';
+                if (isset($envio_exitoso) && $envio_exitoso) {
+                    $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico.';
+                }
+                
+                $this->session->set_flashdata('mensaje', $mensaje);
             } else {
-                $mensaje .= ' Sin embargo, hubo un problema al enviar el correo electrónico.';
-                log_message('error', 'Error al enviar correo de ficha de devolución para préstamo ID: ' . $idPrestamo);
+                throw new Exception('No se pudo actualizar el préstamo.');
             }
-            
-            $this->session->set_flashdata('mensaje', $mensaje);
-               }
-        
-    } catch (Exception $e) {
-        $this->db->trans_rollback();
-        log_message('error', 'Error al finalizar préstamo: ' . $e->getMessage());
-        $this->session->set_flashdata('error', 'Error al procesar la devolución.');
-    }
     
-    redirect('prestamos/activos');
-}
+            $this->db->trans_complete();
+    
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Error al finalizar préstamo: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Error al procesar la devolución.');
+        }
+    
+        redirect('prestamos/activos');
+    }
 
 
 private function _notificar_disponibilidad($idPublicacion) {
@@ -222,17 +227,54 @@ private function _enviar_email_disponibilidad($idUsuario, $publicacion) {
     }
 }
 
-    public function activos() {
-        $this->_verificar_rol(['administrador', 'encargado']);
-  
+/*public function activos() {
+    $this->_verificar_rol(['administrador', 'encargado']);
+    log_message('debug', "Obteniendo préstamos activos");
+
+    $data['prestamos'] = $this->Prestamo_model->obtener_prestamos_activos();
+    log_message('debug', "Total de préstamos encontrados: " . count($data['prestamos']));
+
+    $this->load->view('inc/header');
+    $this->load->view('inc/nabvar');
+    $this->load->view('inc/aside');
+    $this->load->view('prestamos/activos', $data);
+    $this->load->view('inc/footer');
+}*/
+public function activos() {
+    $this->_verificar_rol(['administrador', 'encargado']); 
+    
+    log_message('debug', "\n=== INICIO PRESTAMOS ACTIVOS CONTROLLER ===");
+
+    try {
+        log_message('debug', "Solicitando préstamos activos del modelo...");
         $data['prestamos'] = $this->Prestamo_model->obtener_prestamos_activos();
+        
+        // Verificar datos antes de pasarlos a la vista
+        log_message('debug', "Datos a pasar a la vista - Total préstamos: " . count($data['prestamos']));
+        foreach($data['prestamos'] as $index => $prestamo) {
+            log_message('debug', sprintf(
+                "Vista[%d]: Préstamo[%d] Solicitud[%d] Usuario[%s] Publicación[%s]",
+                $index + 1,
+                $prestamo->idPrestamo,
+                $prestamo->idSolicitud,
+                $prestamo->nombres . ' ' . $prestamo->apellidoPaterno,
+                $prestamo->titulo
+            ));
+        }
+
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
         $this->load->view('inc/aside');
         $this->load->view('prestamos/activos', $data);
         $this->load->view('inc/footer');
+
+    } catch (Exception $e) {
+        log_message('error', 'Error en prestamos/activos: ' . $e->getMessage());
+        show_error('Ha ocurrido un error al cargar los préstamos activos');
     }
 
+    log_message('debug', "=== FIN PRESTAMOS ACTIVOS CONTROLLER ===\n");
+}
     public function historial() {
         $this->_verificar_rol(['administrador', 'encargado']);
         $data['prestamos'] = $this->Prestamo_model->obtener_historial_prestamos();

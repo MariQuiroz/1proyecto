@@ -285,7 +285,7 @@ class Solicitud_model extends CI_Model {
         return $this->db->get()->result();
     }
    
-    public function aprobar_solicitud($idSolicitud, $idEncargado) {
+   /* public function aprobar_solicitud($idSolicitud, $idEncargado) {
         $this->db->trans_start();
         log_message('debug', "=== Iniciando aprobación de solicitud {$idSolicitud} ===");
     
@@ -408,7 +408,100 @@ class Solicitud_model extends CI_Model {
             return false;
         }
     }
+    */
+    public function aprobar_solicitud($idSolicitud, $idEncargado) {
+        log_message('debug', "\n==== INICIO aprobar_solicitud({$idSolicitud}) ====");
+        
+        $this->db->trans_start();
     
+        try {
+            // Verificar solicitud
+            $solicitud = $this->db->get_where('SOLICITUD_PRESTAMO', [
+                'idSolicitud' => $idSolicitud,
+                'estado' => 1
+            ])->row();
+            
+            log_message('debug', sprintf(
+                "Solicitud encontrada: ID[%d] Estado[%d]",
+                $solicitud->idSolicitud,
+                $solicitud->estado
+            ));
+    
+            // Obtener detalles
+            $detalles = $this->db->select('
+                ds.idDetalleSolicitud,
+                ds.idPublicacion,
+                p.titulo,
+                p.estado as estado_publicacion
+            ')
+            ->from('DETALLE_SOLICITUD ds')
+            ->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion')
+            ->where('ds.idSolicitud', $idSolicitud)
+            ->get()
+            ->result();
+    
+            log_message('debug', "Publicaciones en solicitud: " . count($detalles));
+            
+            foreach($detalles as $detalle) {
+                log_message('debug', sprintf(
+                    "Detalle: ID[%d] Publicación[%d - %s] Estado[%d]",
+                    $detalle->idDetalleSolicitud,
+                    $detalle->idPublicacion,
+                    $detalle->titulo,
+                    $detalle->estado_publicacion
+                ));
+    
+                // Verificar disponibilidad
+                if($detalle->estado_publicacion != ESTADO_PUBLICACION_DISPONIBLE) {
+                    throw new Exception("Publicación {$detalle->idPublicacion} no disponible");
+                }
+    
+                // Crear préstamo
+                $data_prestamo = [
+                    'idSolicitud' => $idSolicitud,
+                    'idPublicacion' => $detalle->idPublicacion,
+                    'idEncargadoPrestamo' => $idEncargado,
+                    'fechaPrestamo' => date('Y-m-d H:i:s'),
+                    'horaInicio' => date('H:i:s'),
+                    'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
+                    'estado' => 1
+                ];
+    
+                $this->db->insert('PRESTAMO', $data_prestamo);
+                $idPrestamo = $this->db->insert_id();
+                
+                log_message('debug', sprintf(
+                    "Préstamo creado: ID[%d] Publicación[%d]", 
+                    $idPrestamo,
+                    $detalle->idPublicacion
+                ));
+    
+                // Actualizar estado publicación
+                $this->db->where('idPublicacion', $detalle->idPublicacion)
+                         ->update('PUBLICACION', ['estado' => ESTADO_PUBLICACION_EN_CONSULTA]);
+            }
+    
+            // Actualizar solicitud
+            $this->db->where('idSolicitud', $idSolicitud)
+                     ->update('SOLICITUD_PRESTAMO', [
+                        'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
+                        'fechaAprobacionRechazo' => date('Y-m-d H:i:s')
+                     ]);
+    
+            $this->db->trans_complete();
+            $result = $this->db->trans_status();
+            
+            log_message('debug', "Transacción completada: " . ($result ? 'OK' : 'ERROR'));
+            log_message('debug', "==== FIN aprobar_solicitud() ====\n");
+            
+            return $result;
+    
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', "Error en aprobar_solicitud: " . $e->getMessage());
+            return false;
+        }
+    }
     public function crear_solicitud_multiple($idUsuario, $publicaciones) {
         $this->db->trans_start();
         

@@ -91,20 +91,34 @@
                     </ul>
                 </li>
 
-                <?php if ($this->session->userdata('rol') == 'administrador'): ?>
-                    <li>
-                        <a href="javascript:void(0);" aria-haspopup="true" aria-expanded="false" id="reportes-menu">
-                            <i class="la la-file-text-o"></i>
-                            <span> Reportes </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="<?php echo site_url('reportes/prestamos'); ?>" id="reporte-prestamos">Reporte de Préstamos</a></li>
-                            <li><a href="<?php echo site_url('reportes/publicaciones'); ?>" id="publicaciones-solicitadas">Publicaciones más Solicitadas</a></li>
-                            <li><a href="<?php echo site_url('reportes/usuarios'); ?>" id="usuarios-activos">Usuarios más Activos</a></li>
-                        </ul>
-                    </li>
-                <?php endif; ?>
+                <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+                <li>
+                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                        <i class="fe-bar-chart-2"></i>
+                        <span> Reportes </span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+                        <li>
+                            <a href="<?php echo site_url('reportes/prestamos'); ?>">
+                                <i class="fe-file-text mr-1"></i>
+                                Préstamos Activos e Históricos
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?php echo site_url('reportes/publicaciones'); ?>">
+                                <i class="fe-book mr-1"></i>
+                                Publicaciones Más Solicitadas
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?php echo site_url('reportes/usuarios'); ?>">
+                                <i class="fe-users mr-1"></i>
+                                Usuarios Activos
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            <?php endif; ?>
 
                 <li>
                     <a href="<?php echo site_url('notificaciones/index'); ?>" id="notificaciones-menu">

@@ -182,18 +182,26 @@
             </button>
         </li>
 
-        <li class="dropdown d-none d-lg-block">
-            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
-                Reports
-                <i class="mdi mdi-chevron-down"></i> 
+       <!-- Condicional para mostrar Reports solo a administradores y encargados -->
+<?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+    <li class="dropdown d-none d-lg-block">
+        <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+            Reports
+            <i class="mdi mdi-chevron-down"></i> 
+        </a>
+        <div class="dropdown-menu">
+            <a href="<?php echo site_url('reportes/prestamos'); ?>" class="dropdown-item">
+                <i class="fe-file-text mr-1"></i> Informe de Préstamos
             </a>
-            <div class="dropdown-menu">
-                <!-- Adapta estos elementos según las necesidades de tu hemeroteca -->
-                <a href="javascript:void(0);" class="dropdown-item">Informe de Préstamos</a>
-                <a href="javascript:void(0);" class="dropdown-item">Informe de Publicaciones</a>
-                <a href="javascript:void(0);" class="dropdown-item">Informe de Usuarios</a>
-            </div>
-        </li>
+            <a href="<?php echo site_url('reportes/publicaciones'); ?>" class="dropdown-item">
+                <i class="fe-book-open mr-1"></i> Informe de Publicaciones
+            </a>
+            <a href="<?php echo site_url('reportes/usuarios'); ?>" class="dropdown-item">
+                <i class="fe-users mr-1"></i> Informe de Usuarios
+            </a>
+        </div>
+    </li>
+<?php endif; ?>
 
         <li class="dropdown dropdown-mega d-none d-lg-block">
             <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
