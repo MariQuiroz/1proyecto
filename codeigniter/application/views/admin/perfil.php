@@ -1,5 +1,5 @@
 <!-- application/views/usuario/perfil.php -->
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Mi Perfil</h2>
     
     <?php if ($this->session->flashdata('success')): ?>

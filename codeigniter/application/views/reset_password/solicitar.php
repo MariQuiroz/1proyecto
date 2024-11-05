@@ -1,5 +1,5 @@
 <!-- application/views/reset_password/solicitar.php -->
-<div class="container">
+<div class="container-fluid"> 
     <h2>Restablecer Contraseña</h2>
     <?php echo form_open_multipart('reset_password/solicitar'); ?>
         <div class="form-group">

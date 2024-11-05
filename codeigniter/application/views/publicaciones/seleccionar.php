@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container-fluid"> 
     <h2>Seleccionar Publicación para Solicitar</h2>
     <div class="table-responsive">
         <table class="table table-hover table-centered">

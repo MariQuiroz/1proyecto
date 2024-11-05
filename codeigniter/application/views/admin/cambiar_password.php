@@ -15,7 +15,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+<div class="container-fluid"> 
         <h2>Cambiar Contraseña</h2>
         <?php if (validation_errors()): ?>
             <div class="alert alert-danger"><?php echo validation_errors(); ?></div>

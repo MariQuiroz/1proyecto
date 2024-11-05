@@ -1,5 +1,5 @@
 <!-- application/views/prestamos/confirmar_prestamo.php -->
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Confirmar Préstamo</h2>
     
     <?php echo form_open('prestamos/crear_desde_reserva/' . $reserva->idReserva); ?>

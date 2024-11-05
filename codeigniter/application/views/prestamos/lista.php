@@ -1,4 +1,4 @@
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Lista de Préstamos</h2>
     
     <?php if ($this->session->flashdata('success')): ?>

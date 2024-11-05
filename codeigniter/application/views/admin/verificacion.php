@@ -22,7 +22,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container-fluid"> 
         <h2 class="text-center">Verificación de Cuenta</h2>
         <?php if(isset($mensaje)): ?>
             <div class="alert alert-info" role="alert">

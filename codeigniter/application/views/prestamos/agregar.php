@@ -1,5 +1,5 @@
 <!-- application/views/prestamos/agregar.php -->
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Registrar Nuevo Préstamo</h2>
     
     <?php echo form_open_multipart('prestamos/agregarbd'); ?>

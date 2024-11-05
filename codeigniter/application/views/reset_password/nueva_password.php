@@ -1,5 +1,5 @@
 <!-- application/views/reset_password/nueva_password.php -->
-<div class="container">
+<div class="container-fluid"> 
     <h2>Ingresa tu Nueva Contraseña</h2>
     <?php echo form_open_multipart('reset_password/actualizar'); ?>
         <input type="hidden" name="token" value="<?php echo $token; ?>">

@@ -1,5 +1,5 @@
 <!-- application/views/usuario/cambiar_contrasena.php -->
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Cambiar Contraseña</h2>
     
     <?php if ($this->session->flashdata('success')): ?>

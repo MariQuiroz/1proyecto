@@ -6,7 +6,7 @@
                 <div class="content">
 
                     <!-- Start Content-->
-                    <div class="container-fluid overflow-auto" style="max-height: 500px;">
+                    <div class="container-fluid"> 
                                    
 <div class="content-wrapper">
     <section class="content-header">

@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container-fluid"> 
     <h2>Notificaciones</h2>
     
     <?php if (empty($notificaciones)): ?>

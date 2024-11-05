@@ -1,5 +1,5 @@
 <!-- application/views/usuario/historial.php -->
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Mi Historial</h2>
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">

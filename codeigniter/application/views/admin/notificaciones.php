@@ -1,5 +1,5 @@
 <!-- application/views/usuario/notificaciones.php -->
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Mis Notificaciones</h2>
     
     <?php if (empty($notificaciones)): ?>

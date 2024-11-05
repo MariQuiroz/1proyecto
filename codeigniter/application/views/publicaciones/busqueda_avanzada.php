@@ -1,5 +1,5 @@
 <!-- application/views/publicaciones/busqueda_avanzada.php -->
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Búsqueda Avanzada de Publicaciones</h2>
     
     <form action="<?= site_url('publicaciones/buscar_avanzado') ?>" method="get">

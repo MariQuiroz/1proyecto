@@ -1,5 +1,5 @@
 <!-- application/views/dashboard.php -->
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Dashboard</h2>
     
     <?php if ($this->session->userdata('rol') == 'administrador'): ?>

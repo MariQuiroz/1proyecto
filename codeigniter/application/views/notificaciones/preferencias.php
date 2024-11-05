@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container-fluid"> 
     <h2>Preferencias de Notificación</h2>
     
     <?php if ($this->session->flashdata('mensaje')): ?>

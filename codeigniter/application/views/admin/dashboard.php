@@ -1,5 +1,5 @@
 <!-- application/views/admin/dashboard.php -->
-<div class="container">
+<div class="container-fluid"> 
     <h1 class="mt-4">Dashboard de Administración</h1>
     <div class="row">
         <div class="col-md-3 mb-3">

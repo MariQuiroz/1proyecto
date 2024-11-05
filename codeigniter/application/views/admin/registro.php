@@ -23,7 +23,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container-fluid"> 
         <h2 class="text-center">Registro de Nuevo Usuario</h2>
         
         <?php echo validation_errors('<div class="alert alert-danger">', '</div>'); ?>

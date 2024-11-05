@@ -1,5 +1,5 @@
 <!-- application/views/registro/formulario.php -->
-<div class="container">
+<div class="container-fluid">
     <h2>Registro de Usuario</h2>
     <?php echo form_open('registro/procesar'); ?>
         <div class="form-group">

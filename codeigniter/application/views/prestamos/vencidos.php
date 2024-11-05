@@ -1,4 +1,4 @@
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Préstamos Vencidos</h2>
     
     <?php if (empty($prestamos)): ?>

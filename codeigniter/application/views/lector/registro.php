@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>Xeria - Responsive Admin Dashboard Template</title>
+        <title>Hemeroteca</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <meta content="A fully featured admin theme which can be used to build CRM, CMS, etc." name="description" />
         <meta content="Coderthemes" name="author" />
@@ -18,7 +18,7 @@
 
     <body class="authentication-bg authentication-bg-pattern">
         <div class="account-pages mt-5 mb-5">
-            <div class="container">
+            <div class="container-fluid"> 
                 <div class="row justify-content-center">
                     <div class="col-md-8 col-lg-6 col-xl-5">
                         <div class="card">
@@ -130,7 +130,7 @@
         <!-- end page -->
 
         <footer class="footer footer-alt">
-            2024 &copy; Hemeroteca theme by <a href="#" class="text-muted">YourName</a> 
+            2024 &copy; Hemeroteca <a href="#" class="text-muted">"José Antonio Arze"</a> 
         </footer>
 
         <!-- Vendor js -->

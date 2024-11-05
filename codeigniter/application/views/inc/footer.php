@@ -1,7 +1,7 @@
  <!-- Footer Start -->
  <footer class="footer footer-alt">
            
-                        <?php echo date('Y'); ?> &copy; Hemeroteca
+                        <?php echo date('Y'); ?> &copy; Hemeroteca "José Antonio Arze"
 
         </footer>
         <!-- end Footer -->

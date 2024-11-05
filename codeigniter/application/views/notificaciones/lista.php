@@ -1,7 +1,6 @@
 <div class="content-page">
     <div class="content">
-        <div class="container-fluid overflow-auto" style="max-height: 500px;">
-            <div class="container">
+        <div class="container-fluid"> 
                 <div class="row mb-4">
                     <div class="col-12">
                         <h2 class="float-left">Notificaciones</h2>

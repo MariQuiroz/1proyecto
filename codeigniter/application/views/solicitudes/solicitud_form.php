@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container-fluid"> 
     <h2>Solicitud de Préstamo para "<?php echo $publicacion->titulo; ?>"</h2>
     <?php echo form_open('solicitudes/crear/' . $publicacion->idPublicacion); ?>
     

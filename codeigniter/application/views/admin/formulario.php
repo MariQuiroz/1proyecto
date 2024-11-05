@@ -4,7 +4,7 @@
 
 <div class="content-page">
     <div class="content">
-        <div class="container-fluid overflow-auto" style="max-height: 500px;">    
+        <div class="container-fluid">    
 
             <!-- start page title -->
             <div class="row">

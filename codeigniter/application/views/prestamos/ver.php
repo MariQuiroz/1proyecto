@@ -1,4 +1,4 @@
-<div class="content-wrapper">
+<div class="container-fluid"> 
     <section class="content-header">
         <h1>
             Detalles del Préstamo

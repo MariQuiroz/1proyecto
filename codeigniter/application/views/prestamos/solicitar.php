@@ -1,4 +1,4 @@
-<div class="container mt-4">
+<div class="container-fluid"> 
     <h2>Solicitar Préstamo</h2>
     
     <!-- Mostrar errores de validación -->
