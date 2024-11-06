@@ -191,17 +191,6 @@ class Publicacion_model extends CI_Model {
         return $this->db->get()->result();
     }
 
-   
-   public function obtener_publicacion_detallada($idPublicacion) {
-        $this->db->select('PUBLICACION.*, TIPO.nombreTipo, EDITORIAL.nombreEditorial');
-        $this->db->from('PUBLICACION');
-        $this->db->join('TIPO', 'TIPO.idTipo = PUBLICACION.idTipo');
-        $this->db->join('EDITORIAL', 'EDITORIAL.idEditorial = PUBLICACION.idEditorial');
-        $this->db->where('PUBLICACION.idPublicacion', $idPublicacion);
-        return $this->db->get()->row();
-    }
-
-
     public function cambiar_estado_publicacion($idPublicacion, $nuevoEstado) {
         $this->db->trans_start();
     
@@ -363,5 +352,42 @@ private function mapear_estado($estado) {
             return $this->mapear_estado($resultado->estado);
         }
         return 'Estado desconocido';
+    }
+    public function obtener_publicacion_detallada($idPublicacion) {
+        $this->db->select('
+            p.idPublicacion,
+            p.titulo,
+            p.ubicacionFisica,
+            p.estado,
+            e.nombreEditorial,
+            t.nombreTipo
+        ');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+        $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+        $this->db->where('p.idPublicacion', $idPublicacion);
+        
+        return $this->db->get()->row();
+    }
+    
+    public function obtener_publicaciones_seleccionadas($publicaciones_ids) {
+        if (empty($publicaciones_ids)) {
+            return array();
+        }
+    
+        $this->db->select('
+            p.idPublicacion,
+            p.titulo,
+            p.ubicacionFisica,
+            p.estado,
+            e.nombreEditorial,
+            t.nombreTipo
+        ');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+        $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+        $this->db->where_in('p.idPublicacion', $publicaciones_ids);
+        
+        return $this->db->get()->result();
     }
 }

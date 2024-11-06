@@ -103,50 +103,57 @@ class Solicitudes extends CI_Controller {
         }
         
   
-public function crear($idPublicacion) {
-    $this->_verificar_rol(['lector']);
-
-    // Inicializar array de publicaciones seleccionadas en sesión si no existe
-    if (!$this->session->userdata('publicaciones_seleccionadas')) {
-        $this->session->set_userdata('publicaciones_seleccionadas', array());
-    }
-
-    // Obtener publicaciones seleccionadas actuales
-    $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
-
-    // Añadir la nueva publicación si no está ya seleccionada
-    if (!in_array($idPublicacion, $publicaciones_seleccionadas)) {
-        // Verificar límite de 5 publicaciones
-        if (count($publicaciones_seleccionadas) >= 5) {
-            $this->session->set_flashdata('error', 'Solo puede solicitar hasta 5 publicaciones a la vez.');
-            redirect('publicaciones');
-            return;
+        public function crear($idPublicacion) {
+            $this->_verificar_rol(['lector']);
+            
+            // Validar que el usuario esté autenticado
+            if (!$this->session->userdata('idUsuario')) {
+                redirect('usuarios/login');
+                return;
+            }
+        
+            // Inicializar array de publicaciones seleccionadas
+            if (!$this->session->userdata('publicaciones_seleccionadas')) {
+                $this->session->set_userdata('publicaciones_seleccionadas', array());
+            }
+        
+            $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
+        
+            // Validar límite de publicaciones
+            if (!in_array($idPublicacion, $publicaciones_seleccionadas)) {
+                if (count($publicaciones_seleccionadas) >= 5) {
+                    $this->session->set_flashdata('error', 'Solo puede solicitar hasta 5 publicaciones a la vez.');
+                    redirect('publicaciones');
+                    return;
+                }
+        
+                // Obtener y validar la publicación
+                $publicacion = $this->Publicacion_model->obtener_publicacion_detallada($idPublicacion);
+        
+                if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                    $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
+                    redirect('publicaciones');
+                    return;
+                }
+        
+                $publicaciones_seleccionadas[] = $idPublicacion;
+                $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
+            }
+        
+            // Obtener detalles de todas las publicaciones seleccionadas
+            $data['publicaciones'] = array();
+            if (!empty($publicaciones_seleccionadas)) {
+                $data['publicaciones'] = $this->Publicacion_model->obtener_publicaciones_seleccionadas($publicaciones_seleccionadas);
+            }
+        
+            // Cargar las vistas
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('solicitudes/crear', $data);
+            $this->load->view('inc/footer');
         }
-
-        $publicacion = $this->Publicacion_model->obtener_publicacion($idPublicacion);
-        if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-            $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
-            redirect('publicaciones');
-            return;
-        }
-
-        $publicaciones_seleccionadas[] = $idPublicacion;
-        $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
-    }
-
-    // Obtener todas las publicaciones seleccionadas
-    $data['publicaciones'] = array();
-    foreach ($publicaciones_seleccionadas as $id) {
-        $data['publicaciones'][] = $this->Publicacion_model->obtener_publicacion($id);
-    }
-
-    $this->load->view('inc/header');
-    $this->load->view('inc/nabvar');
-    $this->load->view('inc/aside');
-    $this->load->view('solicitudes/crear', $data);
-    $this->load->view('inc/footer');
-}
-
+        
 public function confirmar() {
     $this->_verificar_rol(['lector']);
     $idUsuario = $this->session->userdata('idUsuario');
