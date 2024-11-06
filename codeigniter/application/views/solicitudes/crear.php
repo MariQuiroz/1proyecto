@@ -1,11 +1,33 @@
 <div class="content-page">
     <div class="content">
         <div class="container-fluid">
+             <!-- Mensajes de éxito y error -->
+             <?php if ($this->session->flashdata('mensaje')): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="mdi mdi-check-circle-outline mr-2"></i>
+                    <?php echo $this->session->flashdata('mensaje'); ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($this->session->flashdata('error')): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="mdi mdi-alert-circle-outline mr-2"></i>
+                    <?php echo $this->session->flashdata('error'); ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            <?php endif; ?>
+
             <div class="row">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body">
                             <h4 class="header-title">Solicitud de Préstamo</h4>
+                            
                             
                             <?php if ($this->session->flashdata('mensaje')): ?>
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -25,7 +47,8 @@
                                 </div>
                             <?php endif; ?>
                             
-                            <div class="alert alert-info">
+                             <!-- Mensaje informativo -->
+                             <div class="alert alert-info">
                                 <i class="mdi mdi-information-outline mr-2"></i>
                                 Puede seleccionar hasta 5 publicaciones para su solicitud.
                             </div>

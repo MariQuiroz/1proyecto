@@ -151,22 +151,6 @@ class Solicitudes extends CI_Controller {
             $this->load->view('inc/footer');
         }
         
-        public function remover($idPublicacion) {
-            $this->_verificar_rol(['lector']);
-            
-            $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas') ?: array();
-            
-            $key = array_search($idPublicacion, $publicaciones_seleccionadas);
-            if ($key !== false) {
-                unset($publicaciones_seleccionadas[$key]);
-                $publicaciones_seleccionadas = array_values($publicaciones_seleccionadas);
-                $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
-                $this->session->set_flashdata('mensaje', 'Publicación removida de la solicitud.');
-            }
-            
-            redirect('solicitudes/crear/0'); // Redirigir a la vista de crear con un ID inválido
-        }
-        
         public function cancelar() {
             $this->_verificar_rol(['lector']);
             $this->session->unset_userdata('publicaciones_seleccionadas');
@@ -753,5 +737,31 @@ private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
             header('Content-Type: application/json');
             echo json_encode($publicaciones);
         }
-        
+        public function remover($idPublicacion) {
+            $this->_verificar_rol(['lector']);
+            
+            // Inicializar array de publicaciones seleccionadas si no existe
+            if (!$this->session->userdata('publicaciones_seleccionadas')) {
+                $this->session->set_userdata('publicaciones_seleccionadas', array());
+            }
+            
+            $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
+            
+            // Verificar si la publicación está en la lista
+            $key = array_search($idPublicacion, $publicaciones_seleccionadas);
+            if ($key !== false) {
+                // Remover la publicación del array
+                unset($publicaciones_seleccionadas[$key]);
+                // Reindexar el array
+                $publicaciones_seleccionadas = array_values($publicaciones_seleccionadas);
+                // Actualizar la sesión
+                $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
+                
+                // Mensaje de éxito
+                $this->session->set_flashdata('mensaje', 'Publicación removida de la solicitud exitosamente.');
+            }
+            
+            // Redirigir de vuelta a la vista de crear
+            redirect('solicitudes/crear/0');
+        }
 }

@@ -480,5 +480,6 @@ private function _enviar_notificaciones($idPublicacion, $tipoNotificacion, $titu
         $this->db->where('PUBLICACION.idPublicacion', $idPublicacion);
         return $this->db->get()->row();
     }
+    
 
 }
