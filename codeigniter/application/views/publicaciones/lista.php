@@ -88,8 +88,11 @@
                                                     case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
                                                         $badge_class = 'badge-danger';
                                                         break;
-                                                    default:
-                                                        $badge_class = 'badge-secondary';
+                                                        case ESTADO_PUBLICACION_ELIMINADO:
+                                                            $badge_class = 'badge-secondary';
+                                                            break;
+                                                        default:
+                                                            $badge_class = 'badge-secondary';
                                                 }
                                             }
                                             ?>

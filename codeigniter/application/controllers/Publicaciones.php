@@ -271,23 +271,157 @@ class Publicaciones extends CI_Controller {
             return false;
         }
     }
-
-            
-        
-
     public function eliminar($idPublicacion) {
         $this->_verificar_permisos_admin_encargado();
-        $data = array(
-            'estado' => ESTADO_PUBLICACION_EN_MANTENIMIENTO,
-            'fechaActualizacion' => date('Y-m-d H:i:s'),
-            'idUsuarioCreador' => $this->session->userdata('idUsuario')
-        );
-        if ($this->publicacion_model->cambiar_estado_publicacion($idPublicacion, $data)) {
-            $this->session->set_flashdata('mensaje', 'Publicación marcada como en mantenimiento correctamente.');
-        } else {
-            $this->session->set_flashdata('error', 'No se pudo marcar la publicación como en mantenimiento.');
+    
+        // Verificar que la publicación exista y no esté en préstamo
+        $publicacion = $this->publicacion_model->obtener_publicacion($idPublicacion);
+        
+        if (!$publicacion) {
+            $this->session->set_flashdata('error', 'La publicación no existe.');
+            redirect('publicaciones/index');
+            return;
         }
-        redirect('publicaciones/index', 'refresh');
+    
+        // Iniciar transacción
+        $this->db->trans_start();
+    
+        try {
+            // Datos para la actualización
+            $data = array(
+                'estado' => ESTADO_PUBLICACION_ELIMINADO,
+                'fechaActualizacion' => date('Y-m-d H:i:s'),
+                'idUsuarioCreador' => $this->session->userdata('idUsuario')
+            );
+    
+            // Actualizar el estado de la publicación
+            $this->db->where('idPublicacion', $idPublicacion);
+            $resultado = $this->db->update('PUBLICACION', $data);
+    
+            if ($resultado) {
+                // Registrar la eliminación en el historial
+                $this->db->trans_complete();
+                
+                // Notificar a administradores y encargados
+                $usuarios_notificar = $this->usuario_model->obtener_admins_encargados();
+                foreach ($usuarios_notificar as $usuario) {
+                    $this->notificacion_model->crear_notificacion(
+                        $usuario->idUsuario,
+                        $idPublicacion,
+                        NOTIFICACION_ELIMINACION,
+                        "La publicación '{$publicacion->titulo}' ha sido eliminada."
+                    );
+                }
+    
+                $this->session->set_flashdata('mensaje', 'Publicación eliminada correctamente.');
+            } else {
+                throw new Exception('No se pudo eliminar la publicación.');
+            }
+    
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            $this->session->set_flashdata('error', 'Error al eliminar la publicación: ' . $e->getMessage());
+            log_message('error', 'Error al eliminar publicación: ' . $e->getMessage());
+        }
+    
+        redirect('publicaciones/index');
+    }
+    
+    // Método auxiliar para registrar la eliminación lógica
+    private function _registrar_eliminacion_logica($idPublicacion) {
+        $datos = array(
+            'idPublicacion' => $idPublicacion,
+            'fechaEliminacion' => date('Y-m-d H:i:s'),
+            'idUsuarioElimina' => $this->session->userdata('idUsuario'),
+            'motivo' => 'Eliminación lógica por usuario'
+        );
+        
+        // Registro en el historial si existe el modelo
+        if (isset($this->historial_model)) {
+            $this->historial_model->registrar_eliminacion($datos);
+        }
+        
+        // Registro en log del sistema
+        log_message('info', 'Publicación ID: ' . $idPublicacion . ' eliminada lógicamente por usuario ID: ' . $this->session->userdata('idUsuario'));
+    }
+    
+    // Método auxiliar para registrar cambios de estado
+    private function _registrar_cambio_estado($idPublicacion, $estadoAnterior, $nuevoEstado) {
+        $datos = array(
+            'idPublicacion' => $idPublicacion,
+            'estadoAnterior' => $estadoAnterior,
+            'estadoNuevo' => $nuevoEstado,
+            'fechaCambio' => date('Y-m-d H:i:s'),
+            'idUsuario' => $this->session->userdata('idUsuario')
+        );
+        
+        // Aquí podrías tener un modelo para registrar estos cambios
+        // $this->historial_model->registrar_cambio_estado($datos);
+    }
+    // Método auxiliar para enviar notificaciones
+private function _enviar_notificaciones($idPublicacion, $tipoNotificacion, $titulo) {
+    // Cargar el modelo de notificaciones si no está cargado
+    if (!isset($this->notificacion_model)) {
+        $this->load->model('notificacion_model');
+    }
+    
+    try {
+        // Obtener usuarios interesados
+        $usuarios_interesados = $this->notificacion_model->obtener_usuarios_interesados($idPublicacion);
+        
+        if (!empty($usuarios_interesados)) {
+            foreach ($usuarios_interesados as $usuario) {
+                switch ($tipoNotificacion) {
+                    case NOTIFICACION_DISPONIBILIDAD:
+                        $mensaje = "La publicación '$titulo' está disponible.";
+                        break;
+                    case NOTIFICACION_ELIMINACION:
+                        $mensaje = "La publicación '$titulo' ha sido retirada del catálogo.";
+                        break;
+                    case NOTIFICACION_VENCIMIENTO:
+                        $mensaje = "La publicación '$titulo' está próxima a vencer.";
+                        break;
+                    default:
+                        $mensaje = "Hay una actualización sobre la publicación '$titulo'.";
+                }
+                
+                $this->notificacion_model->crear_notificacion(
+                    $usuario->idUsuario,
+                    $idPublicacion,
+                    $tipoNotificacion,
+                    $mensaje
+                );
+            }
+            
+            // Registrar en el log del sistema
+            log_message('info', "Notificaciones enviadas - Tipo: $tipoNotificacion, Publicación: $idPublicacion, Usuarios notificados: " . count($usuarios_interesados));
+            return true;
+        }
+        
+        return false;
+        
+    } catch (Exception $e) {
+        log_message('error', "Error al enviar notificaciones: " . $e->getMessage());
+        return false;
+    }
+}
+    // Método auxiliar para notificar a usuarios interesados
+    private function _notificar_usuarios_interesados($idPublicacion) {
+        // Verificar si el modelo de notificaciones está cargado
+        if (!isset($this->notificacion_model)) {
+            $this->load->model('notificacion_model');
+        }
+        
+        // Obtener usuarios interesados y enviar notificaciones
+        $usuarios_interesados = $this->notificacion_model->obtener_usuarios_interesados($idPublicacion);
+        foreach ($usuarios_interesados as $usuario) {
+            $this->notificacion_model->crear_notificacion(
+                $usuario->idUsuario,
+                $idPublicacion,
+                NOTIFICACION_DISPONIBILIDAD,
+                'La publicación que te interesa ahora está disponible.'
+            );
+        }
     }
 
     public function buscar() {

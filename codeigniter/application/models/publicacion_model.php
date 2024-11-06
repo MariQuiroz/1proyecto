@@ -19,19 +19,6 @@ class Publicacion_model extends CI_Model {
         return $query->result();
     }
 
-    public function obtener_nombre_estado($estado) {
-        switch ($estado) {
-            case ESTADO_PUBLICACION_DISPONIBLE:
-                return 'Disponible';
-            case ESTADO_PUBLICACION_EN_CONSULTA:
-                return 'En Consulta';
-            case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
-                return 'En Mantenimiento';
-            default:
-                return 'Desconocido';
-        }
-    }
-
     /*public function obtener_publicaciones_disponibles() {
         $this->db->select('p.idPublicacion, p.titulo, p.portada, e.nombreEditorial, t.nombreTipo');
         $this->db->from('PUBLICACION p');
@@ -59,8 +46,7 @@ class Publicacion_model extends CI_Model {
         $this->db->where('idPublicacion', $idPublicacion);
         return $this->db->update('PUBLICACION', $data);
     }
-
-    public function obtener_publicacion($idPublicacion) {
+    public function obtener_publicacion() {
         $this->db->select('
             p.idPublicacion,
             p.idEditorial,
@@ -76,17 +62,55 @@ class Publicacion_model extends CI_Model {
             p.fechaActualizacion,
             e.nombreEditorial,
             t.nombreTipo,
-            sp.estadoSolicitud,
-            pr.estadoPrestamo
+            MAX(sp.estadoSolicitud) as estadoSolicitud,
+            MAX(pr.estadoPrestamo) as estadoPrestamo
         ');
+    
         $this->db->from('PUBLICACION p');
         $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
         $this->db->join('TIPO t', 't.idTipo = p.idTipo');
         $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
         $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
         $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
-        $this->db->where('p.idPublicacion', $idPublicacion);
-        return $this->db->get()->row();
+    
+        // Asegurarse de que la publicación no esté eliminada
+        $this->db->where('p.estado !=', 0); // Asumiendo que 0 es el estado eliminado
+    
+        // Agrupar por los campos necesarios
+        $this->db->group_by([
+            'p.idPublicacion',
+            'p.idEditorial',
+            'p.idTipo',
+            'p.titulo',
+            'p.fechaPublicacion',
+            'p.numeroPaginas',
+            'p.portada',
+            'p.descripcion',
+            'p.ubicacionFisica',
+            'p.estado',
+            'p.fechaCreacion',
+            'p.fechaActualizacion',
+            'e.nombreEditorial',
+            't.nombreTipo'
+        ]);
+    
+        $this->db->order_by('p.fechaCreacion', 'DESC');
+    
+        return $this->db->get()->result();
+    }
+    public function obtener_nombre_estado($estado) {
+        switch($estado) {
+            case ESTADO_PUBLICACION_DISPONIBLE:
+                return 'Disponible';
+            case ESTADO_PUBLICACION_EN_CONSULTA:
+                return 'En Consulta';
+            case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
+                return 'En Mantenimiento';
+            case ESTADO_PUBLICACION_ELIMINADO:
+                return 'Eliminado';
+            default:
+                return 'Desconocido';
+        }
     }
     public function obtener_publicaciones_disponibles() {
         $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas') ?: array();
@@ -132,6 +156,12 @@ class Publicacion_model extends CI_Model {
         $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
         $this->db->where('p.estado', 1);
         $this->db->order_by('p.fechaCreacion', 'DESC');
+         // Filtrar explícitamente las publicaciones eliminadas
+    $this->db->where('p.estado !=', ESTADO_PUBLICACION_ELIMINADO);
+    
+    // Ordenar por fecha de publicación
+    $this->db->order_by('p.fechaPublicacion', 'DESC');
+
         return $this->db->get()->result();
     }
 
@@ -174,8 +204,94 @@ class Publicacion_model extends CI_Model {
 
     public function cambiar_estado_publicacion($idPublicacion, $nuevoEstado) {
         $this->db->trans_start();
-
+    
+        // Verificar si la publicación existe y obtener su estado actual
+        $publicacion = $this->obtener_publicacion($idPublicacion);
+        if (!$publicacion) {
+            $this->db->trans_rollback();
+            return ['exito' => false, 'mensaje' => 'Publicación no encontrada.'];
+        }
+    
+        // Evitar cambios innecesarios
+        if ($publicacion->estado == $nuevoEstado) {
+            $this->db->trans_rollback();
+            return ['exito' => false, 'mensaje' => 'El estado de la publicación ya es el especificado.'];
+        }
+    
         // Verificar si hay préstamos activos
+        if ($this->tiene_prestamo_activo($idPublicacion) && $nuevoEstado == ESTADO_PUBLICACION_DISPONIBLE) {
+            $this->db->trans_rollback();
+            return ['exito' => false, 'mensaje' => 'No se puede cambiar el estado porque tiene préstamos activos.'];
+        }
+    
+        // Determinar datos según el nuevo estado
+        $data = [
+            'estado' => $nuevoEstado,
+            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $this->session->userdata('idUsuario') ?? null,
+        ];
+    
+        switch ($nuevoEstado) {
+            case ESTADO_PUBLICACION_ELIMINADO:
+                if ($publicacion->estado == ESTADO_PUBLICACION_EN_CONSULTA || $this->tiene_prestamo_activo($idPublicacion)) {
+                    $this->db->trans_rollback();
+                    return ['exito' => false, 'mensaje' => 'No se puede eliminar una publicación en consulta o con préstamos activos.'];
+                }
+            
+                break;
+    
+            case ESTADO_PUBLICACION_EN_CONSULTA:
+                if ($publicacion->estado == ESTADO_PUBLICACION_ELIMINADO) {
+                    $this->db->trans_rollback();
+                    return ['exito' => false, 'mensaje' => 'No se puede poner en consulta una publicación eliminada.'];
+                }
+                break;
+    
+            case ESTADO_PUBLICACION_DISPONIBLE:
+                if ($publicacion->estado == ESTADO_PUBLICACION_ELIMINADO) {
+                    $this->db->trans_rollback();
+                    return ['exito' => false, 'mensaje' => 'No se puede restaurar una publicación eliminada.'];
+                }
+                break;
+    
+            case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
+                if ($this->tiene_prestamo_activo($idPublicacion)) {
+                    $this->db->trans_rollback();
+                    return ['exito' => false, 'mensaje' => 'No se puede poner en mantenimiento una publicación con préstamos activos.'];
+                }
+                break;
+    
+            default:
+                $this->db->trans_rollback();
+                return ['exito' => false, 'mensaje' => 'Estado no válido.'];
+        }
+    
+        // Realizar el cambio de estado
+        $this->db->where('idPublicacion', $idPublicacion);
+        $this->db->update('PUBLICACION', $data);
+    
+        // Registrar en el log del sistema
+        log_message('info', 'Cambio de estado de publicación - ID: ' . $idPublicacion . 
+                            ' - Estado anterior: ' . $publicacion->estado . 
+                            ' - Nuevo estado: ' . $nuevoEstado);
+    
+        $this->db->trans_complete();
+    
+        if ($this->db->trans_status() === FALSE) {
+            log_message('error', 'Error en transacción al cambiar estado de publicación ID: ' . $idPublicacion);
+            return ['exito' => false, 'mensaje' => 'Error al cambiar el estado de la publicación.'];
+        }
+    
+        return [
+            'exito' => true, 
+            'mensaje' => 'Estado actualizado correctamente.',
+            'estado_anterior' => $publicacion->estado,
+            'nuevo_estado' => $nuevoEstado
+        ];
+    }
+    
+    // Función auxiliar para verificar préstamos activos
+    private function tiene_prestamo_activo($idPublicacion) {
         $this->db->select('pr.idPrestamo');
         $this->db->from('PUBLICACION p');
         $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion');
@@ -185,58 +301,44 @@ class Publicacion_model extends CI_Model {
             'p.idPublicacion' => $idPublicacion,
             'pr.estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO
         ]);
-        
-        $prestamo_activo = $this->db->get()->num_rows() > 0;
-
-        if ($prestamo_activo && $nuevoEstado == ESTADO_PUBLICACION_DISPONIBLE) {
-            $this->db->trans_rollback();
-            return false;
-        }
-
-        $data = [
-            'estado' => $nuevoEstado,
-            'fechaActualizacion' => date('Y-m-d H:i:s')
-        ];
-        
-        $this->db->where('idPublicacion', $idPublicacion);
-        $this->db->update('PUBLICACION', $data);
-
-        $this->db->trans_complete();
-        return $this->db->trans_status();
+    
+        return $this->db->get()->num_rows() > 0;
     }
+    
+  public function listar_todas_publicaciones() {
+    $this->db->select('
+        PUBLICACION.idPublicacion,
+        PUBLICACION.titulo,
+        PUBLICACION.fechaPublicacion,
+        PUBLICACION.numeroPaginas,
+        PUBLICACION.portada,
+        PUBLICACION.descripcion,
+        PUBLICACION.ubicacionFisica,
+        PUBLICACION.estado,
+        PUBLICACION.fechaCreacion,
+        PUBLICACION.fechaActualizacion,
+        TIPO.nombreTipo,
+        EDITORIAL.nombreEditorial
+    ');
+    $this->db->from('PUBLICACION');
+    $this->db->join('TIPO', 'TIPO.idTipo = PUBLICACION.idTipo');
+    $this->db->join('EDITORIAL', 'EDITORIAL.idEditorial = PUBLICACION.idEditorial');
+    // Añadir este filtro
+    $this->db->where('PUBLICACION.estado !=', ESTADO_PUBLICACION_ELIMINADO);
+    $this->db->order_by('PUBLICACION.fechaCreacion', 'DESC');
+    return $this->db->get()->result();
+}
 
-    public function listar_todas_publicaciones() {
-        $this->db->select('
-            PUBLICACION.idPublicacion,
-            PUBLICACION.titulo,
-            PUBLICACION.fechaPublicacion,
-            PUBLICACION.numeroPaginas,
-            PUBLICACION.portada,
-            PUBLICACION.descripcion,
-            PUBLICACION.ubicacionFisica,
-            PUBLICACION.estado,
-            PUBLICACION.fechaCreacion,
-            PUBLICACION.fechaActualizacion,
-            TIPO.nombreTipo,
-            EDITORIAL.nombreEditorial
-        ');
-        $this->db->from('PUBLICACION');
-        $this->db->join('TIPO', 'TIPO.idTipo = PUBLICACION.idTipo');
-        $this->db->join('EDITORIAL', 'EDITORIAL.idEditorial = PUBLICACION.idEditorial');
-        // No aplicamos filtro de estado para obtener todas las publicaciones
-        $this->db->order_by('PUBLICACION.fechaCreacion', 'DESC');
-        return $this->db->get()->result();
-    }
+private function mapear_estado($estado) {
+    $mapeo_estados = [
+        ESTADO_PUBLICACION_DISPONIBLE => 'Disponible',
+        ESTADO_PUBLICACION_EN_CONSULTA => 'En préstamo',
+        ESTADO_PUBLICACION_EN_MANTENIMIENTO => 'En mantenimiento',
+        ESTADO_PUBLICACION_ELIMINADO => 'Eliminado'  // Añadir este
+    ];
 
-    private function mapear_estado($estado) {
-        $mapeo_estados = [
-            ESTADO_PUBLICACION_DISPONIBLE => 'Disponible',
-            ESTADO_PUBLICACION_EN_CONSULTA => 'En préstamo',
-            ESTADO_PUBLICACION_EN_MANTENIMIENTO => 'En mantenimiento'
-        ];
-
-        return isset($mapeo_estados[$estado]) ? $mapeo_estados[$estado] : 'Estado desconocido';
-    }
+    return isset($mapeo_estados[$estado]) ? $mapeo_estados[$estado] : 'Estado desconocido';
+}
     public function obtener_estado_personalizado($idPublicacion, $idUsuario) {
         $this->db->select('
             p.estado,
