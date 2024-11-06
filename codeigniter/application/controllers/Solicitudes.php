@@ -106,47 +106,44 @@ class Solicitudes extends CI_Controller {
         public function crear($idPublicacion) {
             $this->_verificar_rol(['lector']);
             
-            // Validar que el usuario esté autenticado
             if (!$this->session->userdata('idUsuario')) {
                 redirect('usuarios/login');
                 return;
             }
         
-            // Inicializar array de publicaciones seleccionadas
+            // Inicializar array de publicaciones seleccionadas si no existe
             if (!$this->session->userdata('publicaciones_seleccionadas')) {
                 $this->session->set_userdata('publicaciones_seleccionadas', array());
             }
         
             $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
         
-            // Validar límite de publicaciones
-            if (!in_array($idPublicacion, $publicaciones_seleccionadas)) {
-                if (count($publicaciones_seleccionadas) >= 5) {
-                    $this->session->set_flashdata('error', 'Solo puede solicitar hasta 5 publicaciones a la vez.');
-                    redirect('publicaciones');
-                    return;
+            // Si se está intentando añadir una nueva publicación
+            if ($idPublicacion !== null) {
+                // Validar límite de publicaciones
+                if (!in_array($idPublicacion, $publicaciones_seleccionadas)) {
+                    if (count($publicaciones_seleccionadas) >= 5) {
+                        $this->session->set_flashdata('error', 'Solo puede solicitar hasta 5 publicaciones a la vez.');
+                    } else {
+                        // Verificar disponibilidad de la publicación
+                        $publicacion = $this->Publicacion_model->obtener_publicacion_detallada($idPublicacion);
+                        if ($publicacion && $publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE) {
+                            $publicaciones_seleccionadas[] = $idPublicacion;
+                            $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
+                            $this->session->set_flashdata('mensaje', 'Publicación añadida a la solicitud.');
+                        } else {
+                            $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
+                        }
+                    }
                 }
-        
-                // Obtener y validar la publicación
-                $publicacion = $this->Publicacion_model->obtener_publicacion_detallada($idPublicacion);
-        
-                if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-                    $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
-                    redirect('publicaciones');
-                    return;
-                }
-        
-                $publicaciones_seleccionadas[] = $idPublicacion;
-                $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
             }
         
-            // Obtener detalles de todas las publicaciones seleccionadas
+            // Obtener detalles de las publicaciones seleccionadas
             $data['publicaciones'] = array();
             if (!empty($publicaciones_seleccionadas)) {
                 $data['publicaciones'] = $this->Publicacion_model->obtener_publicaciones_seleccionadas($publicaciones_seleccionadas);
             }
         
-            // Cargar las vistas
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
@@ -154,6 +151,29 @@ class Solicitudes extends CI_Controller {
             $this->load->view('inc/footer');
         }
         
+        public function remover($idPublicacion) {
+            $this->_verificar_rol(['lector']);
+            
+            $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas') ?: array();
+            
+            $key = array_search($idPublicacion, $publicaciones_seleccionadas);
+            if ($key !== false) {
+                unset($publicaciones_seleccionadas[$key]);
+                $publicaciones_seleccionadas = array_values($publicaciones_seleccionadas);
+                $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
+                $this->session->set_flashdata('mensaje', 'Publicación removida de la solicitud.');
+            }
+            
+            redirect('solicitudes/crear/0'); // Redirigir a la vista de crear con un ID inválido
+        }
+        
+        public function cancelar() {
+            $this->_verificar_rol(['lector']);
+            $this->session->unset_userdata('publicaciones_seleccionadas');
+            $this->session->set_flashdata('mensaje', 'Solicitud cancelada.');
+            redirect('publicaciones');
+        }
+
 public function confirmar() {
     $this->_verificar_rol(['lector']);
     $idUsuario = $this->session->userdata('idUsuario');
@@ -734,5 +754,4 @@ private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
             echo json_encode($publicaciones);
         }
         
-       
 }

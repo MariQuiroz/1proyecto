@@ -112,15 +112,18 @@ class Publicacion_model extends CI_Model {
                 return 'Desconocido';
         }
     }
+   
     public function obtener_publicaciones_disponibles() {
         $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas') ?: array();
     
         $this->db->select('
             p.idPublicacion,
             p.titulo,
-            p.fechaPublicacion,
-            p.portada,
             p.ubicacionFisica,
+            p.estado,
+            p.portada,
+            p.fechaPublicacion,
+            p.descripcion,
             e.nombreEditorial,
             t.nombreTipo
         ');
@@ -128,9 +131,11 @@ class Publicacion_model extends CI_Model {
         $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
         $this->db->join('TIPO t', 't.idTipo = p.idTipo');
         $this->db->where('p.estado', ESTADO_PUBLICACION_DISPONIBLE);
+        
         if (!empty($publicaciones_seleccionadas)) {
             $this->db->where_not_in('p.idPublicacion', $publicaciones_seleccionadas);
         }
+        
         return $this->db->get()->result();
     }
 
@@ -359,6 +364,9 @@ private function mapear_estado($estado) {
             p.titulo,
             p.ubicacionFisica,
             p.estado,
+            p.portada,
+            p.fechaPublicacion,
+            p.descripcion,
             e.nombreEditorial,
             t.nombreTipo
         ');
@@ -369,9 +377,10 @@ private function mapear_estado($estado) {
         
         return $this->db->get()->row();
     }
+  
     
-    public function obtener_publicaciones_seleccionadas($publicaciones_ids) {
-        if (empty($publicaciones_ids)) {
+    public function obtener_publicaciones_seleccionadas($ids) {
+        if (empty($ids)) {
             return array();
         }
     
@@ -380,13 +389,39 @@ private function mapear_estado($estado) {
             p.titulo,
             p.ubicacionFisica,
             p.estado,
+            p.portada,
+            p.fechaPublicacion,
+            p.descripcion,
             e.nombreEditorial,
             t.nombreTipo
         ');
         $this->db->from('PUBLICACION p');
         $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
         $this->db->join('TIPO t', 't.idTipo = p.idTipo');
-        $this->db->where_in('p.idPublicacion', $publicaciones_ids);
+        $this->db->where_in('p.idPublicacion', $ids);
+        
+        return $this->db->get()->result();
+    }
+    public function obtener_publicaciones_disponibles_no_seleccionadas($publicaciones_seleccionadas) {
+        $this->db->select('
+            p.idPublicacion,
+            p.titulo,
+            p.ubicacionFisica,
+            p.estado,
+            p.portada,
+            p.fechaPublicacion,
+            p.descripcion,
+            e.nombreEditorial,
+            t.nombreTipo
+        ');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+        $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+        $this->db->where('p.estado', ESTADO_PUBLICACION_DISPONIBLE);
+        
+        if (!empty($publicaciones_seleccionadas)) {
+            $this->db->where_not_in('p.idPublicacion', $publicaciones_seleccionadas);
+        }
         
         return $this->db->get()->result();
     }
