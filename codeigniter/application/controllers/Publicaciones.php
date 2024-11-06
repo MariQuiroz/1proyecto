@@ -56,15 +56,28 @@ class Publicaciones extends CI_Controller {
 
     public function solicitar($idPublicacion) {
         $this->_verificar_sesion();
+        
         if (!$this->_es_lector()) {
             $this->session->set_flashdata('error', 'Solo los lectores pueden solicitar publicaciones.');
             redirect('publicaciones');
+            return;
         }
         
-        $publicacion = $this->publicacion_model->obtener_publicacion($idPublicacion);
+        $publicacion = $this->publicacion_model->obtener_publicacion_detallada($idPublicacion);
+        
+        if (!$publicacion) {
+            $this->session->set_flashdata('error', 'La publicación no existe.');
+            redirect('publicaciones');
+            return;
+        }
+        
+        // Limpiar mensajes previos para evitar duplicados
+        $this->session->unset_userdata('error');
+        
         if ($publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
             $this->session->set_flashdata('error', 'Esta publicación no está disponible para préstamo.');
             redirect('publicaciones');
+            return;
         }
     
         $data['publicacion'] = $publicacion;

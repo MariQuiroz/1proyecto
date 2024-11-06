@@ -7,7 +7,6 @@
                         <div class="card-body">
                             <h4 class="header-title">Solicitud de Préstamo</h4>
                             
-                            
                             <?php if ($this->session->flashdata('mensaje')): ?>
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <?php echo $this->session->flashdata('mensaje'); ?>

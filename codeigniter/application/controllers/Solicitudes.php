@@ -103,54 +103,7 @@ class Solicitudes extends CI_Controller {
         }
         
   
-        public function crear($idPublicacion) {
-            $this->_verificar_rol(['lector']);
-            
-            if (!$this->session->userdata('idUsuario')) {
-                redirect('usuarios/login');
-                return;
-            }
-        
-            // Inicializar array de publicaciones seleccionadas si no existe
-            if (!$this->session->userdata('publicaciones_seleccionadas')) {
-                $this->session->set_userdata('publicaciones_seleccionadas', array());
-            }
-        
-            $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
-        
-            // Si se está intentando añadir una nueva publicación
-            if ($idPublicacion !== null) {
-                // Validar límite de publicaciones
-                if (!in_array($idPublicacion, $publicaciones_seleccionadas)) {
-                    if (count($publicaciones_seleccionadas) >= 5) {
-                        $this->session->set_flashdata('error', 'Solo puede solicitar hasta 5 publicaciones a la vez.');
-                    } else {
-                        // Verificar disponibilidad de la publicación
-                        $publicacion = $this->Publicacion_model->obtener_publicacion_detallada($idPublicacion);
-                        if ($publicacion && $publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE) {
-                            $publicaciones_seleccionadas[] = $idPublicacion;
-                            $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
-                            $this->session->set_flashdata('mensaje', 'Publicación añadida a la solicitud.');
-                        } else {
-                            $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
-                        }
-                    }
-                }
-            }
-        
-            // Obtener detalles de las publicaciones seleccionadas
-            $data['publicaciones'] = array();
-            if (!empty($publicaciones_seleccionadas)) {
-                $data['publicaciones'] = $this->Publicacion_model->obtener_publicaciones_seleccionadas($publicaciones_seleccionadas);
-            }
-        
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('solicitudes/crear', $data);
-            $this->load->view('inc/footer');
-        }
-        
+    
         public function cancelar() {
             $this->_verificar_rol(['lector']);
             $this->session->unset_userdata('publicaciones_seleccionadas');
@@ -737,31 +690,118 @@ private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
             header('Content-Type: application/json');
             echo json_encode($publicaciones);
         }
-        public function remover($idPublicacion) {
-            $this->_verificar_rol(['lector']);
-            
-            // Inicializar array de publicaciones seleccionadas si no existe
-            if (!$this->session->userdata('publicaciones_seleccionadas')) {
-                $this->session->set_userdata('publicaciones_seleccionadas', array());
-            }
-            
-            $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
-            
-            // Verificar si la publicación está en la lista
-            $key = array_search($idPublicacion, $publicaciones_seleccionadas);
-            if ($key !== false) {
-                // Remover la publicación del array
-                unset($publicaciones_seleccionadas[$key]);
-                // Reindexar el array
-                $publicaciones_seleccionadas = array_values($publicaciones_seleccionadas);
-                // Actualizar la sesión
-                $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
-                
-                // Mensaje de éxito
-                $this->session->set_flashdata('mensaje', 'Publicación removida de la solicitud exitosamente.');
-            }
-            
-            // Redirigir de vuelta a la vista de crear
-            redirect('solicitudes/crear/0');
+       // En el controlador Solicitudes.php
+
+public function crear($idPublicacion) {
+    $this->_verificar_rol(['lector']);
+    
+    log_message('debug', "=== INICIO crear() - idPublicacion: {$idPublicacion} ===");
+    
+    if (!$this->session->userdata('idUsuario')) {
+        log_message('error', 'Usuario no autenticado intentando crear solicitud');
+        redirect('usuarios/login');
+        return;
+    }
+
+    // Inicializar array de publicaciones seleccionadas si no existe
+    if (!$this->session->userdata('publicaciones_seleccionadas')) {
+        $this->session->set_userdata('publicaciones_seleccionadas', array());
+        log_message('debug', 'Inicializando array de publicaciones seleccionadas');
+    }
+
+    $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
+    log_message('debug', 'Publicaciones seleccionadas actuales: ' . json_encode($publicaciones_seleccionadas));
+
+    // Si se está intentando añadir una nueva publicación
+    if ($idPublicacion !== null && $idPublicacion !== '0') {
+        log_message('debug', "Intentando añadir publicación ID: {$idPublicacion}");
+        
+        // Verificar disponibilidad
+        $publicacion = $this->Publicacion_model->obtener_publicacion_detallada($idPublicacion);
+        log_message('debug', "Estado de la publicación: " . ($publicacion ? $publicacion->estado : 'No encontrada'));
+
+        if (!$publicacion) {
+            log_message('error', "Publicación {$idPublicacion} no encontrada");
+            $this->session->set_flashdata('error', 'La publicación no existe.');
+            redirect('publicaciones/lista');
+            return;
         }
+
+        if (in_array($idPublicacion, $publicaciones_seleccionadas)) {
+            log_message('info', "Publicación {$idPublicacion} ya está en la lista");
+            $this->session->set_flashdata('error', 'La publicación ya está en la lista de solicitudes.');
+        } else {
+            if (count($publicaciones_seleccionadas) >= 5) {
+                log_message('warning', 'Intento de añadir más de 5 publicaciones');
+                $this->session->set_flashdata('error', 'Solo puede solicitar hasta 5 publicaciones a la vez.');
+            } else if ($publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                log_message('warning', "Publicación {$idPublicacion} no disponible. Estado: {$publicacion->estado}");
+                $this->session->set_flashdata('error', 'La publicación no está disponible para préstamo.');
+            } else {
+                $publicaciones_seleccionadas[] = $idPublicacion;
+                $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
+                $this->session->set_flashdata('mensaje', 'Publicación añadida a la solicitud.');
+                log_message('debug', "Publicación {$idPublicacion} añadida exitosamente");
+            }
+        }
+
+        // Limpiar mensajes de error previos si hay éxito
+        if ($this->session->flashdata('mensaje')) {
+            $this->session->unset_userdata('error');
+        }
+    }
+
+    // Obtener detalles actualizados
+    $data['publicaciones'] = array();
+    if (!empty($publicaciones_seleccionadas)) {
+        $data['publicaciones'] = $this->Publicacion_model->obtener_publicaciones_seleccionadas($publicaciones_seleccionadas);
+        log_message('debug', 'Total publicaciones en la solicitud: ' . count($data['publicaciones']));
+    }
+
+    log_message('debug', "=== FIN crear() ===");
+
+    $this->load->view('inc/header');
+    $this->load->view('inc/nabvar');
+    $this->load->view('inc/aside');
+    $this->load->view('solicitudes/crear', $data);
+    $this->load->view('inc/footer');
+}
+
+public function remover($idPublicacion) {
+    $this->_verificar_rol(['lector']);
+    
+    log_message('debug', "=== INICIO remover() - idPublicacion: {$idPublicacion} ===");
+    
+    // Validar que el ID de publicación es válido
+    if (!$idPublicacion) {
+        log_message('error', 'ID de publicación inválido');
+        $this->session->set_flashdata('error', 'ID de publicación inválido.');
+        redirect('solicitudes/crear/0');
+        return;
+    }
+
+    $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas') ?: array();
+    log_message('debug', 'Publicaciones antes de remover: ' . json_encode($publicaciones_seleccionadas));
+
+    // Verificar si la publicación está en la lista
+    $key = array_search($idPublicacion, $publicaciones_seleccionadas);
+    if ($key !== false) {
+        unset($publicaciones_seleccionadas[$key]);
+        $publicaciones_seleccionadas = array_values($publicaciones_seleccionadas);
+        $this->session->set_userdata('publicaciones_seleccionadas', $publicaciones_seleccionadas);
+        
+        log_message('debug', 'Publicaciones después de remover: ' . json_encode($publicaciones_seleccionadas));
+        log_message('info', "Publicación {$idPublicacion} removida exitosamente");
+        
+        // Establecer mensaje de éxito y limpiar errores previos
+        $this->session->set_flashdata('mensaje', 'Publicación removida de la solicitud exitosamente.');
+        $this->session->unset_userdata('error');
+    } else {
+        log_message('warning', "Publicación {$idPublicacion} no encontrada en la lista");
+        $this->session->set_flashdata('error', 'La publicación no está en la lista de solicitudes.');
+    }
+    
+    log_message('debug', "=== FIN remover() ===");
+    redirect('solicitudes/crear/0');
+}
 }

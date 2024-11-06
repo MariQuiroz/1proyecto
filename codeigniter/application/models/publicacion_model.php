@@ -358,26 +358,6 @@ private function mapear_estado($estado) {
         }
         return 'Estado desconocido';
     }
-    public function obtener_publicacion_detallada($idPublicacion) {
-        $this->db->select('
-            p.idPublicacion,
-            p.titulo,
-            p.ubicacionFisica,
-            p.estado,
-            p.portada,
-            p.fechaPublicacion,
-            p.descripcion,
-            e.nombreEditorial,
-            t.nombreTipo
-        ');
-        $this->db->from('PUBLICACION p');
-        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
-        $this->db->join('TIPO t', 't.idTipo = p.idTipo');
-        $this->db->where('p.idPublicacion', $idPublicacion);
-        
-        return $this->db->get()->row();
-    }
-  
     
     public function obtener_publicaciones_seleccionadas($ids) {
         if (empty($ids)) {
@@ -425,4 +405,48 @@ private function mapear_estado($estado) {
         
         return $this->db->get()->result();
     }
+    public function validar_disponibilidad($idPublicacion) {
+        $this->db->select('estado');
+        $this->db->from('PUBLICACION');
+        $this->db->where('idPublicacion', $idPublicacion);
+        
+        $publicacion = $this->db->get()->row();
+        
+        if (!$publicacion) {
+            return false;
+        }
+        
+        return $publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE;
+    }
+    // En el modelo Publicacion_model.php
+
+public function obtener_publicacion_detallada($idPublicacion) {
+    log_message('debug', "Obteniendo detalles de publicación ID: {$idPublicacion}");
+    
+    $this->db->select('
+        p.idPublicacion,
+        p.titulo,
+        p.ubicacionFisica,
+        p.estado,
+        p.portada,
+        p.fechaPublicacion,
+        p.descripcion,
+        e.nombreEditorial,
+        t.nombreTipo
+    ');
+    $this->db->from('PUBLICACION p');
+    $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+    $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+    $this->db->where('p.idPublicacion', $idPublicacion);
+    
+    $resultado = $this->db->get()->row();
+    log_message('debug', 'Query ejecutado: ' . $this->db->last_query());
+    log_message('debug', 'Resultado: ' . ($resultado ? 'encontrado' : 'no encontrado'));
+    
+    if ($resultado) {
+        log_message('debug', 'Estado de la publicación: ' . $resultado->estado);
+    }
+    
+    return $resultado;
+}
 }
