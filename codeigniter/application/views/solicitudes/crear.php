@@ -145,15 +145,15 @@
                                         <?php endif; ?>
 
                                         <a href="<?php echo site_url('solicitudes/confirmar'); ?>" 
-                                           class="btn btn-primary"
-                                           onclick="return confirm('¿Está seguro de confirmar la solicitud? Una vez confirmada, no podrá modificarla.');">
+                                        class="btn btn-primary"
+                                        onclick="return confirm('¿Está seguro de confirmar la solicitud? Una vez confirmada, no podrá modificarla.');">
                                             <i class="mdi mdi-check-circle mr-1"></i>Confirmar Solicitud
                                         </a>
 
                                         <a href="<?php echo site_url('solicitudes/cancelar'); ?>" 
-                                           class="btn btn-secondary"
-                                           onclick="return confirm('¿Está seguro de cancelar la solicitud? Se perderán todas las publicaciones seleccionadas.');">
-                                            <i class="mdi mdi-close-circle mr-1"></i>Cancelar
+                                        class="btn btn-danger"
+                                        onclick="return confirm('¿Está seguro de cancelar? Se eliminarán todas las publicaciones seleccionadas.');">
+                                            <i class="mdi mdi-close-circle mr-1"></i>Cancelar Selección
                                         </a>
                                     </div>
                                 </div>

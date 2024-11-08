@@ -758,7 +758,7 @@ public function confirmar() {
     redirect('solicitudes/mis_solicitudes');
 }
 
-public function cancelar($idSolicitud) {
+/*public function cancelar($idSolicitud) {
     $this->_verificar_rol(['lector']);
     $idUsuario = $this->session->userdata('idUsuario');
 
@@ -777,7 +777,30 @@ public function cancelar($idSolicitud) {
 
     redirect('solicitudes/mis_solicitudes');
 }
+*/
+public function cancelar() {
+    $this->_verificar_rol(['lector']);
+    
+    log_message('debug', '=== INICIO cancelar() ===');
 
+    try {
+        // Limpiar las publicaciones seleccionadas de la sesión
+        $this->session->unset_userdata('publicaciones_seleccionadas');
+        
+        // Registrar en el log para seguimiento
+        log_message('info', 'Usuario ID: ' . $this->session->userdata('idUsuario') . ' canceló su selección de publicaciones');
+        
+        $this->session->set_flashdata('mensaje', 'Se ha cancelado la selección de publicaciones.');
+        
+        // Redireccionar al catálogo de publicaciones
+        redirect('publicaciones/index');
+        
+    } catch (Exception $e) {
+        log_message('error', 'Error al cancelar selección: ' . $e->getMessage());
+        $this->session->set_flashdata('error', 'Ocurrió un error al cancelar la selección. Por favor, inténtelo nuevamente.');
+        redirect('solicitudes/crear/0');
+    }
+}
 public function remover($idPublicacion) {
     $this->_verificar_rol(['lector']);
     
