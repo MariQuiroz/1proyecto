@@ -13,6 +13,7 @@ class Publicaciones extends CI_Controller {
         $this->load->helper('url');
         $this->load->library('form_validation');
         $this->load->library('upload');
+        $this->load->helper('estados');
         
     }
 

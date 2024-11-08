@@ -600,5 +600,373 @@ class Solicitud_model extends CI_Model {
     public function registrar_historial_solicitud($datos) {
         return $this->db->insert('HISTORIAL_SOLICITUD', $datos);
     }
+    public function tiene_solicitud_pendiente($idPublicacion) {
+        $this->db->select('sp.idSolicitud');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->where([
+            'ds.idPublicacion' => $idPublicacion,
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1
+        ]);
+        return $this->db->get()->num_rows() > 0;
+    }
+
+    public function crear_solicitud_individual($data_solicitud, $idPublicacion) {
+        $this->db->trans_start();
+
+        try {
+            // Insertar la solicitud principal
+            $this->db->insert('SOLICITUD_PRESTAMO', $data_solicitud);
+            $idSolicitud = $this->db->insert_id();
+
+            // Insertar el detalle de la solicitud
+            $detalle = array(
+                'idSolicitud' => $idSolicitud,
+                'idPublicacion' => $idPublicacion,
+                'observaciones' => 'Solicitud pendiente de aprobación'
+            );
+            $this->db->insert('DETALLE_SOLICITUD', $detalle);
+
+            $this->db->trans_complete();
+            return $this->db->trans_status() ? $idSolicitud : false;
+
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Error al crear solicitud individual: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function verificar_tiempo_limite() {
+        $fecha_actual = date('Y-m-d H:i:s');
+        
+        // Obtener solicitudes que han excedido el tiempo límite
+        $this->db->select('sp.idSolicitud, sp.idUsuario, ds.idPublicacion');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->where([
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1,
+            'sp.fechaLimiteAprobacion <' => $fecha_actual
+        ]);
+
+        $solicitudes_vencidas = $this->db->get()->result();
+
+        foreach ($solicitudes_vencidas as $solicitud) {
+            // Actualizar estado de la solicitud
+            $this->db->where('idSolicitud', $solicitud->idSolicitud);
+            $this->db->update('SOLICITUD_PRESTAMO', [
+                'estadoSolicitud' => ESTADO_SOLICITUD_CANCELADA,
+                'fechaActualizacion' => $fecha_actual,
+                'observaciones' => 'Cancelada automáticamente por tiempo límite excedido'
+            ]);
+
+            // Liberar la publicación
+            $this->db->where('idPublicacion', $solicitud->idPublicacion);
+            $this->db->update('PUBLICACION', [
+                'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                'fechaActualizacion' => $fecha_actual
+            ]);
+
+            // Notificar al usuario
+            $this->Notificacion_model->crear_notificacion(
+                $solicitud->idUsuario,
+                $solicitud->idPublicacion,
+                NOTIFICACION_CANCELACION_TIEMPO,
+                'Su solicitud ha sido cancelada por exceder el tiempo límite de aprobación.'
+            );
+        }
+    }
+  
+    public function verificar_disponibilidad_reserva($idPublicacion) {
+        // Verificar si hay alguna reserva activa para la publicación
+        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 hours'));
+        
+        $this->db->select('
+            sp.idSolicitud,
+            sp.idUsuario,
+            sp.fechaCreacion,
+            u.nombres,
+            u.apellidoPaterno
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idSolicitud = sp.idSolicitud');
+        $this->db->join('USUARIO u', 'u.idUsuario = sp.idUsuario');
+        $this->db->where([
+            'ds.idPublicacion' => $idPublicacion,
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1,
+            'sp.fechaCreacion >' => $tiempoLimite
+        ]);
     
+        $reserva = $this->db->get()->row();
+    
+        if ($reserva) {
+            return [
+                'disponible' => false,
+                'motivo' => 'Reservada por otro usuario',
+                'tiempo_restante' => strtotime($tiempoLimite) - strtotime($reserva->fechaCreacion),
+                'usuario' => $reserva->nombres . ' ' . $reserva->apellidoPaterno
+            ];
+        }
+    
+        return ['disponible' => true];
+    }
+    
+    
+    public function formatear_tiempo_restante($segundos) {
+        if ($segundos <= 0) {
+            return '0 minutos';
+        }
+    
+        $horas = floor($segundos / 3600);
+        $minutos = floor(($segundos % 3600) / 60);
+        $segundosRestantes = $segundos % 60;
+    
+        $partes = [];
+        if ($horas > 0) {
+            $partes[] = $horas . ' hora' . ($horas > 1 ? 's' : '');
+        }
+        if ($minutos > 0) {
+            $partes[] = $minutos . ' minuto' . ($minutos > 1 ? 's' : '');
+        }
+        if ($segundosRestantes > 0 && count($partes) == 0) {
+            $partes[] = $segundosRestantes . ' segundo' . ($segundosRestantes > 1 ? 's' : '');
+        }
+    
+        return implode(', ', $partes);
+    }
+    public function contar_solicitudes_activas($idUsuario) {
+        // Obtener el tiempo límite (2 horas atrás)
+        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 hours'));
+        
+        $this->db->select('COUNT(DISTINCT sp.idSolicitud) as total');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->where([
+            'sp.idUsuario' => $idUsuario,
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1,
+            'sp.fechaCreacion >' => $tiempoLimite
+        ]);
+    
+        $resultado = $this->db->get()->row();
+        return $resultado ? $resultado->total : 0;
+    }
+    
+    // Método adicional para contar solicitudes activas por publicación
+    public function contar_solicitudes_activas_publicacion($idPublicacion) {
+        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 hours'));
+        
+        $this->db->select('COUNT(DISTINCT sp.idSolicitud) as total');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idSolicitud = sp.idSolicitud');
+        $this->db->where([
+            'ds.idPublicacion' => $idPublicacion,
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1,
+            'sp.fechaCreacion >' => $tiempoLimite
+        ]);
+    
+        $resultado = $this->db->get()->row();
+        return $resultado ? $resultado->total : 0;
+    }
+    
+    // Método útil para obtener el resumen de solicitudes activas
+    public function obtener_resumen_solicitudes_activas($idUsuario) {
+        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 hours'));
+        
+        $this->db->select('
+            sp.idSolicitud,
+            sp.fechaCreacion,
+            GROUP_CONCAT(p.titulo SEPARATOR ", ") as publicaciones,
+            COUNT(ds.idPublicacion) as total_publicaciones
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idSolicitud = sp.idSolicitud');
+        $this->db->join('PUBLICACION p', 'p.idPublicacion = ds.idPublicacion');
+        $this->db->where([
+            'sp.idUsuario' => $idUsuario,
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1,
+            'sp.fechaCreacion >' => $tiempoLimite
+        ]);
+        $this->db->group_by('sp.idSolicitud');
+        
+        return $this->db->get()->result();
+    }
+    
+    // Método para verificar si se puede crear una nueva solicitud
+    public function puede_crear_nueva_solicitud($idUsuario) {
+        $solicitudes_activas = $this->contar_solicitudes_activas($idUsuario);
+        $limite_solicitudes = 5; // Puedes hacer esto configurable
+        
+        return [
+            'puede_crear' => $solicitudes_activas < $limite_solicitudes,
+            'solicitudes_activas' => $solicitudes_activas,
+            'solicitudes_restantes' => $limite_solicitudes - $solicitudes_activas,
+            'limite_solicitudes' => $limite_solicitudes
+        ];
+    }  
+ 
+
+    public function tiene_reserva_activa($idPublicacion) {
+        $this->db->where('DETALLE_SOLICITUD.idPublicacion', $idPublicacion);
+        $this->db->where('SOLICITUD_PRESTAMO.estadoSolicitud', ESTADO_SOLICITUD_RESERVA_TEMPORAL);
+        $this->db->where('SOLICITUD_PRESTAMO.fechaSolicitud >', date('Y-m-d H:i:s', strtotime('-2 hours')));
+        $this->db->join('DETALLE_SOLICITUD', 'SOLICITUD_PRESTAMO.idSolicitud = DETALLE_SOLICITUD.idSolicitud');
+        return $this->db->get('SOLICITUD_PRESTAMO')->num_rows() > 0;
+    }
+
+    public function crear_reserva_temporal($idPublicacion, $idUsuario) {
+        $data = array(
+            'idUsuario' => $idUsuario,
+            'fechaSolicitud' => date('Y-m-d H:i:s'),
+            'estadoSolicitud' => ESTADO_SOLICITUD_RESERVA_TEMPORAL,
+            'estado' => 1,
+            'fechaCreacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $idUsuario
+        );
+
+        $this->db->insert('SOLICITUD_PRESTAMO', $data);
+        $idSolicitud = $this->db->insert_id();
+
+        $data_detalle = array(
+            'idSolicitud' => $idSolicitud,
+            'idPublicacion' => $idPublicacion,
+            'observaciones' => 'Reserva temporal'
+        );
+
+        $this->db->insert('DETALLE_SOLICITUD', $data_detalle);
+        
+        if ($this->db->affected_rows() > 0) {
+            return ['exito' => true, 'mensaje' => 'Reserva creada correctamente.'];
+        } else {
+            return ['exito' => false, 'mensaje' => 'Error al crear la reserva.'];
+        }
+    }
+
+    public function obtener_tiempo_restante_reserva($idPublicacion) {
+        $this->db->select('SOLICITUD_PRESTAMO.fechaSolicitud');
+        $this->db->where('DETALLE_SOLICITUD.idPublicacion', $idPublicacion);
+        $this->db->where('SOLICITUD_PRESTAMO.estadoSolicitud', ESTADO_SOLICITUD_RESERVA_TEMPORAL);
+        $this->db->join('DETALLE_SOLICITUD', 'SOLICITUD_PRESTAMO.idSolicitud = DETALLE_SOLICITUD.idSolicitud');
+        $reserva = $this->db->get('SOLICITUD_PRESTAMO')->row();
+
+        if ($reserva) {
+            $fechaExpiracion = new DateTime($reserva->fechaSolicitud);
+            $fechaExpiracion->add(new DateInterval('PT2H')); // Añadir 2 horas
+            $ahora = new DateTime();
+            $intervalo = $ahora->diff($fechaExpiracion);
+            return $intervalo->format('%H:%I:%S');
+        }
+
+        return '00:00:00';
+    }
+
+    public function verificar_reserva_vigente($idPublicacion, $idUsuario) {
+        $this->db->where('DETALLE_SOLICITUD.idPublicacion', $idPublicacion);
+        $this->db->where('SOLICITUD_PRESTAMO.idUsuario', $idUsuario);
+        $this->db->where('SOLICITUD_PRESTAMO.estadoSolicitud', ESTADO_SOLICITUD_RESERVA_TEMPORAL);
+        $this->db->where('SOLICITUD_PRESTAMO.fechaSolicitud >', date('Y-m-d H:i:s', strtotime('-2 hours')));
+        $this->db->join('DETALLE_SOLICITUD', 'SOLICITUD_PRESTAMO.idSolicitud = DETALLE_SOLICITUD.idSolicitud');
+        return $this->db->get('SOLICITUD_PRESTAMO')->num_rows() > 0;
+    }
+
+    public function convertir_reserva_en_solicitud($idPublicacion, $idUsuario) {
+        // Iniciar transacción
+        $this->db->trans_start();
+
+        // Buscar la reserva temporal
+        $this->db->where('DETALLE_SOLICITUD.idPublicacion', $idPublicacion);
+        $this->db->where('SOLICITUD_PRESTAMO.idUsuario', $idUsuario);
+        $this->db->where('SOLICITUD_PRESTAMO.estadoSolicitud', ESTADO_SOLICITUD_RESERVA_TEMPORAL);
+        $this->db->join('DETALLE_SOLICITUD', 'SOLICITUD_PRESTAMO.idSolicitud = DETALLE_SOLICITUD.idSolicitud');
+        $reserva = $this->db->get('SOLICITUD_PRESTAMO')->row();
+
+        if (!$reserva) {
+            return ['exito' => false, 'mensaje' => 'No se encontró una reserva válida.'];
+        }
+
+        // Actualizar estado de la solicitud
+        $this->db->where('idSolicitud', $reserva->idSolicitud);
+        $this->db->update('SOLICITUD_PRESTAMO', ['estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE]);
+
+        // Actualizar observaciones en el detalle
+        $this->db->where('idDetalleSolicitud', $reserva->idDetalleSolicitud);
+        $this->db->update('DETALLE_SOLICITUD', ['observaciones' => 'Solicitud de préstamo']);
+
+        // Completar transacción
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            return ['exito' => false, 'mensaje' => 'Error en la transacción.'];
+        } else {
+            return ['exito' => true, 'idSolicitud' => $reserva->idSolicitud, 'mensaje' => 'Solicitud creada correctamente.'];
+        }
+    }
+
+    public function cancelar_solicitud($idSolicitud, $idUsuario) {
+        // ...
+    }
+
+    public function cancelar_reserva_temporal($idPublicacion, $idUsuario) {
+        log_message('debug', "=== INICIO cancelar_reserva_temporal() ===");
+        log_message('debug', "Publicación: {$idPublicacion}, Usuario: {$idUsuario}");
+    
+        $this->db->trans_start();
+    
+        try {
+            // Buscar la reserva temporal
+            $this->db->select('
+                sp.idSolicitud, 
+                ds.idDetalleSolicitud
+            ');
+            $this->db->from('SOLICITUD_PRESTAMO sp');
+            $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+            $this->db->where([
+                'ds.idPublicacion' => $idPublicacion,
+                'sp.idUsuario' => $idUsuario,
+                'sp.estadoSolicitud' => ESTADO_SOLICITUD_RESERVA_TEMPORAL
+            ]);
+    
+            $reserva = $this->db->get()->row();
+            
+            if ($reserva) {
+                log_message('debug', "Reserva encontrada - ID Solicitud: {$reserva->idSolicitud}");
+    
+                // Eliminar el detalle de la solicitud
+                $this->db->where('idDetalleSolicitud', $reserva->idDetalleSolicitud);
+                if (!$this->db->delete('DETALLE_SOLICITUD')) {
+                    throw new Exception('Error al eliminar el detalle de la solicitud');
+                }
+    
+                // Eliminar la solicitud principal
+                $this->db->where('idSolicitud', $reserva->idSolicitud);
+                if (!$this->db->delete('SOLICITUD_PRESTAMO')) {
+                    throw new Exception('Error al eliminar la solicitud');
+                }
+    
+                $this->db->trans_complete();
+                
+                if ($this->db->trans_status() === FALSE) {
+                    throw new Exception('Error en la transacción');
+                }
+    
+                log_message('debug', "Reserva temporal cancelada exitosamente");
+                return true;
+            }
+    
+            log_message('debug', "No se encontró reserva temporal para cancelar");
+            $this->db->trans_commit();
+            return true; // Retornamos true si no hay reserva que cancelar
+    
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', "Error en cancelar_reserva_temporal: " . $e->getMessage());
+            return false;
+        } finally {
+            log_message('debug', "=== FIN cancelar_reserva_temporal() ===");
+        }
+    }
 }
