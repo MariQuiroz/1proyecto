@@ -38,13 +38,23 @@ class Publicaciones extends CI_Controller {
 
     public function index() {
         $this->_verificar_sesion();
+        
         $idUsuario = $this->session->userdata('idUsuario');
         $publicaciones = $this->publicacion_model->listar_todas_publicaciones();
-
+        
         foreach ($publicaciones as &$publicacion) {
-            $publicacion->estado_personalizado = $this->publicacion_model->obtener_estado_personalizado($publicacion->idPublicacion, $idUsuario);
+            $estado_info = $this->publicacion_model->mapear_estado(
+                $publicacion->estado,
+                $idUsuario,
+                $publicacion->estadoReserva,
+                $publicacion->idUsuarioSolicitud
+            );
+            
+            $publicacion->estado_texto = $estado_info['estado'];
+            $publicacion->estado_clase = $estado_info['clase'];
+            $publicacion->puede_solicitar = $this->_puede_solicitar_publicacion($publicacion);
         }
-
+    
         $data['publicaciones'] = $publicaciones;
         $data['es_lector'] = $this->_es_lector();
         
@@ -53,6 +63,19 @@ class Publicaciones extends CI_Controller {
         $this->load->view('inc/aside');
         $this->load->view('publicaciones/lista', $data);
         $this->load->view('inc/footer');
+    }
+    
+    private function _puede_solicitar_publicacion($publicacion) {
+        if (!$this->_es_lector()) {
+            return false;
+        }
+        
+        // Convertir a entero para comparación segura
+        $estado = intval($publicacion->estado);
+        
+        return $estado === ESTADO_PUBLICACION_DISPONIBLE && 
+               !$publicacion->estadoReserva && 
+               !$publicacion->estadoPrestamo;
     }
 
     public function solicitar($idPublicacion) {

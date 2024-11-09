@@ -710,6 +710,7 @@ public function confirmar() {
     $idUsuario = $this->session->userdata('idUsuario');
     
     $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
+    
     if (empty($publicaciones_seleccionadas)) {
         $this->session->set_flashdata('error', 'No hay publicaciones seleccionadas.');
         redirect('publicaciones');
@@ -719,45 +720,121 @@ public function confirmar() {
     $this->db->trans_start();
 
     try {
-        // Verificar que todas las reservas temporales estén vigentes
+        $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
+        $fecha_actual = date('Y-m-d H:i:s');
+        $fecha_expiracion = date('Y-m-d H:i:s', strtotime('+2 hours'));
+
+        // Verificar disponibilidad y reservas existentes
         foreach ($publicaciones_seleccionadas as $idPublicacion) {
-            if (!$this->Solicitud_model->verificar_reserva_vigente($idPublicacion, $idUsuario)) {
-                throw new Exception('Una o más reservas han expirado. Por favor, inicie el proceso nuevamente.');
+            // Verificar si existe una solicitud activa
+            $solicitud_existente = $this->db->select('sp.idSolicitud, sp.estadoSolicitud')
+                ->from('SOLICITUD_PRESTAMO sp')
+                ->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud')
+                ->where([
+                    'ds.idPublicacion' => $idPublicacion,
+                    'sp.estado' => 1,
+                    'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE
+                ])
+                ->get()
+                ->row();
+
+            if ($solicitud_existente) {
+                throw new Exception('Ya existe una solicitud activa para una o más publicaciones.');
+            }
+
+            // Verificar disponibilidad
+            $publicacion = $this->Publicacion_model->obtener_publicacion_detallada($idPublicacion);
+            if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                throw new Exception('La publicación ' . $publicacion->titulo . ' no está disponible.');
             }
         }
 
-        // Crear solicitudes individuales
-        $solicitudes_creadas = [];
+        // Crear la solicitud principal
+        $datos_solicitud = array(
+            'idUsuario' => $idUsuario,
+            'fechaSolicitud' => $fecha_actual,
+            'estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'estado' => 1,
+            'fechaCreacion' => $fecha_actual,
+            'idUsuarioCreador' => $idUsuario
+        );
+
+        $this->db->insert('SOLICITUD_PRESTAMO', $datos_solicitud);
+        $idSolicitud = $this->db->insert_id();
+
+        if (!$idSolicitud) {
+            throw new Exception('Error al crear la solicitud');
+        }
+
+        // Insertar detalles y actualizar estados
         foreach ($publicaciones_seleccionadas as $idPublicacion) {
-            $resultado = $this->Solicitud_model->convertir_reserva_en_solicitud($idPublicacion, $idUsuario);
-            if ($resultado['exito']) {
-                $solicitudes_creadas[] = $resultado['idSolicitud'];
-            } else {
-                throw new Exception($resultado['mensaje']);
+            $datos_detalle = array(
+                'idSolicitud' => $idSolicitud,
+                'idPublicacion' => $idPublicacion,
+                'observaciones' => "Solicitud pendiente - Disponible hasta: " . $fecha_expiracion
+            );
+            
+            $this->db->insert('DETALLE_SOLICITUD', $datos_detalle);
+
+            // Actualizar estado de la publicación
+            $this->db->where('idPublicacion', $idPublicacion);
+            $this->db->update('PUBLICACION', array(
+                'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
+                'fechaActualizacion' => $fecha_actual
+            ));
+        }
+
+        // Notificar al lector
+        $titulos = array();
+        foreach ($publicaciones_seleccionadas as $idPub) {
+            $pub = $this->Publicacion_model->obtener_publicacion($idPub);
+            if ($pub) {
+                $titulos[] = $pub->titulo;
             }
         }
 
-        // Notificar al lector y a los encargados
-        $this->_enviar_notificaciones_solicitud($solicitudes_creadas, $idUsuario);
+        $mensaje_lector = "Se ha registrado tu solicitud para: " . implode(", ", $titulos) . 
+                         "\nPor favor, preséntate en la hemeroteca dentro de las próximas 2 horas." .
+                         "\nTu solicitud estará disponible hasta las: " . date('H:i', strtotime($fecha_expiracion));
+        
+        $this->Notificacion_model->crear_notificacion(
+            $idUsuario,
+            null,
+            NOTIFICACION_SOLICITUD_PRESTAMO,
+            $mensaje_lector
+        );
 
+        // Notificar a encargados
+        $encargados = $this->Usuario_model->obtener_encargados_activos();
+        foreach ($encargados as $encargado) {
+            $mensaje = "Nueva solicitud de préstamo del usuario '{$usuario->nombres} {$usuario->apellidoPaterno}'" .
+                      "\nPublicaciones: " . implode(", ", $titulos) .
+                      "\nDisponible hasta: " . date('H:i', strtotime($fecha_expiracion));
+            
+            $this->Notificacion_model->crear_notificacion(
+                $encargado->idUsuario,
+                null,
+                NOTIFICACION_NUEVA_SOLICITUD,
+                $mensaje
+            );
+        }
+
+        // Limpiar sesión
         $this->session->unset_userdata('publicaciones_seleccionadas');
+        $this->session->set_flashdata('mensaje', 
+            'Solicitud creada con éxito. Por favor, preséntate en la hemeroteca antes de las ' . 
+            date('H:i', strtotime($fecha_expiracion)));
+
         $this->db->trans_complete();
-
-        if ($this->db->trans_status() === FALSE) {
-            throw new Exception('Error en la transacción de la base de datos.');
-        }
-
-        $this->session->set_flashdata('mensaje', 'Solicitudes creadas con éxito.');
 
     } catch (Exception $e) {
         $this->db->trans_rollback();
-        log_message('error', 'Error al confirmar solicitudes: ' . $e->getMessage());
+        log_message('error', 'Error en confirmación de solicitud: ' . $e->getMessage());
         $this->session->set_flashdata('error', $e->getMessage());
     }
 
     redirect('solicitudes/mis_solicitudes');
 }
-
 /*public function cancelar($idSolicitud) {
     $this->_verificar_rol(['lector']);
     $idUsuario = $this->session->userdata('idUsuario');

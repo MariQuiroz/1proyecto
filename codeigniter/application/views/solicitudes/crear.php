@@ -30,7 +30,6 @@
                                 </div>
                             <?php endif; ?>
                             
-                            <!-- Mensaje informativo mejorado -->
                             <div class="alert alert-info">
                                 <div class="d-flex align-items-start">
                                     <i class="mdi mdi-information-outline h3 mr-3 mb-0"></i>
@@ -47,7 +46,6 @@
                             </div>
                             
                             <?php if (!empty($publicaciones)): ?>
-                                <!-- Contador global para la reserva -->
                                 <?php
                                 $tiempo_menor = PHP_INT_MAX;
                                 foreach ($publicaciones as $pub) {
@@ -74,7 +72,6 @@
                                     <?php foreach ($publicaciones as $publicacion): ?>
                                         <div class="col-md-4 mb-4">
                                             <div class="card h-100 shadow-sm">
-                                                <!-- Imagen de portada con badge de tiempo -->
                                                 <div class="position-relative">
                                                     <?php if ($publicacion->portada && file_exists(FCPATH . 'uploads/portadas/' . $publicacion->portada)): ?>
                                                         <img src="<?php echo base_url('uploads/portadas/' . $publicacion->portada); ?>" 
@@ -135,7 +132,6 @@
                                     <?php endforeach; ?>
                                 </div>
 
-                                <!-- Botones de acción -->
                                 <div class="text-center border-top pt-4">
                                     <div class="btn-group btn-group-lg">
                                         <?php if (count($publicaciones) < 5): ?>
@@ -144,22 +140,29 @@
                                             </a>
                                         <?php endif; ?>
 
-                                        <a href="<?php echo site_url('solicitudes/confirmar'); ?>" 
-                                        class="btn btn-primary"
-                                        onclick="return confirm('¿Está seguro de confirmar la solicitud? Una vez confirmada, no podrá modificarla.');">
-                                            <i class="mdi mdi-check-circle mr-1"></i>Confirmar Solicitud
-                                        </a>
+                                        <!-- Formulario de confirmación -->
+                                        <form action="<?php echo site_url('solicitudes/confirmar'); ?>" method="POST" style="display: inline;">
+                                            <?php if (isset($this->security)): ?>
+                                                <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" 
+                                                       value="<?php echo $this->security->get_csrf_hash(); ?>">
+                                            <?php endif; ?>
+                                            
+                                            <button type="submit" 
+                                                    class="btn btn-primary"
+                                                    onclick="return confirm('¿Está seguro de confirmar la solicitud? Una vez confirmada, tendrá 2 horas para presentarse en la hemeroteca.')">
+                                                <i class="mdi mdi-check-circle mr-1"></i>Confirmar Solicitud
+                                            </button>
+                                        </form>
 
                                         <a href="<?php echo site_url('solicitudes/cancelar'); ?>" 
-                                        class="btn btn-danger"
-                                        onclick="return confirm('¿Está seguro de cancelar? Se eliminarán todas las publicaciones seleccionadas.');">
+                                           class="btn btn-danger"
+                                           onclick="return confirm('¿Está seguro de cancelar? Se eliminarán todas las publicaciones seleccionadas.');">
                                             <i class="mdi mdi-close-circle mr-1"></i>Cancelar Selección
                                         </a>
                                     </div>
                                 </div>
 
                             <?php else: ?>
-                                <!-- Mensaje cuando no hay publicaciones seleccionadas -->
                                 <div class="alert alert-warning">
                                     <div class="d-flex align-items-center">
                                         <i class="mdi mdi-alert h2 m-0 mr-2"></i>
@@ -183,7 +186,6 @@
     </div>
 </div>
 
-<!-- Script para el contador regresivo -->
 <?php if (isset($tiempo_menor) && $tiempo_menor < PHP_INT_MAX): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

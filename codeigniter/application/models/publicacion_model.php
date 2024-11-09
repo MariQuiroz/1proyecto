@@ -299,64 +299,84 @@ class Publicacion_model extends CI_Model {
         return $this->db->get()->num_rows() > 0;
     }
     
-  public function listar_todas_publicaciones() {
-    $this->db->select('
-        PUBLICACION.idPublicacion,
-        PUBLICACION.titulo,
-        PUBLICACION.fechaPublicacion,
-        PUBLICACION.numeroPaginas,
-        PUBLICACION.portada,
-        PUBLICACION.descripcion,
-        PUBLICACION.ubicacionFisica,
-        PUBLICACION.estado,
-        PUBLICACION.fechaCreacion,
-        PUBLICACION.fechaActualizacion,
-        TIPO.nombreTipo,
-        EDITORIAL.nombreEditorial
-    ');
-    $this->db->from('PUBLICACION');
-    $this->db->join('TIPO', 'TIPO.idTipo = PUBLICACION.idTipo');
-    $this->db->join('EDITORIAL', 'EDITORIAL.idEditorial = PUBLICACION.idEditorial');
-    // Añadir este filtro
-    $this->db->where('PUBLICACION.estado !=', ESTADO_PUBLICACION_ELIMINADO);
-    $this->db->order_by('PUBLICACION.fechaCreacion', 'DESC');
-    return $this->db->get()->result();
-}
-
-private function mapear_estado($estado) {
-    $mapeo_estados = [
-        ESTADO_PUBLICACION_DISPONIBLE => 'Disponible',
-        ESTADO_PUBLICACION_EN_CONSULTA => 'En préstamo',
-        ESTADO_PUBLICACION_EN_MANTENIMIENTO => 'En mantenimiento',
-        ESTADO_PUBLICACION_ELIMINADO => 'Eliminado'  // Añadir este
-    ];
-
-    return isset($mapeo_estados[$estado]) ? $mapeo_estados[$estado] : 'Estado desconocido';
-}
-    
-    public function obtener_publicaciones_seleccionadas($ids) {
-        if (empty($ids)) {
-            return array();
-        }
-    
+    public function listar_todas_publicaciones() {
         $this->db->select('
             p.idPublicacion,
             p.titulo,
+            p.fechaPublicacion,
+            p.numeroPaginas,
+            p.portada,
+            p.descripcion,
             p.ubicacionFisica,
             p.estado,
-            p.portada,
-            p.fechaPublicacion,
-            p.descripcion,
+            p.fechaCreacion,
+            p.fechaActualizacion,
+            t.nombreTipo,
             e.nombreEditorial,
-            t.nombreTipo
+            MAX(COALESCE(pr.estadoPrestamo, 0)) as estadoPrestamo,
+            MAX(COALESCE(sp.estadoSolicitud, 0)) as estadoSolicitud,
+            MAX(COALESCE(ds.fechaReserva, NULL)) as fechaReserva,
+            MAX(COALESCE(ds.estadoReserva, 0)) as estadoReserva,
+            MAX(CASE 
+                WHEN sp.estado = 1 THEN sp.idUsuario 
+                ELSE NULL 
+            END) as idUsuarioSolicitud
         ');
         $this->db->from('PUBLICACION p');
-        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
         $this->db->join('TIPO t', 't.idTipo = p.idTipo');
-        $this->db->where_in('p.idPublicacion', $ids);
+        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
+        $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
+        $this->db->where('p.estado !=', ESTADO_PUBLICACION_ELIMINADO);
+        $this->db->group_by([
+            'p.idPublicacion',
+            'p.titulo',
+            'p.fechaPublicacion',
+            'p.numeroPaginas',
+            'p.portada',
+            'p.descripcion',
+            'p.ubicacionFisica',
+            'p.estado',
+            'p.fechaCreacion',
+            'p.fechaActualizacion',
+            't.nombreTipo',
+            'e.nombreEditorial'
+        ]);
+        $this->db->order_by('p.fechaCreacion', 'DESC');
         
         return $this->db->get()->result();
     }
+    public function mapear_estado($estado, $idUsuario = null, $estadoReserva = 0, $idUsuarioSolicitud = null) {
+        $estado = intval($estado);
+        
+        switch ($estado) {
+            case ESTADO_PUBLICACION_DISPONIBLE:
+                return ['estado' => 'Disponible', 'clase' => 'text-success'];
+                
+            case ESTADO_PUBLICACION_EN_CONSULTA:
+                if ($idUsuarioSolicitud && $idUsuarioSolicitud == $idUsuario) {
+                    return ['estado' => 'En préstamo por ti', 'clase' => 'text-primary'];
+                }
+                return ['estado' => 'En consulta', 'clase' => 'text-warning'];
+                
+            case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
+                return ['estado' => 'En mantenimiento', 'clase' => 'text-danger'];
+                
+            case ESTADO_PUBLICACION_RESERVADA:
+                if ($estadoReserva && $idUsuarioSolicitud == $idUsuario) {
+                    return ['estado' => 'Reservada por ti', 'clase' => 'text-info'];
+                }
+                return ['estado' => 'Reservada', 'clase' => 'text-warning'];
+                
+            case ESTADO_PUBLICACION_ELIMINADO:
+                return ['estado' => 'No disponible', 'clase' => 'text-muted'];
+                
+            default:
+                return ['estado' => 'Estado desconocido', 'clase' => 'text-secondary'];
+        }
+    }
+
     public function obtener_publicaciones_disponibles_no_seleccionadas($publicaciones_seleccionadas) {
         $this->db->select('
             p.idPublicacion,
@@ -380,19 +400,27 @@ private function mapear_estado($estado) {
         
         return $this->db->get()->result();
     }
-    public function validar_disponibilidad($idPublicacion) {
-        $this->db->select('estado');
-        $this->db->from('PUBLICACION');
-        $this->db->where('idPublicacion', $idPublicacion);
-        
-        $publicacion = $this->db->get()->row();
-        
-        if (!$publicacion) {
-            return false;
-        }
-        
-        return $publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE;
+  // Método adicional para validar una única publicación
+public function validar_disponibilidad($idPublicacion) {
+    $this->db->select('
+        p.estado,
+        COUNT(pr.idPrestamo) as prestamos_activos
+    ');
+    $this->db->from('PUBLICACION p');
+    $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
+    $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
+    $this->db->where('p.idPublicacion', $idPublicacion);
+    $this->db->group_by('p.idPublicacion, p.estado');
+    
+    $result = $this->db->get()->row();
+    
+    if (!$result) {
+        return false;
     }
+    
+    return $result->estado === ESTADO_PUBLICACION_DISPONIBLE && $result->prestamos_activos == 0;
+}
     // En el modelo Publicacion_model.php
 
 public function obtener_publicacion_detallada($idPublicacion) {
@@ -761,4 +789,88 @@ private function notificar_encargados_cancelacion($solicitud) {
         );
     }
 }
+public function obtener_publicaciones_seleccionadas($ids) {
+    if (empty($ids)) {
+        return array();
+    }
+
+    $this->db->select('
+        p.idPublicacion,
+        p.titulo,
+        p.ubicacionFisica,
+        p.estado,
+        p.portada,
+        p.fechaPublicacion,
+        p.descripcion,
+        p.numeroPaginas,
+        e.nombreEditorial,
+        t.nombreTipo'
+    );
+    $this->db->from('PUBLICACION p');
+    $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+    $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+    
+    // Si ids es un array, usamos where_in
+    if (is_array($ids)) {
+        $this->db->where_in('p.idPublicacion', $ids);
+    } else {
+        // Si es un solo id, usamos where
+        $this->db->where('p.idPublicacion', $ids);
+    }
+    
+    // Verificar que las publicaciones estén activas y disponibles
+    $this->db->where('p.estado', ESTADO_PUBLICACION_DISPONIBLE);
+
+    $result = $this->db->get();
+
+    // Verificar si hubo error en la consulta
+    if (!$result) {
+        log_message('error', 'Error al obtener publicaciones seleccionadas: ' . $this->db->error()['message']);
+        return array();
+    }
+
+    return $result->result();
+}
+
+// Método complementario para verificar disponibilidad
+public function verificar_disponibilidad_multiple($ids) {
+    if (empty($ids)) {
+        return array();
+    }
+
+    $this->db->select('
+        p.idPublicacion,
+        p.titulo,
+        p.estado,
+        CASE
+            WHEN p.estado != ' . ESTADO_PUBLICACION_DISPONIBLE . ' THEN true
+            WHEN pr.idPrestamo IS NOT NULL THEN true
+            ELSE false
+        END as no_disponible
+    ');
+    $this->db->from('PUBLICACION p');
+    $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
+    $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
+    $this->db->where_in('p.idPublicacion', $ids);
+    
+    $result = $this->db->get()->result();
+    
+    $no_disponibles = array();
+    foreach ($result as $pub) {
+        if ($pub->no_disponible) {
+            $no_disponibles[] = array(
+                'idPublicacion' => $pub->idPublicacion,
+                'titulo' => $pub->titulo,
+                'razon' => ($pub->estado != ESTADO_PUBLICACION_DISPONIBLE) ? 
+                    'La publicación no está disponible' : 
+                    'La publicación está en préstamo'
+            );
+        }
+    }
+    
+    return $no_disponibles;
+}
+
+
 }

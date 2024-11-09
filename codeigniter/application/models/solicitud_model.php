@@ -864,47 +864,6 @@ class Solicitud_model extends CI_Model {
         return '00:00:00';
     }
 
-    public function verificar_reserva_vigente($idPublicacion, $idUsuario) {
-        $this->db->where('DETALLE_SOLICITUD.idPublicacion', $idPublicacion);
-        $this->db->where('SOLICITUD_PRESTAMO.idUsuario', $idUsuario);
-        $this->db->where('SOLICITUD_PRESTAMO.estadoSolicitud', ESTADO_SOLICITUD_RESERVA_TEMPORAL);
-        $this->db->where('SOLICITUD_PRESTAMO.fechaSolicitud >', date('Y-m-d H:i:s', strtotime('-2 hours')));
-        $this->db->join('DETALLE_SOLICITUD', 'SOLICITUD_PRESTAMO.idSolicitud = DETALLE_SOLICITUD.idSolicitud');
-        return $this->db->get('SOLICITUD_PRESTAMO')->num_rows() > 0;
-    }
-
-    public function convertir_reserva_en_solicitud($idPublicacion, $idUsuario) {
-        // Iniciar transacción
-        $this->db->trans_start();
-
-        // Buscar la reserva temporal
-        $this->db->where('DETALLE_SOLICITUD.idPublicacion', $idPublicacion);
-        $this->db->where('SOLICITUD_PRESTAMO.idUsuario', $idUsuario);
-        $this->db->where('SOLICITUD_PRESTAMO.estadoSolicitud', ESTADO_SOLICITUD_RESERVA_TEMPORAL);
-        $this->db->join('DETALLE_SOLICITUD', 'SOLICITUD_PRESTAMO.idSolicitud = DETALLE_SOLICITUD.idSolicitud');
-        $reserva = $this->db->get('SOLICITUD_PRESTAMO')->row();
-
-        if (!$reserva) {
-            return ['exito' => false, 'mensaje' => 'No se encontró una reserva válida.'];
-        }
-
-        // Actualizar estado de la solicitud
-        $this->db->where('idSolicitud', $reserva->idSolicitud);
-        $this->db->update('SOLICITUD_PRESTAMO', ['estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE]);
-
-        // Actualizar observaciones en el detalle
-        $this->db->where('idDetalleSolicitud', $reserva->idDetalleSolicitud);
-        $this->db->update('DETALLE_SOLICITUD', ['observaciones' => 'Solicitud de préstamo']);
-
-        // Completar transacción
-        $this->db->trans_complete();
-
-        if ($this->db->trans_status() === FALSE) {
-            return ['exito' => false, 'mensaje' => 'Error en la transacción.'];
-        } else {
-            return ['exito' => true, 'idSolicitud' => $reserva->idSolicitud, 'mensaje' => 'Solicitud creada correctamente.'];
-        }
-    }
 
     public function cancelar_solicitud($idSolicitud, $idUsuario) {
         // ...
@@ -967,6 +926,308 @@ class Solicitud_model extends CI_Model {
             return false;
         } finally {
             log_message('debug', "=== FIN cancelar_reserva_temporal() ===");
+        }
+    }
+   
+    // Método para cancelar reservas expiradas
+    public function cancelar_reservas_expiradas() {
+        $fecha_limite = date('Y-m-d H:i:s', time() - TIEMPO_RESERVA);
+        
+        $this->db->select('sp.idSolicitud, ds.idPublicacion');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->where([
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_RESERVA_TEMPORAL,
+            'sp.fechaCreacion <' => $fecha_limite,
+            'sp.estado' => 1
+        ]);
+        
+        $reservas_expiradas = $this->db->get()->result();
+
+        foreach ($reservas_expiradas as $reserva) {
+            $this->db->trans_start();
+            
+            // Actualizar la solicitud
+            $this->db->where('idSolicitud', $reserva->idSolicitud);
+            $this->db->update('SOLICITUD_PRESTAMO', [
+                'estadoSolicitud' => ESTADO_SOLICITUD_EXPIRADA,
+                'fechaActualizacion' => date('Y-m-d H:i:s')
+            ]);
+
+            // Liberar la publicación
+            $this->db->where('idPublicacion', $reserva->idPublicacion);
+            $this->db->update('PUBLICACION', [
+                'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                'fechaActualizacion' => date('Y-m-d H:i:s')
+            ]);
+
+            $this->db->trans_complete();
+        }
+
+        return count($reservas_expiradas);
+    }
+    public function verificar_solicitud_existente($idPublicacion, $idUsuario) {
+        $this->db->select('sp.idSolicitud');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->where([
+            'ds.idPublicacion' => $idPublicacion,
+            'sp.idUsuario' => $idUsuario,
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1
+        ]);
+        return $this->db->get()->num_rows() > 0;
+    }
+
+    public function verificar_solicitudes_expiradas() {
+        $limite_tiempo = date('Y-m-d H:i:s', strtotime('-2 hours'));
+        
+        $this->db->select('
+            sp.idSolicitud, 
+            sp.idUsuario, 
+            ds.idPublicacion, 
+            p.titulo
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->where([
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.fechaCreacion <=' => $limite_tiempo,
+            'sp.estado' => 1
+        ]);
+
+        $solicitudes_expiradas = $this->db->get()->result();
+
+        foreach ($solicitudes_expiradas as $solicitud) {
+            // Actualizar la solicitud a estado rechazada
+            $this->db->where('idSolicitud', $solicitud->idSolicitud);
+            $this->db->update('SOLICITUD_PRESTAMO', [
+                'estadoSolicitud' => ESTADO_SOLICITUD_RECHAZADA,
+                'fechaActualizacion' => date('Y-m-d H:i:s')
+            ]);
+
+            // Liberar la publicación
+            $this->db->where('idPublicacion', $solicitud->idPublicacion);
+            $this->db->update('PUBLICACION', [
+                'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                'fechaActualizacion' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        return $solicitudes_expiradas;
+    }
+    public function verificar_reserva_vigente($idPublicacion, $idUsuario) {
+        // Verificar si ya existe una solicitud activa o pendiente
+        $this->db->select('sp.idSolicitud, sp.estadoSolicitud, sp.fechaCreacion');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->where([
+            'ds.idPublicacion' => $idPublicacion,
+            'sp.estado' => 1
+        ]);
+        $this->db->where_in('sp.estadoSolicitud', [
+            ESTADO_SOLICITUD_PENDIENTE,
+            ESTADO_SOLICITUD_APROBADA
+        ]);
+
+        $solicitud_existente = $this->db->get()->row();
+
+        if ($solicitud_existente) {
+            if ($solicitud_existente->idUsuario == $idUsuario) {
+                return false; // El mismo usuario ya tiene una solicitud
+            }
+            return false; // Otro usuario tiene una solicitud activa
+        }
+
+        return true; // No hay solicitudes activas
+    }
+
+    public function convertir_reserva_en_solicitud($idPublicacion, $idUsuario) {
+        $fecha_actual = date('Y-m-d H:i:s');
+        $fecha_expiracion = date('Y-m-d H:i:s', strtotime('+2 hours'));
+
+        // Verificar estado de la publicación
+        $publicacion = $this->db->get_where('PUBLICACION', [
+            'idPublicacion' => $idPublicacion,
+            'estado' => ESTADO_PUBLICACION_DISPONIBLE
+        ])->row();
+
+        if (!$publicacion) {
+            return [
+                'exito' => false,
+                'mensaje' => 'La publicación no está disponible.'
+            ];
+        }
+
+        // Crear solicitud con ID único
+        $data_solicitud = [
+            'idUsuario' => $idUsuario,
+            'fechaSolicitud' => $fecha_actual,
+            'fechaExpiracion' => $fecha_expiracion,
+            'estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'estado' => 1,
+            'fechaCreacion' => $fecha_actual,
+            'idUsuarioCreador' => $idUsuario
+        ];
+
+        $this->db->insert('SOLICITUD_PRESTAMO', $data_solicitud);
+        $idSolicitud = $this->db->insert_id();
+
+        // Crear detalle de solicitud
+        $data_detalle = [
+            'idSolicitud' => $idSolicitud,
+            'idPublicacion' => $idPublicacion,
+            'observaciones' => 'Reserva temporal - Expira: ' . $fecha_expiracion
+        ];
+
+        $this->db->insert('DETALLE_SOLICITUD', $data_detalle);
+
+        // Actualizar estado de la publicación a reservada
+        $this->db->where('idPublicacion', $idPublicacion);
+        $this->db->update('PUBLICACION', [
+            'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
+            'fechaActualizacion' => $fecha_actual
+        ]);
+
+        return [
+            'exito' => true,
+            'idSolicitud' => $idSolicitud
+        ];
+    }
+    public function tiene_solicitud_activa($idUsuario, $idPublicacion) {
+        $this->db->select('sp.idSolicitud');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->where([
+            'sp.idUsuario' => $idUsuario,
+            'ds.idPublicacion' => $idPublicacion,
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1,
+            'ds.fechaExpiracionReserva >' => date('Y-m-d H:i:s')
+        ]);
+        
+        return $this->db->get()->num_rows() > 0;
+    }
+    
+    public function registrar_verificacion_expiracion($idSolicitud, $fecha_expiracion) {
+        // Registrar en tabla de auditoría o log del sistema
+        log_message('info', "Registrada verificación de expiración para solicitud {$idSolicitud} - Expira: {$fecha_expiracion}");
+    }
+    
+    public function verificar_y_procesar_expiraciones() {
+        $fecha_actual = date('Y-m-d H:i:s');
+        
+        // Obtener solicitudes con reservas expiradas
+        $this->db->select('ds.idSolicitud, ds.idPublicacion, sp.idUsuario');
+        $this->db->from('DETALLE_SOLICITUD ds');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'ds.idSolicitud = sp.idSolicitud');
+        $this->db->where([
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1,
+            'ds.estadoReserva' => 1,
+            'ds.fechaExpiracionReserva <=' => $fecha_actual
+        ]);
+        
+        $reservas_expiradas = $this->db->get()->result();
+        
+        foreach ($reservas_expiradas as $reserva) {
+            $this->db->trans_start();
+            
+            // Actualizar detalle de solicitud
+            $this->db->where([
+                'idSolicitud' => $reserva->idSolicitud,
+                'idPublicacion' => $reserva->idPublicacion
+            ]);
+            $this->db->update('DETALLE_SOLICITUD', [
+                'estadoReserva' => 0,
+                'observaciones' => "Reserva expirada el " . date('Y-m-d H:i:s')
+            ]);
+            
+            // Actualizar estado de la publicación
+            $this->db->where('idPublicacion', $reserva->idPublicacion);
+            $this->db->update('PUBLICACION', [
+                'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                'fechaActualizacion' => $fecha_actual
+            ]);
+            
+            // Notificar al usuario
+            $publicacion = $this->Publicacion_model->obtener_publicacion($reserva->idPublicacion);
+            $mensaje = "Tu reserva para '{$publicacion->titulo}' ha expirado por exceder el tiempo límite de 2 horas.";
+            
+            $this->Notificacion_model->crear_notificacion(
+                $reserva->idUsuario,
+                $reserva->idPublicacion,
+                NOTIFICACION_SOLICITUD_PRESTAMO,
+                $mensaje
+            );
+            
+            $this->db->trans_complete();
+            
+            if ($this->db->trans_status() === FALSE) {
+                log_message('error', "Error al procesar expiración de solicitud {$reserva->idSolicitud}");
+            }
+        }
+    }
+
+    public function verificar_expiraciones_pendientes() {
+        $fecha_actual = date('Y-m-d H:i:s');
+        
+        // Obtener solicitudes expiradas
+        $this->db->select('
+            sp.idSolicitud, 
+            sp.idUsuario, 
+            ds.idPublicacion,
+            p.titulo
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->where([
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1,
+            'ds.fechaExpiracionReserva <=' => $fecha_actual
+        ]);
+        
+        $solicitudes_expiradas = $this->db->get()->result();
+        
+        foreach ($solicitudes_expiradas as $solicitud) {
+            $this->db->trans_start();
+            
+            try {
+                // Actualizar estado de solicitud
+                $this->db->where('idSolicitud', $solicitud->idSolicitud);
+                $this->db->update('SOLICITUD_PRESTAMO', [
+                    'estadoSolicitud' => ESTADO_SOLICITUD_EXPIRADA,
+                    'fechaActualizacion' => $fecha_actual
+                ]);
+                
+                // Liberar publicación
+                $this->db->where('idPublicacion', $solicitud->idPublicacion);
+                $this->db->update('PUBLICACION', [
+                    'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                    'fechaActualizacion' => $fecha_actual
+                ]);
+                
+                // Notificar al usuario
+                $mensaje = "Tu solicitud para '{$solicitud->titulo}' ha expirado por exceder el tiempo límite de 2 horas.";
+                $this->Notificacion_model->crear_notificacion(
+                    $solicitud->idUsuario,
+                    $solicitud->idPublicacion,
+                    NOTIFICACION_SOLICITUD_EXPIRADA,
+                    $mensaje
+                );
+                
+                $this->db->trans_complete();
+                
+                if ($this->db->trans_status() === FALSE) {
+                    throw new Exception("Error al procesar expiración de solicitud {$solicitud->idSolicitud}");
+                }
+                
+            } catch (Exception $e) {
+                $this->db->trans_rollback();
+                log_message('error', $e->getMessage());
+            }
         }
     }
 }
