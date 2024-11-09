@@ -139,36 +139,31 @@ class Publicacion_model extends CI_Model {
         return $this->db->get()->result();
     }
 
-    public function listar_publicaciones() {
-        $this->db->select('
-            p.idPublicacion,
-            p.titulo,
-            p.fechaPublicacion,
-            p.portada,
-            p.descripcion,
-            p.ubicacionFisica,
-            p.estado,
-            t.nombreTipo,
-            e.nombreEditorial,
-            pr.estadoPrestamo,
-            sp.estadoSolicitud
-        ');
-        $this->db->from('PUBLICACION p');
-        $this->db->join('TIPO t', 't.idTipo = p.idTipo');
-        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
-        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
-        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
-        $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
-        $this->db->where('p.estado', 1);
-        $this->db->order_by('p.fechaCreacion', 'DESC');
-         // Filtrar explícitamente las publicaciones eliminadas
+public function listar_publicaciones() {
+    $this->db->select('
+        p.idPublicacion,
+        p.titulo,
+        p.fechaPublicacion,
+        p.estado,
+        e.nombreEditorial,
+        t.nombreTipo,
+        CASE 
+            WHEN sp.idUsuario = ' . $this->session->userdata('idUsuario') . ' 
+            AND p.estado = ' . ESTADO_PUBLICACION_RESERVADA . '
+            AND sp.estadoSolicitud = ' . ESTADO_SOLICITUD_PENDIENTE . '
+            THEN 1 
+            ELSE 0 
+        END as es_mi_reserva
+    ');
+    $this->db->from('PUBLICACION p');
+    $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+    $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+    $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
     $this->db->where('p.estado !=', ESTADO_PUBLICACION_ELIMINADO);
     
-    // Ordenar por fecha de publicación
-    $this->db->order_by('p.fechaPublicacion', 'DESC');
-
-        return $this->db->get()->result();
-    }
+    return $this->db->get()->result();
+}
 
     public function buscar_publicaciones($termino) {
         $this->db->select('
@@ -300,6 +295,8 @@ class Publicacion_model extends CI_Model {
     }
     
     public function listar_todas_publicaciones() {
+        $idUsuarioActual = $this->session->userdata('idUsuario');
+        
         $this->db->select('
             p.idPublicacion,
             p.titulo,
@@ -316,19 +313,33 @@ class Publicacion_model extends CI_Model {
             MAX(COALESCE(pr.estadoPrestamo, 0)) as estadoPrestamo,
             MAX(COALESCE(sp.estadoSolicitud, 0)) as estadoSolicitud,
             MAX(COALESCE(ds.fechaReserva, NULL)) as fechaReserva,
+            MAX(COALESCE(ds.fechaExpiracionReserva, NULL)) as fechaExpiracionReserva,
             MAX(COALESCE(ds.estadoReserva, 0)) as estadoReserva,
             MAX(CASE 
                 WHEN sp.estado = 1 THEN sp.idUsuario 
                 ELSE NULL 
-            END) as idUsuarioSolicitud
-        ');
+            END) as idUsuarioSolicitud,
+            MAX(CASE 
+                WHEN (
+                    sp.idUsuario = ' . $idUsuarioActual . ' 
+                    AND p.estado = ' . ESTADO_PUBLICACION_RESERVADA . '
+                    AND sp.estadoSolicitud = ' . ESTADO_SOLICITUD_PENDIENTE . '
+                    AND sp.estado = 1
+                    AND ds.fechaExpiracionReserva > NOW()
+                ) THEN 1 
+                ELSE 0 
+            END) as es_mi_reserva'
+        );
+        
         $this->db->from('PUBLICACION p');
         $this->db->join('TIPO t', 't.idTipo = p.idTipo');
         $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
         $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
         $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
         $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
+        
         $this->db->where('p.estado !=', ESTADO_PUBLICACION_ELIMINADO);
+        
         $this->db->group_by([
             'p.idPublicacion',
             'p.titulo',
@@ -343,10 +354,12 @@ class Publicacion_model extends CI_Model {
             't.nombreTipo',
             'e.nombreEditorial'
         ]);
+        
         $this->db->order_by('p.fechaCreacion', 'DESC');
         
         return $this->db->get()->result();
     }
+    
     public function mapear_estado($estado, $idUsuario = null, $estadoReserva = 0, $idUsuarioSolicitud = null) {
         $estado = intval($estado);
         

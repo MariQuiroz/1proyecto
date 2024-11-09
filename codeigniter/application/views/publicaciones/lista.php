@@ -112,37 +112,50 @@
                                                 $badge_class = '';
                                                 $estado_texto = '';
                                                 $icon_class = '';
-                                                
-                                                switch (intval($publicacion->estado)) {
-                                                    case ESTADO_PUBLICACION_DISPONIBLE:
-                                                        $badge_class = 'badge-success';
-                                                        $estado_texto = 'Disponible';
-                                                        $icon_class = 'mdi mdi-book-open-variant';
-                                                        break;
-                                                    case ESTADO_PUBLICACION_EN_CONSULTA:
-                                                        $badge_class = 'badge-warning';
-                                                        $estado_texto = 'En Consulta';
-                                                        $icon_class = 'mdi mdi-book-account';
-                                                        break;
-                                                    case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
-                                                        $badge_class = 'badge-danger';
-                                                        $estado_texto = 'En Mantenimiento';
-                                                        $icon_class = 'mdi mdi-wrench';
-                                                        break;
-                                                    case ESTADO_PUBLICACION_RESERVADA:
-                                                        $badge_class = 'badge-info';
-                                                        $estado_texto = 'Reservada';
-                                                        $icon_class = 'mdi mdi-calendar-clock';
-                                                        break;
-                                                    case ESTADO_PUBLICACION_ELIMINADO:
-                                                        $badge_class = 'badge-secondary';
-                                                        $estado_texto = 'Eliminada';
-                                                        $icon_class = 'mdi mdi-delete';
-                                                        break;
-                                                    default:
-                                                        $badge_class = 'badge-secondary';
-                                                        $estado_texto = 'Estado Desconocido';
-                                                        $icon_class = 'mdi mdi-help-circle';
+
+                                                if ($publicacion->es_mi_reserva == 1) {
+                                                    $badge_class = 'badge-primary';
+                                                    $estado_texto = 'Reservada por ti';
+                                                    if ($publicacion->fechaExpiracionReserva) {
+                                                        $tiempo_restante = strtotime($publicacion->fechaExpiracionReserva) - time();
+                                                        if ($tiempo_restante > 0) {
+                                                            $minutos_restantes = ceil($tiempo_restante / 60);
+                                                            $estado_texto .= ' (' . $minutos_restantes . ' min)';
+                                                        }
+                                                    }
+                                                    $icon_class = 'mdi mdi-account-clock';
+                                                } else{
+                                                    switch (intval($publicacion->estado)) {
+                                                        case ESTADO_PUBLICACION_DISPONIBLE:
+                                                            $badge_class = 'badge-success';
+                                                            $estado_texto = 'Disponible';
+                                                            $icon_class = 'mdi mdi-book-open-variant';
+                                                            break;
+                                                        case ESTADO_PUBLICACION_EN_CONSULTA:
+                                                            $badge_class = 'badge-warning';
+                                                            $estado_texto = 'En Consulta';
+                                                            $icon_class = 'mdi mdi-book-account';
+                                                            break;
+                                                        case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
+                                                            $badge_class = 'badge-danger';
+                                                            $estado_texto = 'En Mantenimiento';
+                                                            $icon_class = 'mdi mdi-wrench';
+                                                            break;
+                                                        case ESTADO_PUBLICACION_RESERVADA:
+                                                            $badge_class = 'badge-info';
+                                                            $estado_texto = 'Reservada';
+                                                            $icon_class = 'mdi mdi-calendar-clock';
+                                                            break;
+                                                        case ESTADO_PUBLICACION_ELIMINADO:
+                                                            $badge_class = 'badge-secondary';
+                                                            $estado_texto = 'Eliminada';
+                                                            $icon_class = 'mdi mdi-delete';
+                                                            break;
+                                                        default:
+                                                            $badge_class = 'badge-secondary';
+                                                            $estado_texto = 'Estado Desconocido';
+                                                            $icon_class = 'mdi mdi-help-circle';
+                                                    }
                                                 }
                                                 ?>
                                                 <span class="badge <?php echo $badge_class; ?>">
