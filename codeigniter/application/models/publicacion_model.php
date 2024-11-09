@@ -400,27 +400,7 @@ class Publicacion_model extends CI_Model {
         
         return $this->db->get()->result();
     }
-  // Método adicional para validar una única publicación
-public function validar_disponibilidad($idPublicacion) {
-    $this->db->select('
-        p.estado,
-        COUNT(pr.idPrestamo) as prestamos_activos
-    ');
-    $this->db->from('PUBLICACION p');
-    $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
-    $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
-    $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
-    $this->db->where('p.idPublicacion', $idPublicacion);
-    $this->db->group_by('p.idPublicacion, p.estado');
-    
-    $result = $this->db->get()->row();
-    
-    if (!$result) {
-        return false;
-    }
-    
-    return $result->estado === ESTADO_PUBLICACION_DISPONIBLE && $result->prestamos_activos == 0;
-}
+ 
     // En el modelo Publicacion_model.php
 
 public function obtener_publicacion_detallada($idPublicacion) {
@@ -453,29 +433,6 @@ public function obtener_publicacion_detallada($idPublicacion) {
     return $resultado;
 }
 
-public function reservar_publicacion($idPublicacion, $idUsuario) {
-    $this->db->trans_start();
-    
-    // Verificar si la publicación está disponible
-    $publicacion = $this->obtener_publicacion($idPublicacion);
-    if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-        return false;
-    }
-
-    // Actualizar estado de la publicación
-    $data = array(
-        'estado' => ESTADO_PUBLICACION_DISPONIBLE, // Mantenemos el estado disponible
-        'reservadoPor' => $idUsuario,
-        'fechaReserva' => date('Y-m-d H:i:s'),
-        'fechaActualizacion' => date('Y-m-d H:i:s')
-    );
-
-    $this->db->where('idPublicacion', $idPublicacion);
-    $this->db->update('PUBLICACION', $data);
-
-    $this->db->trans_complete();
-    return $this->db->trans_status();
-}
 
 public function liberar_reserva($idPublicacion) {
     $this->db->trans_start();
@@ -872,5 +829,62 @@ public function verificar_disponibilidad_multiple($ids) {
     return $no_disponibles;
 }
 
+public function reservar_publicacion($idPublicacion, $idUsuario) {
+    $this->db->trans_start();
+    
+    // Verificar disponibilidad actual
+    $this->db->select('estado');
+    $this->db->from('PUBLICACION');
+    $this->db->where('idPublicacion', $idPublicacion);
+    
+    $publicacion = $this->db->get()->row();
+    
+    if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+        $this->db->trans_rollback();
+        return false;
+    }
 
+    // Actualizar estado de la publicación a RESERVADA
+    $data = array(
+        'estado' => ESTADO_PUBLICACION_RESERVADA,
+        'fechaActualizacion' => date('Y-m-d H:i:s'),
+        'idUsuarioCreador' => $idUsuario
+    );
+
+    $this->db->where('idPublicacion', $idPublicacion);
+    $this->db->update('PUBLICACION', $data);
+
+    $this->db->trans_complete();
+    return $this->db->trans_status();
+}
+
+public function liberar_reserva_expirada($idPublicacion) {
+    $this->db->trans_start();
+
+    $data = array(
+        'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+        'fechaActualizacion' => date('Y-m-d H:i:s')
+    );
+
+    $this->db->where('idPublicacion', $idPublicacion);
+    $this->db->update('PUBLICACION', $data);
+
+    $this->db->trans_complete();
+    return $this->db->trans_status();
+}
+
+public function validar_disponibilidad($idPublicacion) {
+    $this->db->select('p.estado, sp.estadoSolicitud');
+    $this->db->from('PUBLICACION p');
+    $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
+    $this->db->where('p.idPublicacion', $idPublicacion);
+    
+    $resultado = $this->db->get()->row();
+    
+    return $resultado && 
+           $resultado->estado == ESTADO_PUBLICACION_DISPONIBLE && 
+           (!$resultado->estadoSolicitud || 
+            $resultado->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE);
+}
 }

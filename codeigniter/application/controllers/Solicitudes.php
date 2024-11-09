@@ -721,41 +721,24 @@ public function confirmar() {
 
     try {
         $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
-        $fecha_actual = date('Y-m-d H:i:s');
-        $fecha_expiracion = date('Y-m-d H:i:s', strtotime('+2 hours'));
+        $hora_actual = date('Y-m-d H:i:s');
+        $hora_expiracion = date('Y-m-d H:i:s', strtotime('+2 hours'));
 
-        // Verificar disponibilidad y reservas existentes
+        // Validación inicial de disponibilidad
         foreach ($publicaciones_seleccionadas as $idPublicacion) {
-            // Verificar si existe una solicitud activa
-            $solicitud_existente = $this->db->select('sp.idSolicitud, sp.estadoSolicitud')
-                ->from('SOLICITUD_PRESTAMO sp')
-                ->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud')
-                ->where([
-                    'ds.idPublicacion' => $idPublicacion,
-                    'sp.estado' => 1,
-                    'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE
-                ])
-                ->get()
-                ->row();
-
-            if ($solicitud_existente) {
-                throw new Exception('Ya existe una solicitud activa para una o más publicaciones.');
-            }
-
-            // Verificar disponibilidad
-            $publicacion = $this->Publicacion_model->obtener_publicacion_detallada($idPublicacion);
-            if (!$publicacion || $publicacion->estado != ESTADO_PUBLICACION_DISPONIBLE) {
-                throw new Exception('La publicación ' . $publicacion->titulo . ' no está disponible.');
+            if (!$this->Publicacion_model->validar_disponibilidad($idPublicacion)) {
+                throw new Exception('Una o más publicaciones ya no están disponibles.');
             }
         }
 
-        // Crear la solicitud principal
+        // Crear solicitud principal con estado pendiente
         $datos_solicitud = array(
             'idUsuario' => $idUsuario,
-            'fechaSolicitud' => $fecha_actual,
+            'fechaSolicitud' => $hora_actual,
             'estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
             'estado' => 1,
-            'fechaCreacion' => $fecha_actual,
+            'fechaCreacion' => $hora_actual,
+            'observaciones' => "Reserva temporal hasta: " . $hora_expiracion,
             'idUsuarioCreador' => $idUsuario
         );
 
@@ -766,25 +749,25 @@ public function confirmar() {
             throw new Exception('Error al crear la solicitud');
         }
 
-        // Insertar detalles y actualizar estados
+        // Procesar cada publicación
         foreach ($publicaciones_seleccionadas as $idPublicacion) {
+            // Crear detalle de solicitud con información de reserva
             $datos_detalle = array(
                 'idSolicitud' => $idSolicitud,
                 'idPublicacion' => $idPublicacion,
-                'observaciones' => "Solicitud pendiente - Disponible hasta: " . $fecha_expiracion
+                'fechaReserva' => $hora_actual,
+                'fechaExpiracionReserva' => $hora_expiracion,
+                'estadoReserva' => 1,
+                'observaciones' => "Reserva temporal hasta: " . $hora_expiracion
             );
             
             $this->db->insert('DETALLE_SOLICITUD', $datos_detalle);
 
-            // Actualizar estado de la publicación
-            $this->db->where('idPublicacion', $idPublicacion);
-            $this->db->update('PUBLICACION', array(
-                'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
-                'fechaActualizacion' => $fecha_actual
-            ));
+            // Actualizar estado de publicación a RESERVADA
+            $this->Publicacion_model->reservar_publicacion($idPublicacion, $idUsuario);
         }
 
-        // Notificar al lector
+        // Preparar mensaje para el lector
         $titulos = array();
         foreach ($publicaciones_seleccionadas as $idPub) {
             $pub = $this->Publicacion_model->obtener_publicacion($idPub);
@@ -793,10 +776,13 @@ public function confirmar() {
             }
         }
 
-        $mensaje_lector = "Se ha registrado tu solicitud para: " . implode(", ", $titulos) . 
-                         "\nPor favor, preséntate en la hemeroteca dentro de las próximas 2 horas." .
-                         "\nTu solicitud estará disponible hasta las: " . date('H:i', strtotime($fecha_expiracion));
-        
+        $mensaje_lector = sprintf(
+            "Publicaciones reservadas temporalmente:\n%s\nTu reserva expira a las: %s\nPor favor, acércate al encargado antes de ese horario.",
+            implode(", ", $titulos),
+            date('H:i', strtotime($hora_expiracion))
+        );
+
+        // Crear notificación para el lector
         $this->Notificacion_model->crear_notificacion(
             $idUsuario,
             null,
@@ -805,35 +791,45 @@ public function confirmar() {
         );
 
         // Notificar a encargados
-        $encargados = $this->Usuario_model->obtener_encargados_activos();
-        foreach ($encargados as $encargado) {
-            $mensaje = "Nueva solicitud de préstamo del usuario '{$usuario->nombres} {$usuario->apellidoPaterno}'" .
-                      "\nPublicaciones: " . implode(", ", $titulos) .
-                      "\nDisponible hasta: " . date('H:i', strtotime($fecha_expiracion));
-            
-            $this->Notificacion_model->crear_notificacion(
-                $encargado->idUsuario,
-                null,
-                NOTIFICACION_NUEVA_SOLICITUD,
-                $mensaje
-            );
-        }
+        $this->_notificar_encargados_nueva_reserva($usuario, $titulos, $hora_expiracion);
 
-        // Limpiar sesión
+        // Limpiar sesión y mostrar mensaje de éxito
         $this->session->unset_userdata('publicaciones_seleccionadas');
         $this->session->set_flashdata('mensaje', 
-            'Solicitud creada con éxito. Por favor, preséntate en la hemeroteca antes de las ' . 
-            date('H:i', strtotime($fecha_expiracion)));
+            'Publicaciones reservadas temporalmente. Por favor acércate al encargado antes de las ' . 
+            date('H:i', strtotime($hora_expiracion))
+        );
 
         $this->db->trans_complete();
 
     } catch (Exception $e) {
         $this->db->trans_rollback();
-        log_message('error', 'Error en confirmación de solicitud: ' . $e->getMessage());
+        log_message('error', 'Error en confirmación de reserva: ' . $e->getMessage());
         $this->session->set_flashdata('error', $e->getMessage());
     }
 
     redirect('solicitudes/mis_solicitudes');
+}
+
+private function _notificar_encargados_nueva_reserva($usuario, $titulos, $hora_expiracion) {
+    $encargados = $this->Usuario_model->obtener_encargados_activos();
+    
+    $mensaje_encargado = sprintf(
+        "Nueva reserva temporal:\nUsuario: %s %s\nPublicaciones: %s\nExpira: %s",
+        $usuario->nombres,
+        $usuario->apellidoPaterno,
+        implode(", ", $titulos),
+        date('H:i', strtotime($hora_expiracion))
+    );
+
+    foreach ($encargados as $encargado) {
+        $this->Notificacion_model->crear_notificacion(
+            $encargado->idUsuario,
+            null,
+            NOTIFICACION_NUEVA_SOLICITUD,
+            $mensaje_encargado
+        );
+    }
 }
 /*public function cancelar($idSolicitud) {
     $this->_verificar_rol(['lector']);
