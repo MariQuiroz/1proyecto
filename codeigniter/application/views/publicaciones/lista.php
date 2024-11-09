@@ -35,9 +35,9 @@
                                         <div class="float-right">
                                             <span class="mr-3"><i class="mdi mdi-circle text-success"></i> Disponible</span>
                                             <span class="mr-3"><i class="mdi mdi-circle text-warning"></i> En consulta</span>
-                                            <span class="mr-3"><i class="mdi mdi-circle text-primary"></i> En préstamo por ti</span>
-                                            <span class="mr-3"><i class="mdi mdi-circle text-info"></i> En reserva</span>
-                                            <span><i class="mdi mdi-circle text-danger"></i> En mantenimiento</span>
+                                            <span class="mr-3"><i class="mdi mdi-circle text-danger"></i> En mantenimiento</span>
+                                            <span class="mr-3"><i class="mdi mdi-circle text-info"></i> Reservada</span>
+                                            <span><i class="mdi mdi-circle text-muted"></i> Eliminada</span>
                                         </div>
                                     </div>
                                 </div>
@@ -89,12 +89,7 @@
                                 <tbody>
                                     <?php foreach ($publicaciones as $publicacion): 
                                         $ya_seleccionada = in_array($publicacion->idPublicacion, $publicaciones_seleccionadas);
-                                        $estado_personalizado = $this->publicacion_model->obtener_estado_personalizado(
-                                            $publicacion->idPublicacion, 
-                                            $this->session->userdata('idUsuario')
-                                        );
                                         
-                                        // Solo mostrar si no está seleccionada o no es un lector
                                         if (!($this->session->userdata('rol') == 'lector' && $ya_seleccionada)):
                                     ?>
                                         <tr>
@@ -113,10 +108,46 @@
                                             <td><?php echo htmlspecialchars($publicacion->nombreTipo); ?></td>
                                             <td><?php echo date('d/m/Y', strtotime($publicacion->fechaPublicacion)); ?></td>
                                             <td>
-                                                <?php $badge_class = get_badge_class($estado_personalizado); ?>
+                                                <?php 
+                                                $badge_class = '';
+                                                $estado_texto = '';
+                                                $icon_class = '';
+                                                
+                                                switch (intval($publicacion->estado)) {
+                                                    case ESTADO_PUBLICACION_DISPONIBLE:
+                                                        $badge_class = 'badge-success';
+                                                        $estado_texto = 'Disponible';
+                                                        $icon_class = 'mdi mdi-book-open-variant';
+                                                        break;
+                                                    case ESTADO_PUBLICACION_EN_CONSULTA:
+                                                        $badge_class = 'badge-warning';
+                                                        $estado_texto = 'En Consulta';
+                                                        $icon_class = 'mdi mdi-book-account';
+                                                        break;
+                                                    case ESTADO_PUBLICACION_EN_MANTENIMIENTO:
+                                                        $badge_class = 'badge-danger';
+                                                        $estado_texto = 'En Mantenimiento';
+                                                        $icon_class = 'mdi mdi-wrench';
+                                                        break;
+                                                    case ESTADO_PUBLICACION_RESERVADA:
+                                                        $badge_class = 'badge-info';
+                                                        $estado_texto = 'Reservada';
+                                                        $icon_class = 'mdi mdi-calendar-clock';
+                                                        break;
+                                                    case ESTADO_PUBLICACION_ELIMINADO:
+                                                        $badge_class = 'badge-secondary';
+                                                        $estado_texto = 'Eliminada';
+                                                        $icon_class = 'mdi mdi-delete';
+                                                        break;
+                                                    default:
+                                                        $badge_class = 'badge-secondary';
+                                                        $estado_texto = 'Estado Desconocido';
+                                                        $icon_class = 'mdi mdi-help-circle';
+                                                }
+                                                ?>
                                                 <span class="badge <?php echo $badge_class; ?>">
-                                                    <i class="<?php echo get_estado_icon($estado_personalizado); ?> mr-1"></i>
-                                                    <?php echo $estado_personalizado; ?>
+                                                    <i class="<?php echo $icon_class; ?> mr-1"></i>
+                                                    <?php echo $estado_texto; ?>
                                                 </span>
                                             </td>
                                             <td>
@@ -135,40 +166,58 @@
                                                         <i class="mdi mdi-pencil"></i>
                                                     </a>
 
-                                                    <?php if ($estado_personalizado == 'Disponible'): ?>
-                                                        <a href="<?php echo site_url('publicaciones/eliminar/'.$publicacion->idPublicacion); ?>" 
-                                                           class="btn btn-danger btn-sm" 
-                                                           onclick="return confirm('¿Está seguro de eliminar esta publicación?');" 
-                                                           title="Eliminar">
-                                                            <i class="mdi mdi-delete"></i>
-                                                        </a>
+                                                    <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
+                                                        <div class="btn-group">
+                                                            <button type="button" 
+                                                                    class="btn btn-secondary btn-sm dropdown-toggle" 
+                                                                    data-toggle="dropdown">
+                                                                <i class="mdi mdi-settings"></i>
+                                                            </button>
+                                                            <div class="dropdown-menu">
+                                                                <a class="dropdown-item" 
+                                                                   href="<?php echo site_url('publicaciones/cambiar_estado/'.$publicacion->idPublicacion.'/'.ESTADO_PUBLICACION_EN_MANTENIMIENTO); ?>">
+                                                                    <i class="mdi mdi-wrench"></i> En Mantenimiento
+                                                                </a>
+                                                                <a class="dropdown-item" 
+                                                                   href="<?php echo site_url('publicaciones/cambiar_estado/'.$publicacion->idPublicacion.'/'.ESTADO_PUBLICACION_RESERVADA); ?>">
+                                                                    <i class="mdi mdi-calendar-clock"></i> Reservar
+                                                                </a>
+                                                                <div class="dropdown-divider"></div>
+                                                                <a class="dropdown-item text-danger" 
+                                                                   href="<?php echo site_url('publicaciones/eliminar/'.$publicacion->idPublicacion); ?>"
+                                                                   onclick="return confirm('¿Está seguro de eliminar esta publicación?');">
+                                                                    <i class="mdi mdi-delete"></i> Eliminar
+                                                                </a>
+                                                            </div>
+                                                        </div>
                                                     <?php endif; ?>
 
                                                 <?php endif; ?>
 
                                                 <?php if ($this->session->userdata('rol') == 'lector'): ?>
-                                                    <?php if ($estado_personalizado == 'Disponible'): ?>
+                                                    <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
                                                         <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>" 
                                                            class="btn btn-success btn-sm" 
                                                            title="Solicitar préstamo">
                                                             <i class="mdi mdi-book-open-page-variant"></i> Solicitar
                                                         </a>
-                                                    <?php elseif ($estado_personalizado == 'En consulta'): ?>
+                                                    <?php elseif (intval($publicacion->estado) === ESTADO_PUBLICACION_EN_CONSULTA || 
+                                                              intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
                                                         <?php 
-                                                        $estado_interes = $this->Notificacion_model->obtener_estado_interes(
+                                                        $interes_existente = $this->Notificacion_model->obtener_estado_interes(
                                                             $this->session->userdata('idUsuario'), 
                                                             $publicacion->idPublicacion
                                                         );
-                                                        
-                                                        if ($estado_interes == ESTADO_INTERES_SOLICITADO): ?>
-                                                            <button class="btn btn-secondary btn-sm" disabled>
-                                                                <i class="mdi mdi-bell-check"></i> Notificación Solicitada
-                                                            </button>
-                                                        <?php else: ?>
+                                                        if (!$interes_existente): 
+                                                        ?>
                                                             <a href="<?php echo site_url('notificaciones/agregar_interes/'.$publicacion->idPublicacion); ?>" 
                                                                class="btn btn-warning btn-sm">
                                                                 <i class="mdi mdi-bell"></i> Notificarme
                                                             </a>
+                                                        <?php else: ?>
+                                                            <button class="btn btn-secondary btn-sm" disabled>
+                                                                <i class="mdi mdi-bell-check"></i> Notificación Registrada
+                                                            </button>
                                                         <?php endif; ?>
                                                     <?php endif; ?>
                                                 <?php endif; ?>
