@@ -311,4 +311,55 @@ public function eliminar_notificacion($idNotificacion, $idUsuario) {
     $this->db->trans_complete();
     return $this->db->trans_status();
 }
+public function eliminar_interes_al_notificar($idUsuario, $idPublicacion) {
+    $this->db->trans_start();
+    
+    try {
+        // Eliminar el registro de interés
+        $this->db->where([
+            'idUsuario' => $idUsuario,
+            'idPublicacion' => $idPublicacion
+        ]);
+        $this->db->delete('INTERES_PUBLICACION');
+        
+        // Registrar en el log del sistema
+        log_message('info', "Interés eliminado al notificar - Usuario ID: {$idUsuario}, Publicación ID: {$idPublicacion}");
+        
+        $this->db->trans_complete();
+        return $this->db->trans_status();
+    } catch (Exception $e) {
+        log_message('error', 'Error al eliminar interés: ' . $e->getMessage());
+        $this->db->trans_rollback();
+        return false;
+    }
+}
+
+public function crear_notificacion_disponibilidad($idUsuario, $idPublicacion, $mensaje) {
+    $this->db->trans_start();
+    
+    try {
+        // Crear la notificación
+        $data = [
+            'idUsuario' => $idUsuario,
+            'tipo' => NOTIFICACION_DISPONIBILIDAD,
+            'mensaje' => $mensaje,
+            'fechaEnvio' => date('Y-m-d H:i:s'),
+            'leida' => FALSE
+        ];
+
+        $this->db->insert('NOTIFICACION', $data);
+        $idNotificacion = $this->db->insert_id();
+        
+        // Eliminar el interés ya que la publicación está disponible
+        $this->eliminar_interes_al_notificar($idUsuario, $idPublicacion);
+        
+        $this->db->trans_complete();
+        return $this->db->trans_status() ? $idNotificacion : false;
+        
+    } catch (Exception $e) {
+        log_message('error', 'Error al crear notificación de disponibilidad: ' . $e->getMessage());
+        $this->db->trans_rollback();
+        return false;
+    }
+}
 }

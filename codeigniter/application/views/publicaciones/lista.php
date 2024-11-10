@@ -227,8 +227,8 @@
                                                                 $this->session->userdata('idUsuario'), 
                                                                 $publicacion->idPublicacion
                                                             );
-                                                            if (!$interes_existente): 
-                                                            ?>
+                                                            
+                                                            if (!$interes_existente && !$publicacion->tiene_interes): ?>
                                                                 <a href="<?php echo site_url('notificaciones/agregar_interes/'.$publicacion->idPublicacion); ?>" 
                                                                 class="btn btn-warning btn-sm">
                                                                     <i class="mdi mdi-bell"></i> Notificarme

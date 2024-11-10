@@ -53,6 +53,13 @@ class Publicaciones extends CI_Controller {
             $publicacion->estado_texto = $estado_info['estado'];
             $publicacion->estado_clase = $estado_info['clase'];
             $publicacion->puede_solicitar = $this->_puede_solicitar_publicacion($publicacion);
+        
+             // Agregar verificación de interés existente
+            $publicacion->tiene_interes = $this->Notificacion_model->obtener_estado_interes(
+                $idUsuario, 
+                $publicacion->idPublicacion
+            ) ? true : false;
+            
         }
     
         $data['publicaciones'] = $publicaciones;

@@ -258,6 +258,37 @@ public function listar_publicaciones() {
         // Realizar el cambio de estado
         $this->db->where('idPublicacion', $idPublicacion);
         $this->db->update('PUBLICACION', $data);
+        
+        // Agregar la lógica de notificación cuando la publicación se vuelve disponible
+        if ($nuevoEstado == ESTADO_PUBLICACION_DISPONIBLE) {
+            // Obtener usuarios con interés registrado
+            $this->db->select('ip.idUsuario, u.email');
+            $this->db->from('INTERES_PUBLICACION ip');
+            $this->db->join('USUARIO u', 'u.idUsuario = ip.idUsuario');
+            $this->db->where('ip.idPublicacion', $idPublicacion);
+            $usuarios_interesados = $this->db->get()->result();
+
+            foreach ($usuarios_interesados as $usuario) {
+                // Crear notificación
+                $datos_notificacion = [
+                    'idUsuario' => $usuario->idUsuario,
+                    'tipo' => NOTIFICACION_DISPONIBILIDAD,
+                    'mensaje' => "La publicación '{$publicacion->titulo}' ahora está disponible",
+                    'fechaEnvio' => date('Y-m-d H:i:s'),
+                    'leida' => 0
+                ];
+                
+                $this->db->insert('NOTIFICACION', $datos_notificacion);
+
+                // Eliminar el registro de interés
+                $this->db->where([
+                    'idPublicacion' => $idPublicacion,
+                    'idUsuario' => $usuario->idUsuario
+                ]);
+                $this->db->delete('INTERES_PUBLICACION');
+            }
+        }
+
     
         // Registrar en el log del sistema
         log_message('info', 'Cambio de estado de publicación - ID: ' . $idPublicacion . 
