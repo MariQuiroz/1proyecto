@@ -614,7 +614,7 @@ private function _enviar_email_bienvenida($email, $username, $contrasena_tempora
         
                 $idUsuario = $this->session->userdata('idUsuario');
         
-                $data['publicaciones'] = $this->publicacion_model->listar_publicaciones();
+                $data['publicaciones'] = $this->publicacion_model->listar_todas_publicaciones();
                 $data['prestamos_activos'] = $this->prestamo_model->obtener_prestamos_activos_usuario($idUsuario);
                 $data['solicitudes_pendientes'] = $this->solicitud_model->obtener_solicitudes_pendientes_usuario($idUsuario);
                 $data['usuario'] = $this->usuario_model->obtener_usuario($idUsuario);
