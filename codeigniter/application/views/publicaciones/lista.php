@@ -210,27 +210,34 @@
                                                 <?php if ($this->session->userdata('rol') == 'lector'): ?>
                                                     <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
                                                         <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>" 
-                                                           class="btn btn-success btn-sm" 
-                                                           title="Solicitar préstamo">
+                                                        class="btn btn-success btn-sm" 
+                                                        title="Solicitar préstamo">
                                                             <i class="mdi mdi-book-open-page-variant"></i> Solicitar
                                                         </a>
                                                     <?php elseif (intval($publicacion->estado) === ESTADO_PUBLICACION_EN_CONSULTA || 
-                                                              intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
+                                                                intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
                                                         <?php 
-                                                        $interes_existente = $this->Notificacion_model->obtener_estado_interes(
-                                                            $this->session->userdata('idUsuario'), 
-                                                            $publicacion->idPublicacion
-                                                        );
-                                                        if (!$interes_existente): 
-                                                        ?>
-                                                            <a href="<?php echo site_url('notificaciones/agregar_interes/'.$publicacion->idPublicacion); ?>" 
-                                                               class="btn btn-warning btn-sm">
-                                                                <i class="mdi mdi-bell"></i> Notificarme
-                                                            </a>
-                                                        <?php else: ?>
-                                                            <button class="btn btn-secondary btn-sm" disabled>
-                                                                <i class="mdi mdi-bell-check"></i> Notificación Registrada
-                                                            </button>
+                                                        // Verificar si la publicación está prestada o reservada por el usuario actual
+                                                        $es_mi_prestamo = ($publicacion->es_mi_reserva == 1 || 
+                                                                        (isset($publicacion->idUsuarioSolicitud) && 
+                                                                        $publicacion->idUsuarioSolicitud == $this->session->userdata('idUsuario')));
+                                                        
+                                                        if (!$es_mi_prestamo): 
+                                                            $interes_existente = $this->Notificacion_model->obtener_estado_interes(
+                                                                $this->session->userdata('idUsuario'), 
+                                                                $publicacion->idPublicacion
+                                                            );
+                                                            if (!$interes_existente): 
+                                                            ?>
+                                                                <a href="<?php echo site_url('notificaciones/agregar_interes/'.$publicacion->idPublicacion); ?>" 
+                                                                class="btn btn-warning btn-sm">
+                                                                    <i class="mdi mdi-bell"></i> Notificarme
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <button class="btn btn-secondary btn-sm" disabled>
+                                                                    <i class="mdi mdi-bell-check"></i> Notificación Registrada
+                                                                </button>
+                                                            <?php endif; ?>
                                                         <?php endif; ?>
                                                     <?php endif; ?>
                                                 <?php endif; ?>
