@@ -190,7 +190,77 @@ public function listar_publicaciones() {
         $this->db->group_end();
         return $this->db->get()->result();
     }
-
+    public function verificar_y_actualizar_reservas_expiradas() {
+        $this->db->trans_start();
+        
+        try {
+            // Seleccionar todas las reservas expiradas
+            $this->db->select('
+                ds.idPublicacion,
+                ds.idSolicitud,
+                ds.fechaExpiracionReserva,
+                p.estado,
+                sp.idUsuario
+            ');
+            $this->db->from('DETALLE_SOLICITUD ds');
+            $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud');
+            $this->db->join('PUBLICACION p', 'p.idPublicacion = ds.idPublicacion');
+            $this->db->where('ds.fechaExpiracionReserva <', date('Y-m-d H:i:s'));
+            $this->db->where('ds.estadoReserva', 1);
+            $this->db->where('sp.estadoSolicitud', ESTADO_SOLICITUD_PENDIENTE);
+            
+            $reservas_expiradas = $this->db->get()->result();
+            
+            foreach ($reservas_expiradas as $reserva) {
+                // Actualizar estado de la publicación a disponible
+                $data_publicacion = array(
+                    'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                    'fechaActualizacion' => date('Y-m-d H:i:s'),
+                    'idUsuarioCreador' => null // O un ID de sistema
+                );
+                
+                $this->db->where('idPublicacion', $reserva->idPublicacion);
+                $this->db->update('PUBLICACION', $data_publicacion);
+                
+                // Actualizar estado de la reserva
+                $this->db->where('idSolicitud', $reserva->idSolicitud);
+                $this->db->where('idPublicacion', $reserva->idPublicacion);
+                $this->db->update('DETALLE_SOLICITUD', array(
+                    'estadoReserva' => 0,
+                    'observaciones' => 'Reserva expirada el ' . date('Y-m-d H:i:s')
+                ));
+                
+                // Actualizar estado de la solicitud si todas sus reservas están expiradas
+                $this->db->where('idSolicitud', $reserva->idSolicitud);
+                $this->db->update('SOLICITUD_PRESTAMO', array(
+                    'estadoSolicitud' => ESTADO_SOLICITUD_EXPIRADA,
+                    'fechaActualizacion' => date('Y-m-d H:i:s')
+                ));
+                
+                // Crear notificación para el usuario
+                if (isset($this->Notificacion_model)) {
+                    $this->Notificacion_model->crear_notificacion(
+                        $reserva->idUsuario,
+                        $reserva->idPublicacion,
+                        NOTIFICACION_SOLICITUD_EXPIRADA,
+                        'Tu reserva para la publicación ha expirado.'
+                    );
+                }
+                
+                // Registrar en el log del sistema
+                log_message('info', 'Reserva expirada - ID Publicación: ' . $reserva->idPublicacion . 
+                                  ' - ID Solicitud: ' . $reserva->idSolicitud);
+            }
+            
+            $this->db->trans_complete();
+            return $this->db->trans_status();
+            
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Error al procesar reservas expiradas: ' . $e->getMessage());
+            return false;
+        }
+    }
     public function cambiar_estado_publicacion($idPublicacion, $nuevoEstado) {
         $this->db->trans_start();
     
@@ -258,7 +328,7 @@ public function listar_publicaciones() {
         // Realizar el cambio de estado
         $this->db->where('idPublicacion', $idPublicacion);
         $this->db->update('PUBLICACION', $data);
-        
+
         // Agregar la lógica de notificación cuando la publicación se vuelve disponible
         if ($nuevoEstado == ESTADO_PUBLICACION_DISPONIBLE) {
             // Obtener usuarios con interés registrado

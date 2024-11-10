@@ -1,0 +1,39 @@
+2024-11-10 07:25:28 - Iniciando tareas programadas
+[2024-11-10 07:25:28] Ejecutando verificar_reservas
+[2024-11-10 07:25:28] Resultado: OK (HTTP 200)
+[2024-11-10 07:25:28] Respuesta: 
+
+{"success":true,"timestamp":"2024-11-10 07:25:29","message":"Verificaci\u00f3n completada"}
+----------------------------------------
+[2024-11-10 07:25:29] Ejecutando ejecutar_tareas_programadas
+[2024-11-10 07:25:29] Resultado: OK (HTTP 200)
+[2024-11-10 07:25:29] Respuesta: 
+
+{"timestamp":"2024-11-10 07:25:29","resultados":{"reservas":true}}
+----------------------------------------
+2024-11-10 07:37:08 - Iniciando tareas programadas
+[2024-11-10 07:37:08] Ejecutando verificar_reservas
+[2024-11-10 07:37:08] Resultado: OK (HTTP 200)
+[2024-11-10 07:37:08] Respuesta: 
+
+{"success":true,"timestamp":"2024-11-10 07:37:09","message":"Verificaci\u00f3n completada"}
+----------------------------------------
+[2024-11-10 07:37:09] Ejecutando ejecutar_tareas_programadas
+[2024-11-10 07:37:09] Resultado: OK (HTTP 200)
+[2024-11-10 07:37:09] Respuesta: 
+
+{"timestamp":"2024-11-10 07:37:10","resultados":{"reservas":true}}
+----------------------------------------
+2024-11-10 07:37:39 - Iniciando tareas programadas
+[2024-11-10 07:37:39] Ejecutando verificar_reservas
+[2024-11-10 07:37:39] Resultado: OK (HTTP 200)
+[2024-11-10 07:37:39] Respuesta: 
+
+{"success":true,"timestamp":"2024-11-10 07:37:39","message":"Verificaci\u00f3n completada"}
+----------------------------------------
+[2024-11-10 07:37:39] Ejecutando ejecutar_tareas_programadas
+[2024-11-10 07:37:39] Resultado: OK (HTTP 200)
+[2024-11-10 07:37:39] Respuesta: 
+
+{"timestamp":"2024-11-10 07:37:39","resultados":{"reservas":true}}
+----------------------------------------
