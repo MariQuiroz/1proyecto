@@ -77,6 +77,7 @@ public function obtener_prestamos_activos() {
 
     $this->db->select('
         p.idPrestamo,
+        p.idSolicitud,        
         p.fechaPrestamo,
         p.horaInicio,
         p.estadoPrestamo,
@@ -97,7 +98,8 @@ public function obtener_prestamos_activos() {
         'p.estado' => 1
     ]);
     $this->db->group_by('
-        p.idPrestamo, 
+        p.idPrestamo,
+        p.idSolicitud,        
         p.fechaPrestamo, 
         p.horaInicio, 
         p.estadoPrestamo,
@@ -112,14 +114,12 @@ public function obtener_prestamos_activos() {
     // Procesar los resultados
     foreach ($prestamos as &$prestamo) {
         $prestamo->titulos = explode(',', $prestamo->titulos);
-        // Usar el primer título como título principal
         $prestamo->titulo = $prestamo->titulos[0];
     }
 
     log_message('debug', "Total de préstamos activos encontrados: " . count($prestamos));
     return $prestamos;
 }
-
 
    
     public function obtener_historial_prestamos() {
@@ -149,22 +149,58 @@ public function obtener_prestamos_activos() {
     }
 
     public function obtener_prestamos_usuario($idUsuario) {
-        $this->db->select('P.*, PUB.titulo');
+        $this->db->select('
+            P.idPrestamo,
+            P.fechaPrestamo,
+            P.horaInicio,
+            P.horaDevolucion,
+            P.estadoPrestamo,
+            P.estadoDevolucion,
+            PUB.titulo,
+            PUB.idPublicacion,
+            E.nombreEditorial,
+            T.nombreTipo
+        ');
         $this->db->from('PRESTAMO P');
-        $this->db->join('PUBLICACION PUB', 'P.idPublicacion = PUB.idPublicacion');
-        $this->db->where('P.idUsuario', $idUsuario);
+        $this->db->join('SOLICITUD_PRESTAMO SP', 'P.idSolicitud = SP.idSolicitud');
+        $this->db->join('DETALLE_SOLICITUD DS', 'SP.idSolicitud = DS.idSolicitud');
+        $this->db->join('PUBLICACION PUB', 'DS.idPublicacion = PUB.idPublicacion');
+        $this->db->join('EDITORIAL E', 'PUB.idEditorial = E.idEditorial');
+        $this->db->join('TIPO T', 'PUB.idTipo = T.idTipo');
+        $this->db->where('SP.idUsuario', $idUsuario);
+        $this->db->where('P.estado', 1); // Solo préstamos activos en el sistema
         $this->db->order_by('P.fechaPrestamo', 'DESC');
-        return $this->db->get()->result();
+        
+        $query = $this->db->get();
+        
+        if ($query->num_rows() > 0) {
+            return $query->result();
+        }
+        
+        return array();
     }
-
     
     public function obtener_prestamo_detallado($idPrestamo) {
-        $this->db->select('P.*, PUB.titulo, PUB.fechaPublicacion, PUB.ubicacionFisica, PUB.signatura_topografica, U.carnet, U.profesion, E.nombres AS nombres_encargado, E.apellidoPaterno AS apellidoPaterno_encargado');
-        $this->db->from('PRESTAMO P');
-        $this->db->join('PUBLICACION PUB', 'P.idPublicacion = PUB.idPublicacion');
-        $this->db->join('USUARIO U', 'P.idUsuario = U.idUsuario');
-        $this->db->join('USUARIO E', 'P.idEncargadoPrestamo = E.idUsuario');
-        $this->db->where('P.idPrestamo', $idPrestamo);
+        $this->db->select([
+            'p.idPrestamo',
+            'p.estadoPrestamo',
+            'p.fechaPrestamo',
+            'p.horaInicio',
+            'p.estadoDevolucion',
+            'sp.idUsuario',
+            'ds.idPublicacion',
+            'pub.titulo',
+            'u.email',
+            'u.nombres',
+            'u.apellidoPaterno'
+        ]);
+        $this->db->from('PRESTAMO p');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+        $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+        $this->db->where('p.idPrestamo', $idPrestamo);
+        
         return $this->db->get()->row();
     }
     
@@ -471,25 +507,29 @@ public function finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion)
     $this->db->trans_start();
     
     try {
-        // Obtener datos del préstamo con joins necesarios
+        // Obtener datos completos del préstamo
         $this->db->select('
-            p.*,
+            p.idPrestamo,
+            p.idSolicitud,
+            p.estadoPrestamo,
             sp.idUsuario,
-            ds.idPublicacion
+            ds.idPublicacion,
+            pub.estado as estadoPublicacion,
+            pub.titulo
         ');
         $this->db->from('PRESTAMO p');
         $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
         $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
         $this->db->where('p.idPrestamo', $idPrestamo);
         
         $prestamo = $this->db->get()->row();
-        
+
         if (!$prestamo) {
-            log_message('error', "Préstamo no encontrado: {$idPrestamo}");
-            return false;
+            throw new Exception("Préstamo no encontrado: {$idPrestamo}");
         }
-        
-        // Actualizar préstamo
+
+        // Actualizar el préstamo
         $data_prestamo = [
             'estadoPrestamo' => ESTADO_PRESTAMO_FINALIZADO,
             'estadoDevolucion' => $estadoDevolucion,
@@ -499,17 +539,51 @@ public function finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion)
         ];
         
         $this->db->where('idPrestamo', $idPrestamo);
-        $this->db->update('PRESTAMO', $data_prestamo);
+        if (!$this->db->update('PRESTAMO', $data_prestamo)) {
+            throw new Exception('Error al actualizar el préstamo');
+        }
+
+        // Actualizar la publicación a DISPONIBLE
+        $data_publicacion = [
+            'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $idEncargado
+        ];
+        
+        $this->db->where('idPublicacion', $prestamo->idPublicacion);
+        if (!$this->db->update('PUBLICACION', $data_publicacion)) {
+            throw new Exception('Error al actualizar el estado de la publicación');
+        }
+
+        // Actualizar la solicitud
+        $data_solicitud = [
+            'estadoSolicitud' => ESTADO_SOLICITUD_FINALIZADA,
+            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'idUsuarioCreador' => $idEncargado
+        ];
+        
+        $this->db->where('idSolicitud', $prestamo->idSolicitud);
+        if (!$this->db->update('SOLICITUD_PRESTAMO', $data_solicitud)) {
+            throw new Exception('Error al actualizar la solicitud');
+        }
+
+        // Registrar en el log del sistema
+        log_message('info', sprintf(
+            "Préstamo %d finalizado. Publicación %d ('%s') marcada como disponible. Estado de devolución: %s",
+            $idPrestamo,
+            $prestamo->idPublicacion,
+            $prestamo->titulo,
+            $estadoDevolucion
+        ));
 
         $this->db->trans_complete();
-        
+
         if ($this->db->trans_status() === FALSE) {
-            log_message('error', "Error al finalizar préstamo: {$idPrestamo}");
-            return false;
+            throw new Exception("Error en la transacción al finalizar el préstamo {$idPrestamo}");
         }
-        
+
         return $prestamo;
-        
+
     } catch (Exception $e) {
         $this->db->trans_rollback();
         log_message('error', 'Error en finalizar_prestamo: ' . $e->getMessage());
@@ -518,7 +592,7 @@ public function finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion)
 }
 
 private function _obtener_texto_estado_devolucion($estado) {
-    $estado = (int)$estado; // Asegurar que sea un entero
+    $estado = (int)$estado;
     
     switch ($estado) {
         case ESTADO_DEVOLUCION_DAÑADO:

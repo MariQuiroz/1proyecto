@@ -61,77 +61,83 @@ class Prestamos extends CI_Controller {
         redirect('prestamos/activos');
     }
     
-public function finalizar() {
-    $this->_verificar_rol(['administrador', 'encargado']);
-    
-    $idPrestamo = $this->input->post('idPrestamo');
-    $estadoDevolucion = $this->input->post('estadoDevolucion');
-    $observaciones = $this->input->post('observaciones');
-    
-    // Validar que exista el préstamo y esté activo
-    $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
-    if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
-        $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
-        redirect('prestamos/activos');
-        return;
-    }
-
-    $this->db->trans_start();
-
-    try {
-        $idEncargado = $this->session->userdata('idUsuario');
+    public function finalizar() {
+        $this->_verificar_rol(['administrador', 'encargado']);
         
-        // Finalizar el préstamo
-        $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion);
+        $idPrestamo = $this->input->post('idPrestamo');
+        $estadoDevolucion = $this->input->post('estadoDevolucion');
         
-        if ($resultado) {
-            // Actualizar la publicación a disponible
-            $this->Publicacion_model->cambiar_estado_publicacion(
-                $prestamo->idPublicacion,
-                ESTADO_PUBLICACION_DISPONIBLE
-            );
-	   // 2. Generar ficha de devolución
-            $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
-            
-            // 3. Enviar ficha por correo solo si se generó correctamente
-            $envio_exitoso = false;
-            if ($pdf_content) {
-                $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
-            }
+        // Validar que exista el préstamo y esté activo
+        $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
+        if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
+            $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
+            redirect('prestamos/activos');
+            return;
+        }
     
-            // Crear notificación
-            $this->Notificacion_model->crear_notificacion(
-                $prestamo->idUsuario,
-                $prestamo->idPublicacion,
-                NOTIFICACION_DEVOLUCION,
-                "El préstamo ha sido finalizado. Estado: $estadoDevolucion"
-            );
-
-            // Notificar disponibilidad
-            $this->_notificar_disponibilidad($prestamo->idPublicacion);
+        $this->db->trans_start();
+    
+        try {
+            $idEncargado = $this->session->userdata('idUsuario');
             
-            $this->db->trans_complete();
-             // Mensaje de éxito
-            $mensaje = 'Préstamo finalizado con éxito.';
-            if ($envio_exitoso) {
-                $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico al lector.';
+            // Finalizar el préstamo usando el modelo
+            $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion);
+    
+            if ($resultado) {
+                // Generar ficha de devolución
+                $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
+                
+                if ($pdf_content) {
+                    $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
+                    
+                    // Almacenar el PDF temporalmente para acceso del encargado
+                    $filename = 'ficha_devolucion_' . $idPrestamo . '_' . date('YmdHis') . '.pdf';
+                    $filepath = FCPATH . 'uploads/temp/' . $filename;
+                    file_put_contents($filepath, $pdf_content);
+                    $this->session->set_flashdata('pdf_path', base_url('uploads/temp/' . $filename));
+                }
+    
+                // Crear notificación de devolución
+                $this->Notificacion_model->crear_notificacion(
+                    $resultado->idUsuario,
+                    $resultado->idPublicacion,
+                    NOTIFICACION_DEVOLUCION,
+                    "Se ha devuelto la publicación. Estado: $estadoDevolucion"
+                );
+    
+                // Notificar disponibilidad
+                $this->_notificar_disponibilidad($resultado->idPublicacion);
+    
+                $mensaje = 'Préstamo finalizado con éxito.';
+                if (isset($envio_exitoso) && $envio_exitoso) {
+                    $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico.';
+                }
+                
+                $this->session->set_flashdata('mensaje', $mensaje);
+                
             } else {
-                $mensaje .= ' Sin embargo, hubo un problema al enviar el correo electrónico.';
-                log_message('error', 'Error al enviar correo de ficha de devolución para préstamo ID: ' . $idPrestamo);
+                throw new Exception('Error al finalizar el préstamo.');
             }
-            
-            $this->session->set_flashdata('mensaje', $mensaje);
-               }
-        
-    } catch (Exception $e) {
-        $this->db->trans_rollback();
-        log_message('error', 'Error al finalizar préstamo: ' . $e->getMessage());
-        $this->session->set_flashdata('error', 'Error al procesar la devolución.');
+    
+            $this->db->trans_complete();
+    
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Error al finalizar préstamo: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Error al procesar la devolución.');
+        }
+    
+        redirect('prestamos/activos');
     }
     
-    redirect('prestamos/activos');
-}
-
+    private function _obtener_texto_estado_devolucion($estado) {
+        $estados = [
+            ESTADO_DEVOLUCION_BUENO => 'Buen estado',
+            ESTADO_DEVOLUCION_DAÑADO => 'Con daños',
+            ESTADO_DEVOLUCION_PERDIDO => 'Perdido'
+        ];
+        return isset($estados[$estado]) ? $estados[$estado] : 'Estado desconocido';
+    }
 
 private function _notificar_disponibilidad($idPublicacion) {
     // Obtener la publicación
@@ -256,192 +262,303 @@ private function _enviar_email_disponibilidad($idUsuario, $publicacion) {
     
     
     
-    private function generar_ficha_devolucion($idPrestamo) {
+   private function generar_ficha_devolucion($idPrestamo) {
+    try {
+        // Obtener datos necesarios para la ficha
         $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
-        if (!$datos_prestamo) {
-            return false;
-        }
-    
-        $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-        $pdf->SetCreator(PDF_CREATOR);
-        $pdf->SetAuthor('Hemeroteca UMSS');
-        $pdf->SetTitle('Ficha de Devolución');
-        $pdf->SetSubject('Comprobante de Devolución');
-        $pdf->SetKeywords('UMSS, Biblioteca, Devolución');
-        $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, 'Hemeroteca UMSS', 'Comprobante de Devolución', array(0,64,255), array(0,64,128));
-        $pdf->setFooterData(array(0,64,0), array(0,64,128));
-        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
-        $pdf->AddPage();
-        $pdf->SetFont('helvetica', '', 12);
-    
-        $html = '
-        <h1 style="text-align: center;">U.M.S.S. BIBLIOTECAS - COMPROBANTE DE DEVOLUCIÓN</h1>
         
-        <h3>Datos del Lector</h3>
-        <table border="1" cellpadding="5">
-            <tr>
-                <td width="30%"><strong>Nombre:</strong></td>
-                <td width="70%">'.$datos_prestamo['nombreLector'].' '.$datos_prestamo['apellidoLector'].'</td>
-            </tr>
-            <tr>
-                <td><strong>Carnet:</strong></td>
-                <td>'.$datos_prestamo['carnet'].'</td>
-            </tr>
-        </table>
-    
-        <h3>Datos del Préstamo</h3>
-        <table border="1" cellpadding="5">
-            <tr>
-                <td width="30%"><strong>Fecha de préstamo:</strong></td>
-                <td width="70%">'.$datos_prestamo['fechaPrestamo'].'</td>
-            </tr>
-            <tr>
-                <td><strong>Fecha de devolución:</strong></td>
-                <td>'.date('Y-m-d H:i:s').'</td>
-            </tr>
-            <tr>
-                <td><strong>Estado de devolución:</strong></td>
-                <td>'.$datos_prestamo['estadoDevolucion'].'</td>
-            </tr>
-        </table>
-    
-        <h3>Datos de la Publicación</h3>
-        <table border="1" cellpadding="5">
-            <thead>
-                <tr style="background-color: #f0f0f0;">
-                    <th>Título</th>
-                    <th>Editorial</th>
-                    <th>Tipo</th>
-                    <th>Ubicación</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>'.$datos_prestamo['titulo'].'</td>
-                    <td>'.$datos_prestamo['nombreEditorial'].'</td>
-                    <td>'.$datos_prestamo['nombreTipo'].'</td>
-                    <td>'.$datos_prestamo['ubicacionFisica'].'</td>
-                </tr>
-            </tbody>
-        </table>
-    
-        <h3>Encargado de la Devolución</h3>
-        <table border="1" cellpadding="5">
-            <tr>
-                <td width="30%"><strong>Nombre:</strong></td>
-                <td width="70%">'.$datos_prestamo['nombreEncargado'].' '.$datos_prestamo['apellidoEncargado'].'</td>
-            </tr>
-        </table>
-    
-        <div style="text-align: center; margin-top: 50px;">
-            <table width="100%">
-                <tr>
-                    <td width="50%" style="text-align: center;">
-                        ________________________<br>
-                        Firma del Lector
-                    </td>
-                    <td width="50%" style="text-align: center;">
-                        ________________________<br>
-                        Firma del Encargado
-                    </td>
-                </tr>
-            </table>
-        </div>';
-    
-        $pdf->writeHTML($html, true, false, true, false, '');
-        return $pdf->Output('ficha_devolucion.pdf', 'S');
-    }
-    
-    private function enviar_ficha_por_correo($idPrestamo, $pdf_content) {
-        $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
         if (!$datos_prestamo) {
+            log_message('error', 'No se encontraron datos para la ficha de devolución - ID Préstamo: ' . $idPrestamo);
             return false;
         }
-    
-        $this->load->library('email');
-    
-        $config['protocol'] = 'smtp';
-        $config['smtp_host'] = 'smtp.gmail.com';
-        $config['smtp_port'] = 587;
-        $config['smtp_user'] = 'quirozmolinamaritza@gmail.com';
-        $config['smtp_pass'] = 'zdmk qkfw wgdf lshq';
-        $config['smtp_crypto'] = 'tls';
-        $config['mailtype'] = 'html';
-        $config['charset'] = 'utf-8';
-        $config['newline'] = "\r\n";
-    
-        $this->email->initialize($config);
-        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
-        $this->email->to($datos_prestamo['email']);
-        $this->email->subject('Comprobante de Devolución - Hemeroteca UMSS');
-    
-        $mensaje = "
+
+        // Cargar Dompdf
+        require_once APPPATH . '../vendor/autoload.php';
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        // Construir el HTML de la ficha
+        $html = '
+        <!DOCTYPE html>
         <html>
         <head>
-            <title>Comprobante de Devolución</title>
+            <meta charset="UTF-8">
+            <title>Ficha de Devolución - Hemeroteca UMSS</title>
             <style>
-                table { 
-                    border-collapse: collapse; 
-                    width: 100%; 
-                    margin: 10px 0; 
+                body {
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    margin: 20px;
                 }
-                th, td { 
-                    border: 1px solid #ddd; 
-                    padding: 8px; 
-                    text-align: left; 
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
                 }
-                th { 
-                    background-color: #f2f2f2; 
+                .header img {
+                    max-width: 150px;
+                    margin-bottom: 10px;
+                }
+                .titulo {
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                    text-align: center;
+                    color: #003366;
+                }
+                .seccion {
+                    margin-bottom: 20px;
+                }
+                .seccion h3 {
+                    color: #003366;
+                    border-bottom: 1px solid #003366;
+                    padding-bottom: 5px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                }
+                th, td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: left;
+                }
+                th {
+                    background-color: #f5f5f5;
+                    font-weight: bold;
+                }
+                .firmas {
+                    margin-top: 50px;
+                    text-align: center;
+                }
+                .firma {
+                    display: inline-block;
+                    width: 45%;
+                    margin: 0 2%;
+                }
+                .linea-firma {
+                    border-top: 1px solid #000;
+                    margin-top: 50px;
+                    padding-top: 10px;
+                }
+                .footer {
+                    position: fixed;
+                    bottom: 0;
+                    width: 100%;
+                    text-align: center;
+                    font-size: 10px;
+                    color: #666;
+                    padding: 10px 0;
                 }
             </style>
         </head>
         <body>
-            <h2>Comprobante de Devolución - Hemeroteca UMSS</h2>
-            <p>Estimado/a {$datos_prestamo['nombreLector']} {$datos_prestamo['apellidoLector']},</p>
-            <p>Se confirma la devolución de la siguiente publicación:</p>
-            
-            <table>
-                <thead>
+            <div class="header">
+                <img src="' . base_url('assets/img/logo-umss.png') . '" alt="Logo UMSS">
+                <h1>HEMEROTECA UMSS</h1>
+                <h2>COMPROBANTE DE DEVOLUCIÓN</h2>
+            </div>
+
+            <div class="seccion">
+                <h3>Datos del Lector</h3>
+                <table>
                     <tr>
-                        <th>Título</th>
-                        <th>Editorial</th>
-                        <th>Tipo</th>
-                        <th>Ubicación</th>
+                        <th width="30%">Nombre Completo:</th>
+                        <td>' . htmlspecialchars($datos_prestamo['nombreLector'] . ' ' . $datos_prestamo['apellidoLector']) . '</td>
                     </tr>
-                </thead>
-                <tbody>
                     <tr>
-                        <td>{$datos_prestamo['titulo']}</td>
-                        <td>{$datos_prestamo['nombreEditorial']}</td>
-                        <td>{$datos_prestamo['nombreTipo']}</td>
-                        <td>{$datos_prestamo['ubicacionFisica']}</td>
+                        <th>Carnet:</th>
+                        <td>' . htmlspecialchars($datos_prestamo['carnet']) . '</td>
                     </tr>
-                </tbody>
-            </table>
-    
-            <p><strong>Fecha de devolución:</strong> " . date('Y-m-d H:i:s') . "</p>
-            <p><strong>Estado de devolución:</strong> {$datos_prestamo['estadoDevolucion']}</p>
-            
-            <p>Se adjunta el comprobante de devolución en formato PDF.</p>
-            <p>Gracias por utilizar nuestros servicios.</p>
-            <p>Atentamente,<br>Hemeroteca UMSS</p>
+                    <tr>
+                        <th>Email:</th>
+                        <td>' . htmlspecialchars($datos_prestamo['email']) . '</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="seccion">
+                <h3>Datos de la Publicación</h3>
+                <table>
+                    <tr>
+                        <th width="30%">Título:</th>
+                        <td>' . htmlspecialchars($datos_prestamo['titulo']) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Editorial:</th>
+                        <td>' . htmlspecialchars($datos_prestamo['nombreEditorial']) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Ubicación Física:</th>
+                        <td>' . htmlspecialchars($datos_prestamo['ubicacionFisica']) . '</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="seccion">
+                <h3>Datos de la Devolución</h3>
+                <table>
+                    <tr>
+                        <th width="30%">Fecha de Préstamo:</th>
+                        <td>' . date('d/m/Y H:i:s', strtotime($datos_prestamo['fechaPrestamo'])) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha de Devolución:</th>
+                        <td>' . date('d/m/Y H:i:s') . '</td>
+                    </tr>
+                    <tr>
+                        <th>Estado de Devolución:</th>
+                        <td>' . htmlspecialchars($datos_prestamo['estadoDevolucion']) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Encargado:</th>
+                        <td>' . htmlspecialchars($datos_prestamo['nombreEncargado'] . ' ' . $datos_prestamo['apellidoEncargado']) . '</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="firmas">
+                <div class="firma">
+                    <div class="linea-firma">Firma del Lector</div>
+                </div>
+                <div class="firma">
+                    <div class="linea-firma">Firma del Encargado</div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>Fecha y hora de impresión: ' . date('d/m/Y H:i:s') . '</p>
+                <p>ID Préstamo: ' . $idPrestamo . '</p>
+                <p>Este documento es un comprobante oficial de devolución de la Hemeroteca UMSS</p>
+            </div>
         </body>
-        </html>";
+        </html>';
+
+        // Cargar HTML en Dompdf
+        $dompdf->loadHtml($html);
+
+        // Configurar tamaño de papel y orientación
+        $dompdf->setPaper('letter', 'portrait');
+
+        // Renderizar el PDF
+        $dompdf->render();
+
+        // Obtener el contenido del PDF
+        $output = $dompdf->output();
+
+        // Registrar la generación exitosa
+        log_message('info', 'Ficha de devolución generada exitosamente - ID Préstamo: ' . $idPrestamo);
+
+        return $output;
+
+    } catch (Exception $e) {
+        log_message('error', 'Error al generar ficha de devolución: ' . $e->getMessage());
+        return false;
+    }
+}
+    private function enviar_ficha_por_correo($idPrestamo, $pdf_content) {
+        try {
+            // Obtener datos del préstamo y el usuario
+            $datos_prestamo = $this->Prestamo_model->obtener_datos_ficha_devolucion($idPrestamo);
+            if (!$datos_prestamo) {
+                log_message('error', 'No se encontraron datos para generar la ficha de devolución del préstamo ID: ' . $idPrestamo);
+                return false;
+            }
     
-        $this->email->message($mensaje);
-        $this->email->attach($pdf_content, 'attachment', 'comprobante_devolucion.pdf', 'application/pdf');
+            // Configuración del email
+            $config = [
+                'protocol' => 'smtp',
+                'smtp_host' => 'smtp.gmail.com',
+                'smtp_port' => 587,
+                'smtp_user' => 'quirozmolinamaritza@gmail.com',
+                'smtp_pass' => 'zdmk qkfw wgdf lshq',
+                'smtp_crypto' => 'tls',
+                'mailtype' => 'html',
+                'charset' => 'utf-8',
+                'newline' => "\r\n"
+            ];
     
-        if ($this->email->send()) {
+            $this->email->initialize($config);
+            $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
+            $this->email->to($datos_prestamo['email']);
+            $this->email->subject('Comprobante de Devolución - Hemeroteca UMSS');
+    
+            // Construir el cuerpo del mensaje con estilo mejorado
+            $mensaje = "
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; }
+                    .container { padding: 20px; }
+                    .header { background-color: #003366; color: white; padding: 10px; text-align: center; }
+                    .content { margin: 20px 0; }
+                    .details { background-color: #f5f5f5; padding: 15px; border-radius: 5px; }
+                    .footer { font-size: 12px; color: #666; margin-top: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h2>Comprobante de Devolución - Hemeroteca UMSS</h2>
+                    </div>
+                    
+                    <div class='content'>
+                        <p>Estimado/a {$datos_prestamo['nombreLector']} {$datos_prestamo['apellidoLector']},</p>
+                        <p>Se confirma la devolución de la siguiente publicación:</p>
+                        
+                        <div class='details'>
+                            <table>
+                                <tr>
+                                    <th>Título</th>
+                                    <td>{$datos_prestamo['titulo']}</td>
+                                </tr>
+                                <tr>
+                                    <th>Editorial</th>
+                                    <td>{$datos_prestamo['nombreEditorial']}</td>
+                                </tr>
+                                <tr>
+                                    <th>Fecha de Devolución</th>
+                                    <td>" . date('d/m/Y H:i:s') . "</td>
+                                </tr>
+                                <tr>
+                                    <th>Estado de Devolución</th>
+                                    <td>{$datos_prestamo['estadoDevolucion']}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <p>Se adjunta el comprobante detallado de la devolución en formato PDF.</p>
+                    </div>
+                    
+                    <div class='footer'>
+                        <p>Este es un correo automático, por favor no responder.</p>
+                        <p>Hemeroteca UMSS - " . date('Y') . "</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+    
+            $this->email->message($mensaje);
+    
+            // Adjuntar el PDF
+            $this->email->attach($pdf_content, 'attachment', 'comprobante_devolucion.pdf', 'application/pdf');
+    
+            if (!$this->email->send()) {
+                log_message('error', 'Error al enviar correo de devolución: ' . $this->email->print_debugger());
+                return false;
+            }
+    
+            // Registrar el envío exitoso en el log
+            log_message('info', "Ficha de devolución enviada por correo - Préstamo ID: {$idPrestamo}, Email: {$datos_prestamo['email']}");
             return true;
-        } else {
-            log_message('error', 'Error al enviar correo de devolución: ' . $this->email->print_debugger());
+    
+        } catch (Exception $e) {
+            log_message('error', 'Error en enviar_ficha_por_correo: ' . $e->getMessage());
             return false;
         }
     }

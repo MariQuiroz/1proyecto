@@ -151,35 +151,39 @@ class Solicitudes extends CI_Controller {
                 $idEncargado = $this->session->userdata('idUsuario');
                 $fechaActual = date('Y-m-d H:i:s');
                 
-                // Obtener detalles de la solicitud
+                // Obtener detalles de la solicitud con campos específicos
                 $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
                 if (!$solicitud || $solicitud->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
                     throw new Exception('La solicitud no es válida o ya fue procesada');
                 }
         
                 // Actualizar estado de la solicitud
-                $this->db->where('idSolicitud', $idSolicitud);
-                $this->db->update('SOLICITUD_PRESTAMO', [
+                $datos_actualizacion = [
                     'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
                     'fechaAprobacionRechazo' => $fechaActual,
+                    'fechaActualizacion' => $fechaActual,
                     'idUsuarioCreador' => $idEncargado
-                ]);
+                ];
         
-                // Iniciar el préstamo inmediatamente
+                $this->db->where('idSolicitud', $idSolicitud);
+                $this->db->update('SOLICITUD_PRESTAMO', $datos_actualizacion);
+        
+                // Iniciar el préstamo
                 if (!$this->Prestamo_model->iniciar_prestamo($idSolicitud, $idEncargado)) {
                     throw new Exception('Error al iniciar el préstamo');
                 }
         
-                // Generar ficha de préstamo
+                // Guardar información de la ficha en sesión para generación posterior
                 $datos_solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
                 $datos_ficha = [
+                    'idSolicitud' => $idSolicitud,
                     'nombreCompletoLector' => $datos_solicitud[0]->nombres . ' ' . $datos_solicitud[0]->apellidoPaterno,
                     'carnet' => $datos_solicitud[0]->carnet,
                     'profesion' => $datos_solicitud[0]->profesion,
                     'fechaPrestamo' => $fechaActual
                 ];
-        
-                $pdfUrl = $this->generar_pdf_ficha_prestamo($datos_ficha, $idSolicitud);
+                
+                $this->session->set_userdata('datos_ficha_pendiente', $datos_ficha);
         
                 // Notificar al usuario
                 $this->Notificacion_model->crear_notificacion(
@@ -195,9 +199,7 @@ class Solicitudes extends CI_Controller {
                     throw new Exception('Error en la transacción');
                 }
         
-                $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamo iniciado exitosamente.');
-                
-                // Redirigir a préstamos activos
+                $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamo iniciado exitosamente. Puede generar la ficha de préstamo desde la lista de préstamos activos.');
                 redirect('prestamos/activos');
         
             } catch (Exception $e) {
@@ -205,6 +207,40 @@ class Solicitudes extends CI_Controller {
                 log_message('error', 'Error en aprobación: ' . $e->getMessage());
                 $this->session->set_flashdata('error', $e->getMessage());
                 redirect('solicitudes/pendientes');
+            }
+        }
+        
+        // Nuevo método para generar ficha bajo demanda
+        public function generar_ficha($idSolicitud) {
+            $this->_verificar_rol(['administrador', 'encargado']);
+            
+            try {
+                $datos_solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
+                
+                if (empty($datos_solicitud)) {
+                    throw new Exception('No se encontraron detalles de la solicitud');
+                }
+        
+                $datos_ficha = [
+                    'nombreCompletoLector' => $datos_solicitud[0]->nombres . ' ' . $datos_solicitud[0]->apellidoPaterno,
+                    'carnet' => $datos_solicitud[0]->carnet,
+                    'profesion' => $datos_solicitud[0]->profesion,
+                    'fechaPrestamo' => $datos_solicitud[0]->fechaPrestamo
+                ];
+        
+                $pdfUrl = $this->generar_pdf_ficha_prestamo($datos_ficha, $idSolicitud);
+                
+                if (!$pdfUrl) {
+                    throw new Exception('Error al generar la ficha PDF');
+                }
+        
+                $this->session->set_flashdata('mensaje', 'Ficha de préstamo generada exitosamente');
+                redirect('prestamos/activos?pdf=' . urlencode($pdfUrl));
+        
+            } catch (Exception $e) {
+                log_message('error', 'Error al generar ficha: ' . $e->getMessage());
+                $this->session->set_flashdata('error', $e->getMessage());
+                redirect('prestamos/activos');
             }
         }
 

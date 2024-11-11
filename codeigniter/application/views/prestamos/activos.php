@@ -26,6 +26,17 @@
                     </button>
                 </div>
             <?php endif; ?>
+
+                        <!-- Al principio de la vista, justo después de mostrar los mensajes flash -->
+            <?php if ($this->input->get('pdf')): ?>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Abrir el PDF solo una vez cuando se carga la página
+                        var pdfUrl = '<?php echo urldecode($this->input->get('pdf')); ?>';
+                        window.open(pdfUrl, '_blank');
+                    });
+                </script>
+            <?php endif; ?>
             
             <div class="row">
                 <div class="col-12">
@@ -61,6 +72,10 @@
                                             <a href="<?php echo site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" 
                                             class="btn btn-info btn-sm">
                                                 Detalles
+                                            </a>
+                                            <a href="<?php echo site_url('solicitudes/generar_ficha/' . $prestamo->idSolicitud); ?>" 
+                                            class="btn btn-primary btn-sm">
+                                                Generar Ficha
                                             </a>
                                         </td>
                                     </tr>
