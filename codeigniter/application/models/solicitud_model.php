@@ -191,16 +191,22 @@ class Solicitud_model extends CI_Model {
         if (!$this->_verificar_rol(['lector'])) {
             return [];
         }
-
+    
+        // Verificar y procesar solicitudes expiradas primero
+        $this->verificar_y_procesar_expiraciones();
+    
+        // Consulta principal con información detallada
         $this->db->select('
             sp.idSolicitud,
             sp.fechaSolicitud,
             sp.estadoSolicitud,
             sp.idUsuario,
             ds.idPublicacion,
+            ds.fechaExpiracionReserva,
+            ds.observaciones,
             p.titulo,
             p.ubicacionFisica,
-            ds.observaciones,
+            p.estado as estadoPublicacion,
             e.nombreEditorial,
             t.nombreTipo
         ');
@@ -209,10 +215,78 @@ class Solicitud_model extends CI_Model {
         $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
         $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
         $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
-        $this->db->where('sp.idUsuario', $idUsuario);
+        $this->db->where([
+            'sp.idUsuario' => $idUsuario,
+            'sp.estado' => 1
+        ]);
         $this->db->order_by('sp.fechaSolicitud', 'DESC');
-        return $this->db->get()->result();
+    
+        $solicitudes = $this->db->get()->result();
+    
+        // Procesar información adicional para cada solicitud
+        foreach ($solicitudes as &$solicitud) {
+            $solicitud->tiempo_restante = null;
+            $solicitud->estado_texto = $this->_mapear_estado_solicitud($solicitud->estadoSolicitud);
+            $solicitud->estado_clase = $this->_mapear_clase_estado($solicitud->estadoSolicitud);
+    
+            if ($solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE && $solicitud->fechaExpiracionReserva) {
+                $solicitud->tiempo_restante = $this->_calcular_tiempo_restante($solicitud->fechaExpiracionReserva);
+            }
+        }
+    
+        return $solicitudes;
     }
+    
+    // Métodos privados auxiliares
+    private function _mapear_estado_solicitud($estado) {
+        $estados = [
+            ESTADO_SOLICITUD_PENDIENTE => 'Pendiente',
+            ESTADO_SOLICITUD_APROBADA => 'Aprobada',
+            ESTADO_SOLICITUD_RECHAZADA => 'Rechazada',
+            ESTADO_SOLICITUD_FINALIZADA => 'Finalizada',
+            ESTADO_SOLICITUD_EXPIRADA => 'Expirada',
+            ESTADO_SOLICITUD_CANCELADA => 'Cancelada'
+        ];
+        
+        return isset($estados[$estado]) ? $estados[$estado] : 'Desconocido';
+    }
+    
+    private function _mapear_clase_estado($estado) {
+        $clases = [
+            ESTADO_SOLICITUD_PENDIENTE => 'badge-warning',
+            ESTADO_SOLICITUD_APROBADA => 'badge-success',
+            ESTADO_SOLICITUD_RECHAZADA => 'badge-danger',
+            ESTADO_SOLICITUD_FINALIZADA => 'badge-info',
+            ESTADO_SOLICITUD_EXPIRADA => 'badge-secondary',
+            ESTADO_SOLICITUD_CANCELADA => 'badge-dark'
+        ];
+        
+        return isset($clases[$estado]) ? $clases[$estado] : 'badge-secondary';
+    }
+    
+    private function _calcular_tiempo_restante($fecha_expiracion) {
+        $tiempo_expiracion = strtotime($fecha_expiracion);
+        $tiempo_actual = time();
+        $tiempo_restante = $tiempo_expiracion - $tiempo_actual;
+    
+        if ($tiempo_restante <= 0) {
+            return [
+                'segundos' => 0,
+                'formato' => 'Expirado',
+                'expirado' => true
+            ];
+        }
+    
+        $minutos = floor($tiempo_restante / 60);
+        $segundos = $tiempo_restante % 60;
+    
+        return [
+            'segundos' => $tiempo_restante,
+            'formato' => sprintf('%02d:%02d', $minutos, $segundos),
+            'expirado' => false
+        ];
+    }
+
     public function obtener_detalle_solicitud($idSolicitud) {
         $this->db->select('
             sp.idSolicitud,
@@ -1310,5 +1384,148 @@ class Solicitud_model extends CI_Model {
     
     log_message('debug', "=== FIN verificar_expiraciones_pendientes() ===");
     return $solicitudes_procesadas;
+}
+
+public function cancelar_solicitud_enviada($idSolicitud, $idUsuario) {
+    $this->db->trans_start();
+    
+    try {
+        // Obtener detalles de la solicitud
+        $this->db->select('
+            sp.idSolicitud,
+            sp.estadoSolicitud,
+            sp.idUsuario,
+            ds.idPublicacion,
+            p.titulo,
+            p.estado as estadoPublicacion
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->where([
+            'sp.idSolicitud' => $idSolicitud,
+            'sp.idUsuario' => $idUsuario,
+            'sp.estado' => 1
+        ]);
+
+        $solicitud = $this->db->get()->row();
+
+        if (!$solicitud) {
+            throw new Exception('No se encontró la solicitud o no tienes permisos para cancelarla.');
+        }
+
+        // Verificar que la solicitud esté en un estado que permita cancelación
+        $estados_permitidos = [
+            ESTADO_SOLICITUD_PENDIENTE,
+            //ESTADO_SOLICITUD_APROBADA  // Solo si aún no tiene préstamo activo
+        ];
+
+        if (!in_array($solicitud->estadoSolicitud, $estados_permitidos)) {
+            throw new Exception('La solicitud no puede ser cancelada en su estado actual.');
+        }
+
+        // Verificar que no haya un préstamo activo
+        $this->db->select('idPrestamo');
+        $this->db->from('PRESTAMO');
+        $this->db->where([
+            'idSolicitud' => $idSolicitud,
+            'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
+            'estado' => 1
+        ]);
+
+        if ($this->db->get()->num_rows() > 0) {
+            throw new Exception('No se puede cancelar una solicitud con préstamo activo.');
+        }
+
+        // Actualizar estado de la solicitud
+        $data_actualizacion = [
+            'estadoSolicitud' => ESTADO_SOLICITUD_CANCELADA,
+            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'observaciones' => 'Cancelada por el usuario',
+            'idUsuarioCreador' => $idUsuario
+        ];
+
+        $this->db->where('idSolicitud', $idSolicitud);
+        $this->db->update('SOLICITUD_PRESTAMO', $data_actualizacion);
+
+        // Si la solicitud estaba en estado PENDIENTE, actualizar la publicación a disponible
+        if ($solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE) {
+            $this->db->where('idPublicacion', $solicitud->idPublicacion);
+            $this->db->update('PUBLICACION', [
+                'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                'fechaActualizacion' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        // Actualizar el detalle de la solicitud
+        $this->db->where([
+            'idSolicitud' => $idSolicitud,
+            'idPublicacion' => $solicitud->idPublicacion
+        ]);
+        $this->db->update('DETALLE_SOLICITUD', [
+            'observaciones' => 'Solicitud cancelada por el usuario',
+            'fechaActualizacion' => date('Y-m-d H:i:s')
+        ]);
+
+        // Crear notificación para el usuario
+        if (isset($this->Notificacion_model)) {
+            $mensaje = "Has cancelado tu solicitud para: " . $solicitud->titulo;
+            $this->Notificacion_model->crear_notificacion(
+                $idUsuario,
+                $solicitud->idPublicacion,
+                NOTIFICACION_CANCELACION_USUARIO,
+                $mensaje
+            );
+
+            // Si la solicitud estaba aprobada, notificar a los encargados
+            if ($solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE) {
+                $this->notificar_encargados_cancelacion($solicitud);
+            }
+        }
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            throw new Exception('Error en la transacción de la base de datos.');
+        }
+
+        log_message('info', "Solicitud {$idSolicitud} cancelada exitosamente por usuario {$idUsuario}");
+
+        return [
+            'exito' => true,
+            'mensaje' => 'Solicitud cancelada correctamente.'
+        ];
+
+    } catch (Exception $e) {
+        $this->db->trans_rollback();
+        log_message('error', "Error al cancelar solicitud {$idSolicitud}: " . $e->getMessage());
+        
+        return [
+            'exito' => false,
+            'mensaje' => $e->getMessage()
+        ];
+    }
+}
+
+private function notificar_encargados_cancelacion($solicitud) {
+    // Obtener encargados activos
+    $this->db->select('idUsuario');
+    $this->db->from('USUARIO');
+    $this->db->where([
+        'rol' => 'encargado',
+        'estado' => 1
+    ]);
+    $encargados = $this->db->get()->result();
+
+    $mensaje = "El usuario ha cancelado su solicitud para: " . $solicitud->titulo;
+
+    foreach ($encargados as $encargado) {
+        $this->Notificacion_model->crear_notificacion(
+            $encargado->idUsuario,
+            $solicitud->idPublicacion,
+            NOTIFICACION_CANCELACION_USUARIO,
+            $mensaje
+        );
+    }
 }
 }

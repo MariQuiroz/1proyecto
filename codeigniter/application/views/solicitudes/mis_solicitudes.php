@@ -47,6 +47,9 @@
                                                     case ESTADO_SOLICITUD_EXPIRADA:
                                                         echo '<span class="badge badge-secondary">Expirada</span>';
                                                         break;
+                                                    case ESTADO_SOLICITUD_CANCELADA:
+                                                        echo '<span class="badge badge-info">Cancelada</span>';
+                                                        break;
                                                     default:
                                                         echo '<span class="badge badge-secondary">Desconocido</span>';
                                                 }
@@ -79,7 +82,7 @@
                                                     <i class="mdi mdi-eye"></i> Ver Detalles
                                                 </a>
                                                 <?php if ($solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE): ?>
-                                                    <a href="<?php echo site_url('solicitudes/cancelar/'.$solicitud->idSolicitud); ?>" 
+                                                    <a href="<?php echo site_url('solicitudes/cancelar_solicitud/'.$solicitud->idSolicitud); ?>" 
                                                        class="btn btn-danger btn-sm ml-1"
                                                        onclick="return confirm('¿Está seguro de cancelar esta solicitud?');">
                                                         <i class="mdi mdi-close"></i> Cancelar
@@ -98,7 +101,7 @@
                                 <span class="badge badge-warning mr-2">Pendiente</span>
                                 <span class="badge badge-success mr-2">Aprobada</span>
                                 <span class="badge badge-danger mr-2">Rechazada</span>
-                                <span class="badge badge-info mr-2">Finalizada</span>
+                                <span class="badge badge-info mr-2">Cancelada</span>
                                 <span class="badge badge-secondary">Expirada</span>
                             </div>
                         </div>

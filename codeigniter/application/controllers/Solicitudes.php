@@ -59,23 +59,33 @@ class Solicitudes extends CI_Controller {
     
             redirect('solicitudes/pendientes');
         }
-        public function mis_solicitudes() {
-            $this->_verificar_rol(['lector']);
-            // Verificar y procesar expiraciones antes de mostrar
 
-        $this->Solicitud_model->verificar_y_procesar_expiraciones();
-            
-            $idUsuario = $this->session->userdata('idUsuario');
-            $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_usuario($idUsuario);
-            
-            // No es necesario pasar las constantes a la vista si están definidas globalmente
-            
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('solicitudes/mis_solicitudes', $data);
-            $this->load->view('inc/footer');
-        }
+ public function mis_solicitudes() {
+    $this->_verificar_rol(['lector']);
+    
+    try {
+        $idUsuario = $this->session->userdata('idUsuario');
+        
+        // Obtener las solicitudes del usuario con toda la información procesada
+        $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_usuario($idUsuario);
+        
+        // Obtener información adicional para la vista
+        $data['puede_solicitar'] = $this->Solicitud_model->puede_crear_nueva_solicitud($idUsuario);
+        $data['total_solicitudes'] = $this->Solicitud_model->contar_solicitudes_activas($idUsuario);
+        
+        // Cargar las vistas
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('solicitudes/mis_solicitudes', $data);
+        $this->load->view('inc/footer');
+        
+    } catch (Exception $e) {
+        log_message('error', 'Error en mis_solicitudes: ' . $e->getMessage());
+        $this->session->set_flashdata('error', 'Ocurrió un error al cargar las solicitudes.');
+        redirect('usuarios/panel');
+    }
+}
     
         
         private function _enviar_email($to, $subject, $message) {
@@ -1153,6 +1163,27 @@ private function cargar_vistas($vista, $data = array()) {
     $this->load->view('inc/aside');
     $this->load->view($vista, $data);
     $this->load->view('inc/footer');
+}
+
+public function cancelar_solicitud($idSolicitud) {
+    $this->_verificar_rol(['lector']);
+    $idUsuario = $this->session->userdata('idUsuario');
+
+    try {
+        $resultado = $this->Solicitud_model->cancelar_solicitud_enviada($idSolicitud, $idUsuario);
+        
+        if ($resultado['exito']) {
+            $this->session->set_flashdata('mensaje', $resultado['mensaje']);
+        } else {
+            $this->session->set_flashdata('error', $resultado['mensaje']);
+        }
+
+    } catch (Exception $e) {
+        $this->session->set_flashdata('error', 'Error al cancelar la solicitud: ' . $e->getMessage());
+        log_message('error', 'Error en cancelación de solicitud: ' . $e->getMessage());
+    }
+
+    redirect('solicitudes/mis_solicitudes');
 }
 
 
