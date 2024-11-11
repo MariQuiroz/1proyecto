@@ -74,7 +74,8 @@ class Solicitud_model extends CI_Model {
         if (!$this->_verificar_rol(['administrador', 'encargado'])) {
             return [];
         }
-
+    
+        // Mejorar la selección de campos específicos evitando *
         $this->db->select('
             sp.idSolicitud,
             sp.fechaSolicitud,
@@ -82,11 +83,15 @@ class Solicitud_model extends CI_Model {
             sp.idUsuario,
             u.nombres,
             u.apellidoPaterno,
+            u.carnet,                    
             ds.idPublicacion,
+            ds.fechaExpiracionReserva,   
+            ds.estadoReserva,            
+            ds.observaciones,
             p.titulo,
             p.ubicacionFisica,
-            ds.observaciones,
-            e.nombreEditorial
+            e.nombreEditorial,
+            TIMESTAMPDIFF(MINUTE, sp.fechaSolicitud, NOW()) as minutos_transcurridos
         ');
         $this->db->from('SOLICITUD_PRESTAMO sp');
         $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
@@ -98,7 +103,18 @@ class Solicitud_model extends CI_Model {
             'sp.estado' => 1
         ]);
         $this->db->order_by('sp.fechaSolicitud', 'ASC');
-        return $this->db->get()->result();
+    
+        $resultado = $this->db->get()->result();
+    
+        // Agregar cálculo de tiempo restante para cada solicitud
+        foreach ($resultado as $solicitud) {
+            if (!isset($solicitud->fechaExpiracionReserva)) {
+                $solicitud->fechaExpiracionReserva = date('Y-m-d H:i:s', 
+                    strtotime($solicitud->fechaSolicitud . ' +2 minutes'));
+            }
+        }
+    
+        return $resultado;
     }
 
 

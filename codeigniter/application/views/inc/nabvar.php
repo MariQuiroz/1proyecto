@@ -65,6 +65,9 @@
                                 case NOTIFICACION_DEVOLUCION:
                                     $icon_class = 'fe-corner-up-left';
                                     break;
+                                case NOTIFICACION_CANCELACION_SOLICITUD:
+                                     $icon_class = 'fe-corner-up-left';
+                                    break;
                             }
                     ?>
                     <a href="<?php echo site_url('notificaciones/ver/' . $notificacion->idNotificacion); ?>" 

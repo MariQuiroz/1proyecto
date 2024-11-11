@@ -24,6 +24,7 @@
                                         <tr>
                                             <th>ID Solicitud</th>
                                             <th>Usuario</th>
+                                            <th>Carnet</th>
                                             <th>Publicación</th>
                                             <th>Fecha Solicitud</th>
                                             <th>Tiempo Restante</th>

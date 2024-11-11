@@ -32,17 +32,31 @@ class Solicitudes extends CI_Controller {
         public function pendientes() {
             $this->_verificar_rol(['administrador', 'encargado']);
             
-            // Verificar y procesar expiraciones antes de mostrar
-            $this->Solicitud_model->verificar_y_procesar_expiraciones();
-            
-            $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_pendientes();
-            $data['tiempo_limite'] = TIEMPO_LIMITE_SOLICITUD; // Agregar el tiempo límite a los datos
-            
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('solicitudes/pendientes', $data);
-            $this->load->view('inc/footer');
+            try {
+                // Verificar y procesar expiraciones antes de mostrar
+                $this->Solicitud_model->verificar_y_procesar_expiraciones();
+                
+                $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_pendientes();
+                $data['tiempo_limite'] = TIEMPO_RESERVA; // Constante definida en constants.php
+                
+                // Agregar datos adicionales para la vista
+                foreach ($data['solicitudes'] as &$solicitud) {
+                    $solicitud->tiempo_restante = max(0, 
+                        strtotime($solicitud->fechaExpiracionReserva) - time()
+                    );
+                }
+                
+                $this->load->view('inc/header');
+                $this->load->view('inc/nabvar');
+                $this->load->view('inc/aside');
+                $this->load->view('solicitudes/pendientes', $data);
+                $this->load->view('inc/footer');
+                
+            } catch (Exception $e) {
+                log_message('error', 'Error en pendientes(): ' . $e->getMessage());
+                $this->session->set_flashdata('error', 'Error al cargar las solicitudes pendientes.');
+                redirect('usuarios/panel');
+            }
         }
     
         public function eliminar($idSolicitud) {
@@ -1170,21 +1184,79 @@ public function cancelar_solicitud($idSolicitud) {
     $idUsuario = $this->session->userdata('idUsuario');
 
     try {
+        // Obtener información de la solicitud antes de cancelarla
+        $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
+        
+        if (!$solicitud) {
+            throw new Exception('Solicitud no encontrada.');
+        }
+
+        // Verificar que la solicitud pertenezca al usuario actual
+        if ($solicitud->idUsuario != $idUsuario) {
+            throw new Exception('No tienes permiso para cancelar esta solicitud.');
+        }
+
         $resultado = $this->Solicitud_model->cancelar_solicitud_enviada($idSolicitud, $idUsuario);
         
         if ($resultado['exito']) {
+            // Notificar a los encargados si la solicitud estaba pendiente
+            if ($solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE) {
+                $this->_notificar_cancelacion_encargados($solicitud);
+            }
+            
             $this->session->set_flashdata('mensaje', $resultado['mensaje']);
         } else {
             $this->session->set_flashdata('error', $resultado['mensaje']);
         }
 
     } catch (Exception $e) {
-        $this->session->set_flashdata('error', 'Error al cancelar la solicitud: ' . $e->getMessage());
         log_message('error', 'Error en cancelación de solicitud: ' . $e->getMessage());
+        $this->session->set_flashdata('error', 'Error al cancelar la solicitud: ' . $e->getMessage());
     }
 
     redirect('solicitudes/mis_solicitudes');
 }
 
+private function _notificar_cancelacion_encargados($solicitud) {
+    // Obtener información completa del usuario y la publicación
+    $usuario = $this->Usuario_model->obtener_usuario($solicitud->idUsuario);
+    $publicacion = $this->Publicacion_model->obtener_publicacion($solicitud->idPublicacion);
+    
+    // Obtener todos los encargados activos
+    $encargados = $this->Usuario_model->obtener_encargados_activos();
+    
+    if (!empty($encargados)) {
+        $fecha_cancelacion = date('d/m/Y H:i:s');
+        
+        foreach ($encargados as $encargado) {
+            // Crear mensaje personalizado
+            $mensaje = sprintf(
+                "La solicitud pendiente #%d ha sido cancelada.\n" .
+                "Usuario: %s %s\n" .
+                "Publicación: %s\n" .
+                "Fecha de cancelación: %s",
+                $solicitud->idSolicitud,
+                $usuario->nombres,
+                $usuario->apellidoPaterno,
+                $publicacion->titulo,
+                $fecha_cancelacion
+            );
 
+            // Registrar la notificación para el encargado
+            $this->Notificacion_model->crear_notificacion(
+                $encargado->idUsuario,
+                $solicitud->idPublicacion,
+                NOTIFICACION_CANCELACION_SOLICITUD,
+                $mensaje
+            );
+
+            // Registrar en el log del sistema
+            log_message('info', sprintf(
+                'Notificación de cancelación enviada - Solicitud: %d, Encargado: %d',
+                $solicitud->idSolicitud,
+                $encargado->idUsuario
+            ));
+        }
+}
+}
 }

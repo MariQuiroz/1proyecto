@@ -86,7 +86,8 @@ class Notificacion_model extends CI_Model {
             $this->db->where_in('tipo', [
                 NOTIFICACION_NUEVA_SOLICITUD,
                 NOTIFICACION_APROBACION_PRESTAMO,
-                NOTIFICACION_DEVOLUCION
+                NOTIFICACION_DEVOLUCION,
+                NOTIFICACION_CANCELACION_SOLICITUD
             ]);
         } else {
             $this->db->where('tipo !=', NOTIFICACION_NUEVA_SOLICITUD);
@@ -279,7 +280,8 @@ public function validar_notificacion($idNotificacion, $idUsuario, $rol) {
             return in_array($notificacion->tipo, [
                 NOTIFICACION_NUEVA_SOLICITUD,
                 NOTIFICACION_APROBACION_PRESTAMO,
-                NOTIFICACION_RECHAZO_PRESTAMO
+                NOTIFICACION_RECHAZO_PRESTAMO,
+                NOTIFICACION_CANCELACION_SOLICITUD
             ]);
         case 'lector':
             return in_array($notificacion->tipo, [
