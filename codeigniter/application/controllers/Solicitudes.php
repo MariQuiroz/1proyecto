@@ -31,10 +31,13 @@ class Solicitudes extends CI_Controller {
     
         public function pendientes() {
             $this->_verificar_rol(['administrador', 'encargado']);
+            
             // Verificar y procesar expiraciones antes de mostrar
-        $this->Solicitud_model->verificar_y_procesar_expiraciones();
-    
+            $this->Solicitud_model->verificar_y_procesar_expiraciones();
+            
             $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_pendientes();
+            $data['tiempo_limite'] = TIEMPO_LIMITE_SOLICITUD; // Agregar el tiempo límite a los datos
+            
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');

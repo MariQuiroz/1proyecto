@@ -18,44 +18,131 @@
                                 Aquí puedes ver y gestionar todas las solicitudes pendientes de préstamo de publicaciones.
                             </p>
 
-                            <table id="basic-datatable" class="table dt-responsive nowrap">
-                                <thead>
-                                    <tr>
-                                        <th>ID Solicitud</th>
-                                        <th>Usuario</th>
-                                        <th>Publicación</th>
-                                        <th>Fecha Solicitud</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($solicitudes as $solicitud): ?>
-                                    <tr>
-                                        <td><?php echo $solicitud->idSolicitud; ?></td>
-                                        <td><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno; ?></td>
-                                        <td><?php echo $solicitud->titulo; ?></td>
-                                        <td><?php echo date('d/m/Y H:i', strtotime($solicitud->fechaSolicitud)); ?></td>
-                                        <td>
-                                            <a href="<?php echo site_url('solicitudes/aprobar/' . $solicitud->idSolicitud); ?>" class="btn btn-success btn-sm">Aprobar</a>
-                                            <a href="<?php echo site_url('solicitudes/rechazar/' . $solicitud->idSolicitud); ?>" class="btn btn-danger btn-sm">Rechazar</a>
-                                            <a href="<?php echo site_url('solicitudes/detalle/' . $solicitud->idSolicitud); ?>" class="btn btn-info btn-sm">Detalles</a>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div> <!-- end card body-->
-                    </div> <!-- end card -->
-                </div><!-- end col-->
+                            <div class="table-responsive">
+                                <table id="basic-datatable" class="table dt-responsive nowrap">
+                                    <thead>
+                                        <tr>
+                                            <th>ID Solicitud</th>
+                                            <th>Usuario</th>
+                                            <th>Publicación</th>
+                                            <th>Fecha Solicitud</th>
+                                            <th>Tiempo Restante</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($solicitudes as $solicitud): 
+                                            $tiempo_expiracion = strtotime($solicitud->fechaExpiracionReserva);
+                                            $tiempo_actual = time();
+                                            $tiempo_restante = $tiempo_expiracion - $tiempo_actual;
+                                            $solicitud_activa = ($tiempo_restante > 0 && $solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE);
+                                        ?>
+                                        <tr>
+                                            <td><?php echo $solicitud->idSolicitud; ?></td>
+                                            <td>
+                                                <div>
+                                                    <strong><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno; ?></strong>
+                                                </div>
+                                                <small class="text-muted">
+                                                    CI: <?php echo $solicitud->carnet; ?>
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <div><?php echo $solicitud->titulo; ?></div>
+                                                <small class="text-muted">
+                                                    Ubicación: <?php echo $solicitud->ubicacionFisica; ?>
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <?php echo date('d/m/Y H:i', strtotime($solicitud->fechaSolicitud)); ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE): ?>
+                                                    <?php if ($tiempo_restante > 0): ?>
+                                                        <span class="badge badge-warning">
+                                                            <?php 
+                                                            $minutos = floor($tiempo_restante / 60);
+                                                            $segundos = $tiempo_restante % 60;
+                                                            echo sprintf('%02d:%02d', $minutos, $segundos);
+                                                            ?>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="badge badge-danger">Expirado</span>
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                switch($solicitud->estadoSolicitud) {
+                                                    case ESTADO_SOLICITUD_PENDIENTE:
+                                                        if ($tiempo_restante > 0) {
+                                                            echo '<span class="badge badge-warning">Pendiente</span>';
+                                                        } else {
+                                                            echo '<span class="badge badge-secondary">Por Expirar</span>';
+                                                        }
+                                                        break;
+                                                    case ESTADO_SOLICITUD_EXPIRADA:
+                                                        echo '<span class="badge badge-secondary">Expirada</span>';
+                                                        break;
+                                                    default:
+                                                        echo '<span class="badge badge-secondary">Desconocido</span>';
+                                                }
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($solicitud_activa): ?>
+                                                    <a href="<?php echo site_url('solicitudes/aprobar/' . $solicitud->idSolicitud); ?>" 
+                                                       class="btn btn-success btn-sm">
+                                                        <i class="mdi mdi-check"></i> Aprobar
+                                                    </a>
+                                                    <a href="<?php echo site_url('solicitudes/rechazar/' . $solicitud->idSolicitud); ?>" 
+                                                       class="btn btn-danger btn-sm"
+                                                       onclick="return confirm('¿Está seguro de rechazar esta solicitud?');">
+                                                        <i class="mdi mdi-close"></i> Rechazar
+                                                    </a>
+                                                <?php endif; ?>
+                                                <a href="<?php echo site_url('solicitudes/detalle/' . $solicitud->idSolicitud); ?>" 
+                                                   class="btn btn-info btn-sm">
+                                                    <i class="mdi mdi-eye"></i> Ver Detalles
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Leyenda de estados y tiempos -->
+                            <div class="mt-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5>Estados:</h5>
+                                        <span class="badge badge-warning mr-2">Pendiente</span>
+                                        <span class="badge badge-secondary mr-2">Por Expirar</span>
+                                        <span class="badge badge-secondary">Expirada</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5>Información:</h5>
+                                        <p class="text-muted mb-0">
+                                            <small>• Las solicitudes expiran después de <?php echo $tiempo_limite; ?> minutos</small><br>
+                                            <small>• Las solicitudes expiradas no pueden ser aprobadas</small>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!-- end row-->
         </div>
     </div>
 </div>
 
-<script>
-// Colocar este script al final de la vista de solicitudes pendientes
 <?php if ($this->input->get('pdf')): ?>
+<script>
     window.open('<?php echo $this->input->get('pdf'); ?>', '_blank');
-<?php endif; ?>
 </script>
+<?php endif; ?>

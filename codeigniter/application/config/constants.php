@@ -114,7 +114,10 @@ defined('ESTADO_PRESTAMO_ACTIVO') OR define('ESTADO_PRESTAMO_ACTIVO', 1);
 defined('ESTADO_PRESTAMO_FINALIZADO') OR define('ESTADO_PRESTAMO_FINALIZADO', 2);
 
 // Constante para el tiempo de reserva (en segundos)
-defined('TIEMPO_RESERVA') OR define('TIEMPO_RESERVA', 7200); // 2 horas
+defined('TIEMPO_RESERVA') OR define('TIEMPO_RESERVA', 120); // 2 minutos
+
+// Constantes para tiempos límite
+defined('TIEMPO_LIMITE_SOLICITUD') OR define('TIEMPO_LIMITE_SOLICITUD', 2); // 2 minutos
 
 // Estados para devolución de préstamos
 defined('ESTADO_DEVOLUCION_BUENO') OR define('ESTADO_DEVOLUCION_BUENO', 1);
