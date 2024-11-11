@@ -1205,7 +1205,7 @@ class Solicitud_model extends CI_Model {
         log_message('info', "Registrada verificación de expiración para solicitud {$idSolicitud} - Expira: {$fecha_expiracion}");
     }
     
-    public function verificar_y_procesar_expiraciones() {
+    /*public function verificar_y_procesar_expiraciones() {
         $fecha_actual = date('Y-m-d H:i:s');
         
         // Obtener solicitudes con reservas expiradas
@@ -1285,6 +1285,107 @@ class Solicitud_model extends CI_Model {
         }
         
         return count($reservas_expiradas);
+    }*/
+    public function verificar_y_procesar_expiraciones() {
+        $fecha_actual = date('Y-m-d H:i:s');
+        
+        // Obtener solicitudes expiradas con información detallada
+        $this->db->select('
+            sp.idSolicitud, 
+            sp.idUsuario, 
+            sp.fechaCreacion,
+            ds.idPublicacion,
+            p.titulo,
+            u.nombres,
+            u.apellidoPaterno,
+            u.email
+        ');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idSolicitud = sp.idSolicitud');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+        $this->db->where([
+            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'sp.estado' => 1,
+            'ds.fechaExpiracionReserva <=' => $fecha_actual
+        ]);
+        
+        $solicitudes_expiradas = $this->db->get()->result();
+        
+        foreach ($solicitudes_expiradas as $solicitud) {
+            $this->db->trans_start();
+            
+            try {
+                // Actualizar estado de solicitud
+                $this->db->where('idSolicitud', $solicitud->idSolicitud);
+                $this->db->update('SOLICITUD_PRESTAMO', [
+                    'estadoSolicitud' => ESTADO_SOLICITUD_EXPIRADA,
+                    'fechaActualizacion' => $fecha_actual,
+                    'observaciones' => 'Expirada por tiempo límite'
+                ]);
+                
+                // Liberar publicación
+                $this->db->where('idPublicacion', $solicitud->idPublicacion);
+                $this->db->update('PUBLICACION', [
+                    'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                    'fechaActualizacion' => $fecha_actual
+                ]);
+                
+                // Notificar al usuario solicitante
+                $mensaje_usuario = sprintf(
+                    "Tu solicitud para '%s' ha expirado por exceder el tiempo límite de espera.",
+                    $solicitud->titulo
+                );
+    
+                $this->Notificacion_model->crear_notificacion(
+                    $solicitud->idUsuario,
+                    $solicitud->idPublicacion,
+                    NOTIFICACION_SOLICITUD_EXPIRADA,
+                    $mensaje_usuario
+                );
+    
+                // Notificar a los encargados
+                $encargados = $this->Usuario_model->obtener_encargados_activos();
+                $mensaje_encargado = sprintf(
+                    "Solicitud expirada\nUsuario: %s %s\nPublicación: %s\nFecha solicitud: %s\nMotivo: Tiempo límite excedido",
+                    $solicitud->nombres,
+                    $solicitud->apellidoPaterno,
+                    $solicitud->titulo,
+                    date('d/m/Y H:i', strtotime($solicitud->fechaCreacion))
+                );
+    
+                foreach ($encargados as $encargado) {
+                    $this->Notificacion_model->crear_notificacion(
+                        $encargado->idUsuario,
+                        $solicitud->idPublicacion,
+                        NOTIFICACION_SOLICITUD_EXPIRADA,
+                        $mensaje_encargado
+                    );
+                }
+                
+                $this->db->trans_complete();
+                
+                if ($this->db->trans_status() === FALSE) {
+                    throw new Exception("Error al procesar expiración de solicitud {$solicitud->idSolicitud}");
+                }
+                
+                // Registrar en el log del sistema
+                log_message('info', sprintf(
+                    'Solicitud %d expirada - Usuario: %s %s, Publicación: %s',
+                    $solicitud->idSolicitud,
+                    $solicitud->nombres,
+                    $solicitud->apellidoPaterno,
+                    $solicitud->titulo
+                ));
+                
+            } catch (Exception $e) {
+                $this->db->trans_rollback();
+                log_message('error', $e->getMessage());
+                continue;
+            }
+        }
+    
+        return count($solicitudes_expiradas);
     }
 
     public function tiene_tiempo_valido($idSolicitud) {

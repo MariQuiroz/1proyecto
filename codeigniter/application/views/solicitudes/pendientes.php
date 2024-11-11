@@ -22,10 +22,11 @@
                                 <table id="basic-datatable" class="table dt-responsive nowrap">
                                     <thead>
                                         <tr>
-                                            <th>ID Solicitud</th>
-                                            <th>Usuario</th>
+                                            <th>ID</th>
+                                            <th>Nombre Usuario</th>
                                             <th>Carnet</th>
-                                            <th>Publicación</th>
+                                            <th>Título Publicación</th>
+                                            <th>Ubicación</th>
                                             <th>Fecha Solicitud</th>
                                             <th>Tiempo Restante</th>
                                             <th>Estado</th>
@@ -41,24 +42,28 @@
                                         ?>
                                         <tr>
                                             <td><?php echo $solicitud->idSolicitud; ?></td>
+                                            
                                             <td>
-                                                <div>
-                                                    <strong><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno; ?></strong>
-                                                </div>
-                                                <small class="text-muted">
-                                                    CI: <?php echo $solicitud->carnet; ?>
-                                                </small>
+                                                <strong><?php echo htmlspecialchars($solicitud->nombres . ' ' . $solicitud->apellidoPaterno); ?></strong>
                                             </td>
+
                                             <td>
-                                                <div><?php echo $solicitud->titulo; ?></div>
-                                                <small class="text-muted">
-                                                    Ubicación: <?php echo $solicitud->ubicacionFisica; ?>
-                                                </small>
+                                                <?php echo htmlspecialchars($solicitud->carnet); ?>
                                             </td>
+
+                                            <td>
+                                                <?php echo htmlspecialchars($solicitud->titulo); ?>
+                                            </td>
+
+                                            <td>
+                                                <?php echo htmlspecialchars($solicitud->ubicacionFisica); ?>
+                                            </td>
+
                                             <td>
                                                 <?php echo date('d/m/Y H:i', strtotime($solicitud->fechaSolicitud)); ?>
                                             </td>
-                                            <td>
+
+                                            <td class="text-center">
                                                 <?php if ($solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE): ?>
                                                     <?php if ($tiempo_restante > 0): ?>
                                                         <span class="badge badge-warning">
@@ -75,7 +80,8 @@
                                                     <span class="text-muted">-</span>
                                                 <?php endif; ?>
                                             </td>
-                                            <td>
+
+                                            <td class="text-center">
                                                 <?php
                                                 switch($solicitud->estadoSolicitud) {
                                                     case ESTADO_SOLICITUD_PENDIENTE:
@@ -93,22 +99,27 @@
                                                 }
                                                 ?>
                                             </td>
-                                            <td>
-                                                <?php if ($solicitud_activa): ?>
-                                                    <a href="<?php echo site_url('solicitudes/aprobar/' . $solicitud->idSolicitud); ?>" 
-                                                       class="btn btn-success btn-sm">
-                                                        <i class="mdi mdi-check"></i> Aprobar
+
+                                            <td class="text-center">
+                                                <div class="btn-group">
+                                                    <?php if ($solicitud_activa): ?>
+                                                        <a href="<?php echo site_url('solicitudes/aprobar/' . $solicitud->idSolicitud); ?>" 
+                                                           class="btn btn-success btn-sm" title="Aprobar">
+                                                            <i class="mdi mdi-check"></i>
+                                                        </a>
+                                                        <a href="<?php echo site_url('solicitudes/rechazar/' . $solicitud->idSolicitud); ?>" 
+                                                           class="btn btn-danger btn-sm"
+                                                           onclick="return confirm('¿Está seguro de rechazar esta solicitud?');"
+                                                           title="Rechazar">
+                                                            <i class="mdi mdi-close"></i>
+                                                        </a>
+                                                    <?php endif; ?>
+                                                    <a href="<?php echo site_url('solicitudes/detalle/' . $solicitud->idSolicitud); ?>" 
+                                                       class="btn btn-info btn-sm"
+                                                       title="Ver Detalles">
+                                                        <i class="mdi mdi-eye"></i>
                                                     </a>
-                                                    <a href="<?php echo site_url('solicitudes/rechazar/' . $solicitud->idSolicitud); ?>" 
-                                                       class="btn btn-danger btn-sm"
-                                                       onclick="return confirm('¿Está seguro de rechazar esta solicitud?');">
-                                                        <i class="mdi mdi-close"></i> Rechazar
-                                                    </a>
-                                                <?php endif; ?>
-                                                <a href="<?php echo site_url('solicitudes/detalle/' . $solicitud->idSolicitud); ?>" 
-                                                   class="btn btn-info btn-sm">
-                                                    <i class="mdi mdi-eye"></i> Ver Detalles
-                                                </a>
+                                                </div>
                                             </td>
                                         </tr>
                                         <?php endforeach; ?>

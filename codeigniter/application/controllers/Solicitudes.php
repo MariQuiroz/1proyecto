@@ -34,10 +34,14 @@ class Solicitudes extends CI_Controller {
             
             try {
                 // Verificar y procesar expiraciones antes de mostrar
-                $this->Solicitud_model->verificar_y_procesar_expiraciones();
+                $solicitudes_expiradas = $this->Solicitud_model->verificar_y_procesar_expiraciones();
+                
+                if ($solicitudes_expiradas > 0) {
+                    log_message('info', "Se procesaron {$solicitudes_expiradas} solicitudes expiradas");
+                }
                 
                 $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_pendientes();
-                $data['tiempo_limite'] = TIEMPO_RESERVA; // Constante definida en constants.php
+                $data['tiempo_limite'] = TIEMPO_RESERVA;
                 
                 // Agregar datos adicionales para la vista
                 foreach ($data['solicitudes'] as &$solicitud) {
@@ -58,7 +62,7 @@ class Solicitudes extends CI_Controller {
                 redirect('usuarios/panel');
             }
         }
-    
+        
         public function eliminar($idSolicitud) {
             $this->_verificar_rol(['administrador', 'encargado']);
     
