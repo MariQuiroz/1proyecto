@@ -1,5 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+$url = $base_url . '/solicitudes/verificar_expiraciones';
+ejecutar_tarea($url);
+
 
 class Cron extends CI_Controller {
     

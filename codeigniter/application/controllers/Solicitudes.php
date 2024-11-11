@@ -31,6 +31,8 @@ class Solicitudes extends CI_Controller {
     
         public function pendientes() {
             $this->_verificar_rol(['administrador', 'encargado']);
+            // Verificar y procesar expiraciones antes de mostrar
+        $this->Solicitud_model->verificar_y_procesar_expiraciones();
     
             $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_pendientes();
             $this->load->view('inc/header');
@@ -56,6 +58,9 @@ class Solicitudes extends CI_Controller {
         }
         public function mis_solicitudes() {
             $this->_verificar_rol(['lector']);
+            // Verificar y procesar expiraciones antes de mostrar
+
+        $this->Solicitud_model->verificar_y_procesar_expiraciones();
             
             $idUsuario = $this->session->userdata('idUsuario');
             $data['solicitudes'] = $this->Solicitud_model->obtener_solicitudes_usuario($idUsuario);
@@ -80,6 +85,8 @@ class Solicitudes extends CI_Controller {
     
         public function detalle($idSolicitud) {
             $this->_verificar_sesion();
+            // Verificar y procesar expiraciones antes de mostrar
+        $this->Solicitud_model->verificar_y_procesar_expiraciones();
             
             $solicitud = $this->Solicitud_model->obtener_detalle_solicitud($idSolicitud);
             
@@ -106,6 +113,12 @@ class Solicitudes extends CI_Controller {
 
 public function aprobar($idSolicitud) {
     $this->_verificar_rol(['administrador', 'encargado']);
+     // Verificar si la solicitud aún es válida
+     if (!$this->Solicitud_model->tiene_tiempo_valido($idSolicitud)) {
+        $this->session->set_flashdata('error', 'La solicitud ha expirado.');
+        redirect('solicitudes/pendientes');
+        return;
+    }
     
     $this->db->trans_start();
     
@@ -705,7 +718,7 @@ public function crear($idPublicacion) {
     $this->load->view('inc/footer');
 }
 
-public function confirmar() {
+/*public function confirmar() {
     $this->_verificar_rol(['lector']);
     $idUsuario = $this->session->userdata('idUsuario');
     
@@ -722,7 +735,7 @@ public function confirmar() {
     try {
         $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
         $hora_actual = date('Y-m-d H:i:s');
-        $hora_expiracion = date('Y-m-d H:i:s', strtotime('+2 hours'));
+        $hora_expiracion = date('Y-m-d H:i:s', strtotime('+2 minutes'));
 
         // Validación inicial de disponibilidad
         foreach ($publicaciones_seleccionadas as $idPublicacion) {
@@ -809,6 +822,186 @@ public function confirmar() {
     }
 
     redirect('solicitudes/mis_solicitudes');
+}*/
+private function _verificar_expiracion_solicitud($idSolicitud) {
+    $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
+    
+    if (!$solicitud) {
+        return false;
+    }
+
+    $tiempo_limite = strtotime('-2 minutes');
+    $fecha_creacion = strtotime($solicitud->fechaCreacion);
+
+    if ($fecha_creacion <= $tiempo_limite) {
+        $this->Solicitud_model->verificar_y_procesar_expiraciones();
+        return true;
+    }
+
+    return false;
+}
+
+public function confirmar() {
+    $this->_verificar_rol(['lector']);
+    $idUsuario = $this->session->userdata('idUsuario');
+    
+    $publicaciones_seleccionadas = $this->session->userdata('publicaciones_seleccionadas');
+    
+    if (empty($publicaciones_seleccionadas)) {
+        $this->session->set_flashdata('error', 'No hay publicaciones seleccionadas.');
+        redirect('publicaciones');
+        return;
+    }
+
+    $this->db->trans_start();
+
+    try {
+        // Verificar expiración antes de procesar
+        $idSolicitud = $this->input->post('idSolicitud');
+        if ($this->_verificar_expiracion_solicitud($idSolicitud)) {
+            $this->session->set_flashdata('error', 'La solicitud ha expirado por tiempo límite.');
+            redirect('solicitudes/mis_solicitudes');
+            return;
+        }
+
+        $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
+        $hora_actual = date('Y-m-d H:i:s');
+        $hora_expiracion = date('Y-m-d H:i:s', strtotime('+2 minutes'));
+
+        // Validación inicial de disponibilidad
+        foreach ($publicaciones_seleccionadas as $idPublicacion) {
+            // Verificar disponibilidad actual y posibles conflictos
+            $disponibilidad = $this->Publicacion_model->verificar_disponibilidad($idPublicacion, $idUsuario);
+            if (!$disponibilidad) {
+                throw new Exception('Una o más publicaciones ya no están disponibles.');
+            }
+            
+            // Verificar si no hay otras solicitudes pendientes
+            $solicitud_existente = $this->Solicitud_model->tiene_solicitud_pendiente($idPublicacion);
+            if ($solicitud_existente) {
+                throw new Exception('Existe una solicitud pendiente para una de las publicaciones.');
+            }
+        }
+
+        // Crear solicitud principal con estado pendiente y tiempo de expiración
+        $datos_solicitud = array(
+            'idUsuario' => $idUsuario,
+            'fechaSolicitud' => $hora_actual,
+            'estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
+            'estado' => 1,
+            'fechaCreacion' => $hora_actual,
+            'observaciones' => "Reserva temporal hasta: " . $hora_expiracion,
+            'idUsuarioCreador' => $idUsuario
+        );
+
+        $this->db->insert('SOLICITUD_PRESTAMO', $datos_solicitud);
+        $idSolicitud = $this->db->insert_id();
+
+        if (!$idSolicitud) {
+            throw new Exception('Error al crear la solicitud');
+        }
+
+        // Procesar cada publicación
+        foreach ($publicaciones_seleccionadas as $idPublicacion) {
+            $datos_detalle = array(
+                'idSolicitud' => $idSolicitud,
+                'idPublicacion' => $idPublicacion,
+                'fechaReserva' => $hora_actual,
+                'fechaExpiracionReserva' => $hora_expiracion,
+                'estadoReserva' => 1,
+                'observaciones' => "Reserva temporal hasta: " . $hora_expiracion
+            );
+            
+            $this->db->insert('DETALLE_SOLICITUD', $datos_detalle);
+
+            // Actualizar estado de publicación a RESERVADA
+            $this->Publicacion_model->reservar_publicacion($idPublicacion, $idUsuario);
+        }
+
+        // Preparar mensaje para el lector
+        $titulos = array();
+        foreach ($publicaciones_seleccionadas as $idPub) {
+            $pub = $this->Publicacion_model->obtener_publicacion($idPub);
+            if ($pub) {
+                $titulos[] = $pub->titulo;
+            }
+        }
+
+        $mensaje_lector = sprintf(
+            "Publicaciones reservadas temporalmente:\n%s\nTu reserva expira a las: %s\nPor favor, acércate al encargado antes de ese horario.",
+            implode(", ", $titulos),
+            date('H:i', strtotime($hora_expiracion))
+        );
+
+        // Crear notificación para el lector
+        $this->Notificacion_model->crear_notificacion(
+            $idUsuario,
+            null,
+            NOTIFICACION_SOLICITUD_PRESTAMO,
+            $mensaje_lector
+        );
+
+        // Notificar a encargados
+        $this->_notificar_encargados_nueva_reserva($usuario, $titulos, $hora_expiracion);
+
+        // Limpiar sesión y mostrar mensaje de éxito
+        $this->session->unset_userdata('publicaciones_seleccionadas');
+        $this->session->set_flashdata('mensaje', 
+            'Publicaciones reservadas temporalmente. Por favor acércate al encargado antes de las ' . 
+            date('H:i', strtotime($hora_expiracion))
+        );
+
+        $this->db->trans_complete();
+
+    } catch (Exception $e) {
+        $this->db->trans_rollback();
+        log_message('error', 'Error en confirmación de reserva: ' . $e->getMessage());
+        $this->session->set_flashdata('error', $e->getMessage());
+    }
+
+    redirect('solicitudes/mis_solicitudes');
+}
+
+private function _programar_verificacion_tiempo_limite($idSolicitud, $hora_expiracion) {
+    // Registramos la verificación programada
+    $datos_verificacion = array(
+        'idSolicitud' => $idSolicitud,
+        'fechaExpiracion' => $hora_expiracion,
+        'estado' => 'pendiente'
+    );
+    
+    $this->db->insert('VERIFICACIONES_EXPIRACION', $datos_verificacion);
+    
+    // Programar tarea de verificación
+    $this->Solicitud_model->registrar_verificacion_expiracion($idSolicitud, $hora_expiracion);
+}
+
+private function _generar_notificaciones_reserva($idUsuario, $publicaciones_seleccionadas, $hora_expiracion) {
+    $titulos = array();
+    foreach ($publicaciones_seleccionadas as $idPub) {
+        $pub = $this->Publicacion_model->obtener_publicacion($idPub);
+        if ($pub) {
+            $titulos[] = $pub->titulo;
+        }
+    }
+
+    // Notificación para el lector
+    $mensaje_lector = sprintf(
+        "Publicaciones reservadas temporalmente:\n%s\nTu reserva expira a las: %s\nPor favor, acércate al encargado antes de ese horario.",
+        implode(", ", $titulos),
+        date('H:i', strtotime($hora_expiracion))
+    );
+
+    $this->Notificacion_model->crear_notificacion(
+        $idUsuario,
+        null,
+        NOTIFICACION_SOLICITUD_PRESTAMO,
+        $mensaje_lector
+    );
+
+    // Notificación para encargados
+    $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
+    $this->_notificar_encargados_nueva_reserva($usuario, $titulos, $hora_expiracion);
 }
 
 private function _notificar_encargados_nueva_reserva($usuario, $titulos, $hora_expiracion) {
