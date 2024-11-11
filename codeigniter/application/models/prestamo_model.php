@@ -605,4 +605,43 @@ private function _obtener_texto_estado_devolucion($estado) {
     }
 }
 
+public function obtener_prestamos_devueltos() {
+    $this->db->select('
+        p.idPrestamo,
+        p.fechaPrestamo,
+        p.horaInicio,
+        p.horaDevolucion,
+        p.estadoDevolucion,
+        p.fechaCreacion,
+        p.idEncargadoPrestamo,
+        p.idEncargadoDevolucion,
+        sp.idUsuario,
+        u.nombres as nombre_lector,
+        u.apellidoPaterno as apellido_lector,
+        u.carnet,
+        pub.titulo,
+        pub.ubicacionFisica,
+        edit.nombreEditorial,
+        ep.nombres as nombre_encargado_prestamo,
+        ep.apellidoPaterno as apellido_encargado_prestamo,
+        edev.nombres as nombre_encargado_devolucion,
+        edev.apellidoPaterno as apellido_encargado_devolucion
+    ');
+    
+    $this->db->from('PRESTAMO p');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
+    $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+    $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+    $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+    $this->db->join('EDITORIAL edit', 'pub.idEditorial = edit.idEditorial');
+    $this->db->join('USUARIO ep', 'p.idEncargadoPrestamo = ep.idUsuario', 'left');
+    $this->db->join('USUARIO edev', 'p.idEncargadoDevolucion = edev.idUsuario', 'left');
+    
+    $this->db->where('p.estadoPrestamo', ESTADO_PRESTAMO_FINALIZADO);
+    $this->db->where('p.estado', 1);
+    $this->db->order_by('p.fechaCreacion', 'DESC');
+    
+    return $this->db->get()->result();
+}
+
 }

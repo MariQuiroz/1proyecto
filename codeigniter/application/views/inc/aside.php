@@ -86,6 +86,7 @@
                         <?php endif; ?>
                         <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
                             <li><a href="<?php echo site_url('prestamos/activos'); ?>" id="prestamos-activos">Préstamos Activos</a></li>
+                            <li><a href="<?php echo site_url('prestamos/devueltos'); ?>"><i class="mdi mdi-book-check"></i><span>Préstamos Devueltos</span></a></li>
                             <li><a href="<?php echo site_url('prestamos/historial'); ?>" id="historial-prestamos">Historial de Préstamos</a></li>
                         <?php endif; ?>
                     </ul>

@@ -86,8 +86,10 @@ class Prestamos extends CI_Controller {
             if ($resultado) {
                 // Generar ficha de devolución
                 $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
+                $envio_exitoso = false;
                 
                 if ($pdf_content) {
+                    // Enviar la ficha por correo electrónico
                     $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
                     
                     // Almacenar el PDF temporalmente para acceso del encargado
@@ -98,19 +100,26 @@ class Prestamos extends CI_Controller {
                 }
     
                 // Crear notificación de devolución
+                $mensaje = "El préstamo de la publicación '{$prestamo->titulo}' ha sido finalizado. Estado: $estadoDevolucion";
                 $this->Notificacion_model->crear_notificacion(
-                    $resultado->idUsuario,
-                    $resultado->idPublicacion,
+                    $prestamo->idUsuario,
+                    $prestamo->idPublicacion,
                     NOTIFICACION_DEVOLUCION,
-                    "Se ha devuelto la publicación. Estado: $estadoDevolucion"
+                    $mensaje
                 );
     
-                // Notificar disponibilidad
-                $this->_notificar_disponibilidad($resultado->idPublicacion);
+                // Actualizar el estado de la publicación a disponible
+                $this->Publicacion_model->cambiar_estado_publicacion($prestamo->idPublicacion, ESTADO_PUBLICACION_DISPONIBLE);
     
+                // Notificar a los usuarios interesados
+                $this->_notificar_disponibilidad($prestamo->idPublicacion);
+    
+                // Preparar mensaje de respuesta
                 $mensaje = 'Préstamo finalizado con éxito.';
-                if (isset($envio_exitoso) && $envio_exitoso) {
-                    $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico.';
+                if ($envio_exitoso) {
+                    $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico al lector.';
+                } else {
+                    $mensaje .= ' Sin embargo, hubo un problema al enviar el correo electrónico.';
                 }
                 
                 $this->session->set_flashdata('mensaje', $mensaje);
@@ -129,7 +138,7 @@ class Prestamos extends CI_Controller {
     
         redirect('prestamos/activos');
     }
-    
+
     private function _obtener_texto_estado_devolucion($estado) {
         $estados = [
             ESTADO_DEVOLUCION_BUENO => 'Buen estado',
@@ -562,4 +571,30 @@ private function _enviar_email_disponibilidad($idUsuario, $publicacion) {
             return false;
         }
     }
+
+    public function devueltos() {
+        $this->_verificar_rol(['administrador', 'encargado']);
+        
+        try {
+            // Obtener lista de préstamos devueltos
+            $data['prestamos'] = $this->Prestamo_model->obtener_prestamos_devueltos();
+            $data['estados_devolucion'] = [
+                'bueno' => 'BUENO',
+                'dañado' => 'DAÑADO',
+                'perdido' => 'PERDIDO'
+            ];
+            
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('prestamos/devueltos', $data);
+            $this->load->view('inc/footer');
+            
+        } catch (Exception $e) {
+            log_message('error', 'Error al cargar préstamos devueltos: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Error al cargar la lista de préstamos devueltos.');
+            redirect('prestamos/activos');
+        }
+    }
+    
 }
