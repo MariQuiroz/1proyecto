@@ -62,7 +62,7 @@ class Solicitudes extends CI_Controller {
                 redirect('usuarios/panel');
             }
         }
-        
+
         public function eliminar($idSolicitud) {
             $this->_verificar_rol(['administrador', 'encargado']);
     
@@ -142,180 +142,71 @@ class Solicitudes extends CI_Controller {
         }
         
 
-public function aprobar($idSolicitud) {
-    $this->_verificar_rol(['administrador', 'encargado']);
-     // Verificar si la solicitud aún es válida
-     if (!$this->Solicitud_model->tiene_tiempo_valido($idSolicitud)) {
-        $this->session->set_flashdata('error', 'La solicitud ha expirado.');
-        redirect('solicitudes/pendientes');
-        return;
-    }
-    
-    $this->db->trans_start();
-    
-    try {
-        $idEncargado = $this->session->userdata('idUsuario');
-        $fechaActual = date('Y-m-d H:i:s');
-        
-        // Verificar si la solicitud ya fue procesada
-        $solicitud_actual = $this->Solicitud_model->obtener_solicitud($idSolicitud);
-        if (!$solicitud_actual || $solicitud_actual->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
-            throw new Exception('La solicitud ya fue procesada o no existe');
-        }
-
-        // Obtener detalles de la solicitud
-        $solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
-        if (empty($solicitud)) {
-            throw new Exception('No se encontraron detalles de la solicitud');
-        }
-
-        // Clasificar publicaciones según disponibilidad
-        $publicaciones_disponibles = [];
-        $publicaciones_no_disponibles = [];
-        
-        foreach ($solicitud as $pub) {
-            $publicacion = $this->Publicacion_model->obtener_publicacion($pub->idPublicacion);
-            if ($publicacion && $publicacion->estado == ESTADO_PUBLICACION_DISPONIBLE) {
-                $publicaciones_disponibles[] = $pub;
-            } else {
-                $publicaciones_no_disponibles[] = $pub;
-            }
-        }
-
-        if (empty($publicaciones_disponibles)) {
-            throw new Exception('Ninguna publicación está disponible actualmente');
-        }
-
-        // Procesar publicaciones disponibles
-        foreach ($publicaciones_disponibles as $pub) {
-            // Crear registro de préstamo
-            $data_prestamo = [
-                'idSolicitud' => $idSolicitud,
-                'idEncargadoPrestamo' => $idEncargado,
-                'fechaPrestamo' => $fechaActual,
-                'horaInicio' => date('H:i:s'),
-                'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
-                'estado' => 1,
-                'fechaCreacion' => $fechaActual,
-                'idUsuarioCreador' => $idEncargado
-            ];
+        public function aprobar($idSolicitud) {
+            $this->_verificar_rol(['administrador', 'encargado']);
             
-            $this->db->insert('PRESTAMO', $data_prestamo);
-
-            // Actualizar estado de la publicación
-            $this->db->where('idPublicacion', $pub->idPublicacion)
-                    ->update('PUBLICACION', [
-                        'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
-                        'fechaActualizacion' => $fechaActual,
-                        'idUsuarioCreador' => $idEncargado
-                    ]);
-
-            // Actualizar detalle de solicitud
-            $this->db->where([
-                'idSolicitud' => $idSolicitud,
-                'idPublicacion' => $pub->idPublicacion
-            ])->update('DETALLE_SOLICITUD', [
-                'observaciones' => 'Préstamo aprobado y procesado'
-            ]);
-        }
-
-        // Determinar estado general de la solicitud
-        $estadoGeneral = empty($publicaciones_no_disponibles) ? 
-                        ESTADO_SOLICITUD_APROBADA : 
-                        ESTADO_SOLICITUD_APROBADA_PARCIAL;
-
-        // Actualizar estado de la solicitud
-        $this->db->where('idSolicitud', $idSolicitud)
-                ->update('SOLICITUD_PRESTAMO', [
-                    'estadoSolicitud' => $estadoGeneral,
+            $this->db->trans_start();
+            
+            try {
+                $idEncargado = $this->session->userdata('idUsuario');
+                $fechaActual = date('Y-m-d H:i:s');
+                
+                // Obtener detalles de la solicitud
+                $solicitud = $this->Solicitud_model->obtener_solicitud($idSolicitud);
+                if (!$solicitud || $solicitud->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
+                    throw new Exception('La solicitud no es válida o ya fue procesada');
+                }
+        
+                // Actualizar estado de la solicitud
+                $this->db->where('idSolicitud', $idSolicitud);
+                $this->db->update('SOLICITUD_PRESTAMO', [
+                    'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
                     'fechaAprobacionRechazo' => $fechaActual,
-                    'fechaActualizacion' => $fechaActual,
                     'idUsuarioCreador' => $idEncargado
                 ]);
-
-        // Crear notificaciones según disponibilidad
-        if (!empty($publicaciones_disponibles)) {
-            $mensaje_aprobadas = "Se han aprobado las siguientes publicaciones:\n" . 
-                               implode("\n", array_map(function($pub) {
-                                   return $pub->titulo;
-                               }, $publicaciones_disponibles)) . 
-                               "\nPuede pasar a recogerlas a la hemeroteca.";
-
-            $this->Notificacion_model->crear_notificacion(
-                $solicitud[0]->idUsuario,
-                null,
-                NOTIFICACION_APROBACION_PRESTAMO,
-                $mensaje_aprobadas
-            );
-        }
-
-        if (!empty($publicaciones_no_disponibles)) {
-            $mensaje_pendientes = "Las siguientes publicaciones están pendientes de disponibilidad:\n" . 
-                                implode("\n", array_map(function($pub) {
-                                    return $pub->titulo;
-                                }, $publicaciones_no_disponibles)) . 
-                                "\nSerá notificado cuando estén disponibles.";
-
-            $this->Notificacion_model->crear_notificacion(
-                $solicitud[0]->idUsuario,
-                null,
-                NOTIFICACION_SOLICITUD_PRESTAMO,
-                $mensaje_pendientes
-            );
-
-            // Actualizar observaciones para publicaciones pendientes
-            foreach ($publicaciones_no_disponibles as $pub) {
-                $this->db->where([
-                    'idSolicitud' => $idSolicitud,
-                    'idPublicacion' => $pub->idPublicacion
-                ])->update('DETALLE_SOLICITUD', [
-                    'observaciones' => 'Pendiente por disponibilidad'
-                ]);
+        
+                // Iniciar el préstamo inmediatamente
+                if (!$this->Prestamo_model->iniciar_prestamo($idSolicitud, $idEncargado)) {
+                    throw new Exception('Error al iniciar el préstamo');
+                }
+        
+                // Generar ficha de préstamo
+                $datos_solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
+                $datos_ficha = [
+                    'nombreCompletoLector' => $datos_solicitud[0]->nombres . ' ' . $datos_solicitud[0]->apellidoPaterno,
+                    'carnet' => $datos_solicitud[0]->carnet,
+                    'profesion' => $datos_solicitud[0]->profesion,
+                    'fechaPrestamo' => $fechaActual
+                ];
+        
+                $pdfUrl = $this->generar_pdf_ficha_prestamo($datos_ficha, $idSolicitud);
+        
+                // Notificar al usuario
+                $this->Notificacion_model->crear_notificacion(
+                    $solicitud->idUsuario,
+                    null,
+                    NOTIFICACION_APROBACION_PRESTAMO,
+                    'Su solicitud ha sido aprobada y el préstamo ha sido iniciado.'
+                );
+        
+                $this->db->trans_complete();
+        
+                if ($this->db->trans_status() === FALSE) {
+                    throw new Exception('Error en la transacción');
+                }
+        
+                $this->session->set_flashdata('mensaje', 'Solicitud aprobada y préstamo iniciado exitosamente.');
+                
+                // Redirigir a préstamos activos
+                redirect('prestamos/activos');
+        
+            } catch (Exception $e) {
+                $this->db->trans_rollback();
+                log_message('error', 'Error en aprobación: ' . $e->getMessage());
+                $this->session->set_flashdata('error', $e->getMessage());
+                redirect('solicitudes/pendientes');
             }
         }
-
-        // Preparar datos para la ficha de préstamo
-        $datos_ficha = [
-            'nombreCompletoLector' => $solicitud[0]->nombres . ' ' . $solicitud[0]->apellidoPaterno,
-            'carnet' => $solicitud[0]->carnet,
-            'profesion' => $solicitud[0]->profesion,
-            'fechaPrestamo' => $fechaActual
-        ];
-
-        // Generar PDF usando el método privado existente
-        $pdfUrl = $this->generar_pdf_ficha_prestamo($datos_ficha, $idSolicitud);
-        
-        $this->db->trans_complete();
-        
-        if ($this->db->trans_status() === FALSE) {
-            throw new Exception('Error en la transacción. Los cambios han sido revertidos.');
-        }
-
-        // Registrar la acción exitosa
-        log_message('info', 'Solicitud ' . $idSolicitud . ' procesada con ' . 
-                   count($publicaciones_disponibles) . ' publicaciones aprobadas y ' . 
-                   count($publicaciones_no_disponibles) . ' pendientes');
-        
-        $mensaje = "Solicitud procesada: " . count($publicaciones_disponibles) . " publicaciones aprobadas";
-        if (!empty($publicaciones_no_disponibles)) {
-            $mensaje .= " y " . count($publicaciones_no_disponibles) . " pendientes de disponibilidad";
-        }
-        $this->session->set_flashdata('mensaje', $mensaje);
-        
-        // Redirigir con el PDF si está disponible
-        if ($pdfUrl) {
-            redirect('solicitudes/pendientes?pdf=' . urlencode($pdfUrl));
-        } else {
-            redirect('solicitudes/pendientes');
-        }
-        
-    } catch (Exception $e) {
-        $this->db->trans_rollback();
-        log_message('error', 'Error al aprobar solicitud ' . $idSolicitud . ': ' . $e->getMessage());
-        $this->session->set_flashdata('error', $e->getMessage());
-        redirect('solicitudes/pendientes');
-    }
-}
 
 public function rechazar($idSolicitud) {
     $this->_verificar_rol(['administrador', 'encargado']);
@@ -408,7 +299,7 @@ private function _notificar_disponibilidad($idPublicacion) {
     }
 }
 private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
-    // Validación de datos y carga de modelos necesarios
+    // Validación de datos y carga de modelos
     if (!isset($this->solicitud_model)) {
         $this->load->model('Solicitud_model');
     }
@@ -423,96 +314,106 @@ private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
     $this->load->model('Usuario_model');
     $encargado = $this->Usuario_model->obtener_usuario($idEncargado);
 
-    // Configuración del PDF
-    $this->load->library('pdf');
-    $pdf = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-    $pdf->SetCreator(PDF_CREATOR);
-    $pdf->SetAuthor('Hemeroteca UMSS');
-    $pdf->SetTitle('Ficha de Préstamo');
-    $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, 'Hemeroteca UMSS', 'Ficha de Préstamo');
-    $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-    $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-    $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-    $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-    $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-    $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-    $pdf->AddPage();
-
-    // Construcción del HTML con estilos mejorados
-    $html = '
-    <style>
-        table.main-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        table.main-table td, table.main-table th {
-            border: 1px solid #000;
-            padding: 8px;
-        }
-        table.main-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            text-align: center;
-        }
-        .header {
-            text-align: center;
-            font-size: 16pt;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        .subheader {
-            text-align: center;
-            font-size: 12pt;
-            margin-bottom: 15px;
-        }
-        .signature-line {
-            border-top: 1px solid #000;
-            width: 200px;
-            text-align: center;
-            margin: 0 auto;
-            padding-top: 5px;
-        }
-    </style>
+    // Cargar Dompdf
+    require_once APPPATH . '../vendor/autoload.php';
+    $options = new \Dompdf\Options();
+    $options->set('isHtml5ParserEnabled', true);
+    $options->set('isPhpEnabled', true);
+    $options->set('isRemoteEnabled', true);
     
-    <div class="header">U.M.S.S. BIBLIOTECAS - EN SALA</div>
-    <div class="subheader">FICHA DE PRÉSTAMO</div>
+    $dompdf = new \Dompdf\Dompdf($options);
+    
+    // Construcción del HTML
+    $html = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+            }
+            .header {
+                text-align: center;
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 20px;
+            }
+            .subheader {
+                text-align: center;
+                font-size: 14px;
+                margin-bottom: 15px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+            }
+            table.info td, table.info th {
+                border: 1px solid #000;
+                padding: 8px;
+            }
+            table.info th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+                text-align: center;
+            }
+            .signature-line {
+                border-top: 1px solid #000;
+                width: 200px;
+                text-align: center;
+                margin: 0 auto;
+                padding-top: 5px;
+            }
+            .footer {
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                font-size: 8px;
+                text-align: right;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">U.M.S.S. BIBLIOTECAS - EN SALA</div>
+        <div class="subheader">FICHA DE PRÉSTAMO</div>
 
-    <table class="main-table">
-        <tr>
-            <td width="30%"><strong>Nombre del Lector:</strong></td>
-            <td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td>
-        </tr>
-        <tr>
-            <td><strong>Carnet del Lector:</strong></td>
-            <td>' . $this->sanitize_for_pdf($datos['carnet']) . '</td>
-        </tr>
-        <tr>
-            <td><strong>Profesión:</strong></td>
-            <td>' . $this->sanitize_for_pdf($datos['profesion']) . '</td>
-        </tr>
-        <tr>
-            <td><strong>Fecha de Préstamo:</strong></td>
-            <td>' . date('d/m/Y H:i:s', strtotime($datos['fechaPrestamo'])) . '</td>
-        </tr>
-        <tr>
-            <td><strong>Encargado:</strong></td>
-            <td>' . $this->sanitize_for_pdf($encargado->nombres . ' ' . $encargado->apellidoPaterno) . '</td>
-        </tr>
-    </table>
-
-    <h4>Publicaciones Prestadas:</h4>
-    <table class="main-table">
-        <thead>
+        <table class="info">
             <tr>
-                <th width="8%">N°</th>
-                <th width="40%">Título</th>
-                <th width="22%">Editorial</th>
-                <th width="15%">Fecha Public.</th>
-                <th width="15%">Ubicación</th>
+                <td width="30%"><strong>Nombre del Lector:</strong></td>
+                <td>' . $this->sanitize_for_pdf($datos['nombreCompletoLector']) . '</td>
             </tr>
-        </thead>
-        <tbody>';
+            <tr>
+                <td><strong>Carnet del Lector:</strong></td>
+                <td>' . $this->sanitize_for_pdf($datos['carnet']) . '</td>
+            </tr>
+            <tr>
+                <td><strong>Profesión:</strong></td>
+                <td>' . $this->sanitize_for_pdf($datos['profesion']) . '</td>
+            </tr>
+            <tr>
+                <td><strong>Fecha de Préstamo:</strong></td>
+                <td>' . date('d/m/Y H:i:s', strtotime($datos['fechaPrestamo'])) . '</td>
+            </tr>
+            <tr>
+                <td><strong>Encargado:</strong></td>
+                <td>' . $this->sanitize_for_pdf($encargado->nombres . ' ' . $encargado->apellidoPaterno) . '</td>
+            </tr>
+        </table>
+
+        <h4>Publicaciones Prestadas:</h4>
+        <table class="info">
+            <thead>
+                <tr>
+                    <th width="8%">N°</th>
+                    <th width="40%">Título</th>
+                    <th width="22%">Editorial</th>
+                    <th width="15%">Fecha Public.</th>
+                    <th width="15%">Ubicación</th>
+                </tr>
+            </thead>
+            <tbody>';
 
     foreach ($detalles_solicitud as $index => $pub) {
         $html .= '
@@ -526,39 +427,46 @@ private function generar_pdf_ficha_prestamo($datos, $idSolicitud) {
     }
 
     $html .= '</tbody></table>
-    
-    <table style="width: 100%; margin-top: 50px;">
-        <tr>
-            <td width="50%" style="text-align: center;">
-                <div class="signature-line">Firma del Lector</div>
-            </td>
-            <td width="50%" style="text-align: center;">
-                <div class="signature-line">Firma del Encargado</div>
-            </td>
-        </tr>
-    </table>
-    
-    <div style="text-align: right; font-size: 8pt; margin-top: 30px;">
-        <p>Fecha y hora de impresión: ' . date('d/m/Y H:i:s') . '</p>
-        <p>ID Solicitud: ' . $idSolicitud . '</p>
-    </div>';
-
-    // Generar el PDF
-    $pdf->writeHTML($html, true, false, true, false, '');
-    
-    // Generar nombre único y guardar el archivo
-    $pdfFileName = 'ficha_prestamo_' . $idSolicitud . '_' . time() . '.pdf';
-    $pdfPath = FCPATH . 'uploads/' . $pdfFileName;
-    
-    if (!file_exists(FCPATH . 'uploads/')) {
-        mkdir(FCPATH . 'uploads/', 0777, true);
-    }
+        
+        <table style="width: 100%; margin-top: 50px;">
+            <tr>
+                <td width="50%" style="text-align: center;">
+                    <div class="signature-line">Firma del Lector</div>
+                </td>
+                <td width="50%" style="text-align: center;">
+                    <div class="signature-line">Firma del Encargado</div>
+                </td>
+            </tr>
+        </table>
+        
+        <div class="footer">
+            <p>Fecha y hora de impresión: ' . date('d/m/Y H:i:s') . '</p>
+            <p>ID Solicitud: ' . $idSolicitud . '</p>
+        </div>
+    </body>
+    </html>';
 
     try {
-        $pdf->Output($pdfPath, 'F');
+        // Configurar Dompdf
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+
+        // Generar nombre único y guardar el archivo
+        $pdfFileName = 'ficha_prestamo_' . $idSolicitud . '_' . time() . '.pdf';
+        $pdfPath = FCPATH . 'uploads/' . $pdfFileName;
+        
+        // Asegurar que el directorio existe
+        if (!file_exists(FCPATH . 'uploads/')) {
+            mkdir(FCPATH . 'uploads/', 0777, true);
+        }
+
+        // Guardar el PDF
+        file_put_contents($pdfPath, $dompdf->output());
+        
         return base_url('uploads/' . $pdfFileName);
     } catch (Exception $e) {
-        log_message('error', 'Error al generar PDF: ' . $e->getMessage());
+        log_message('error', 'Error al generar PDF con Dompdf: ' . $e->getMessage());
         return false;
     }
 }

@@ -8,90 +8,118 @@ class Prestamo_model extends CI_Model {
         $this->load->database();
     }
 
-    public function iniciar_prestamo($idSolicitud, $idEncargado) {
-        $this->db->trans_start();
+// En Prestamo_model.php
+public function iniciar_prestamo($idSolicitud, $idEncargado) {
+    $this->db->trans_start();
+    
+    try {
+        $fechaActual = date('Y-m-d H:i:s');
+        
+        // Obtener detalles de la solicitud
+        $this->db->select('
+            ds.idPublicacion, 
+            ds.idSolicitud,
+            sp.idUsuario,
+            p.titulo,
+            p.estado'
+        );
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->where('sp.idSolicitud', $idSolicitud);
+        
+        $publicaciones = $this->db->get()->result();
 
-        try {
-            log_message('debug', "Iniciando préstamo para solicitud: {$idSolicitud}");
+        if (empty($publicaciones)) {
+            log_message('error', "No se encontraron publicaciones para la solicitud {$idSolicitud}");
+            return false;
+        }
 
-            // Obtener todos los detalles de la solicitud
-            $this->db->select('
-                sp.idSolicitud,
-                sp.idUsuario,
-                ds.idPublicacion,
-                sp.estadoSolicitud,
-                p.estado as estado_publicacion,
-                p.titulo
-            ');
-            $this->db->from('SOLICITUD_PRESTAMO sp');
-            $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
-            $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
-            $this->db->where('sp.idSolicitud', $idSolicitud);
-            
-            $detalles = $this->db->get()->result();
-            log_message('debug', "Detalles encontrados: " . count($detalles));
-
-            if (empty($detalles)) {
-                log_message('error', "No se encontraron detalles para la solicitud {$idSolicitud}");
-                $this->db->trans_rollback();
-                return false;
-            }
-
-            // Verificar que todas las publicaciones estén disponibles
-            foreach ($detalles as $detalle) {
-                if ($detalle->estado_publicacion != ESTADO_PUBLICACION_DISPONIBLE) {
-                    log_message('error', "Publicación {$detalle->idPublicacion} no disponible");
-                    $this->db->trans_rollback();
-                    return false;
-                }
-            }
-
-            $fechaActual = date('Y-m-d H:i:s');
-            $horaActual = date('H:i:s');
-            
-            // Crear un solo registro de préstamo para la solicitud
-            $data_prestamo = [
+        foreach ($publicaciones as $pub) {
+            // Crear registro de préstamo
+            $data_prestamo = array(
                 'idSolicitud' => $idSolicitud,
                 'idEncargadoPrestamo' => $idEncargado,
                 'fechaPrestamo' => $fechaActual,
-                'horaInicio' => $horaActual,
+                'horaInicio' => date('H:i:s'),
                 'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
                 'estado' => 1,
                 'fechaCreacion' => $fechaActual,
-                'idUsuarioCreador' => $this->session->userdata('idUsuario')
-            ];
-
+                'idUsuarioCreador' => $idEncargado
+            );
+            
             $this->db->insert('PRESTAMO', $data_prestamo);
             $idPrestamo = $this->db->insert_id();
-            log_message('debug', "Préstamo creado con ID: {$idPrestamo}");
 
-            // Actualizar estado de cada publicación
-            foreach ($detalles as $detalle) {
-                $this->db->where('idPublicacion', $detalle->idPublicacion);
-                $this->db->update('PUBLICACION', [
-                    'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
-                    'fechaActualizacion' => $fechaActual
-                ]);
-                log_message('debug', "Actualizado estado de publicación: {$detalle->idPublicacion}");
-            }
+            // Actualizar estado de la publicación a EN_CONSULTA
+            $this->db->where('idPublicacion', $pub->idPublicacion);
+            $this->db->update('PUBLICACION', array(
+                'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
+                'fechaActualizacion' => $fechaActual,
+                'idUsuarioCreador' => $idEncargado
+            ));
 
-            // Actualizar estado de la solicitud
-            $this->db->where('idSolicitud', $idSolicitud);
-            $this->db->update('SOLICITUD_PRESTAMO', [
-                'estadoSolicitud' => ESTADO_SOLICITUD_FINALIZADA,
-                'fechaActualizacion' => $fechaActual
-            ]);
-            log_message('debug', "Actualizado estado de solicitud: {$idSolicitud}");
-
-            $this->db->trans_complete();
-            return $this->db->trans_status();
-
-        } catch (Exception $e) {
-            $this->db->trans_rollback();
-            log_message('error', 'Error al iniciar préstamo: ' . $e->getMessage());
-            return false;
+            log_message('info', "Préstamo {$idPrestamo} iniciado para publicación {$pub->idPublicacion}");
         }
+
+        $this->db->trans_complete();
+        return $this->db->trans_status();
+
+    } catch (Exception $e) {
+        $this->db->trans_rollback();
+        log_message('error', 'Error en iniciar_prestamo: ' . $e->getMessage());
+        return false;
     }
+}
+
+public function obtener_prestamos_activos() {
+    log_message('debug', "Obteniendo préstamos activos");
+
+    $this->db->select('
+        p.idPrestamo,
+        p.fechaPrestamo,
+        p.horaInicio,
+        p.estadoPrestamo,
+        u.nombres,
+        u.apellidoPaterno,
+        e.nombreEditorial,
+        GROUP_CONCAT(DISTINCT pub.titulo) as titulos,
+        MIN(ds.observaciones) as observaciones
+    ');
+    $this->db->from('PRESTAMO p');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
+    $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+    $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+    $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+    $this->db->join('EDITORIAL e', 'pub.idEditorial = e.idEditorial');
+    $this->db->where([
+        'p.estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
+        'p.estado' => 1
+    ]);
+    $this->db->group_by('
+        p.idPrestamo, 
+        p.fechaPrestamo, 
+        p.horaInicio, 
+        p.estadoPrestamo,
+        u.nombres, 
+        u.apellidoPaterno, 
+        e.nombreEditorial
+    ');
+    $this->db->order_by('p.fechaPrestamo', 'DESC');
+
+    $prestamos = $this->db->get()->result();
+    
+    // Procesar los resultados
+    foreach ($prestamos as &$prestamo) {
+        $prestamo->titulos = explode(',', $prestamo->titulos);
+        // Usar el primer título como título principal
+        $prestamo->titulo = $prestamo->titulos[0];
+    }
+
+    log_message('debug', "Total de préstamos activos encontrados: " . count($prestamos));
+    return $prestamos;
+}
+
 
    
     public function obtener_historial_prestamos() {
@@ -313,53 +341,6 @@ class Prestamo_model extends CI_Model {
         return $this->db->get()->row()->total;
     }
    
-public function obtener_prestamos_activos() {
-    log_message('debug', "Obteniendo préstamos activos");
-
-    $this->db->select('
-        p.idPrestamo,
-        p.fechaPrestamo,
-        p.horaInicio,
-        p.estadoPrestamo,
-        u.nombres,
-        u.apellidoPaterno,
-        e.nombreEditorial,
-        GROUP_CONCAT(DISTINCT pub.titulo) as titulos,
-        MIN(ds.observaciones) as observaciones
-    ');
-    $this->db->from('PRESTAMO p');
-    $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
-    $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
-    $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
-    $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
-    $this->db->join('EDITORIAL e', 'pub.idEditorial = e.idEditorial');
-    $this->db->where([
-        'p.estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
-        'p.estado' => 1
-    ]);
-    $this->db->group_by('
-        p.idPrestamo, 
-        p.fechaPrestamo, 
-        p.horaInicio, 
-        p.estadoPrestamo,
-        u.nombres, 
-        u.apellidoPaterno, 
-        e.nombreEditorial
-    ');
-    $this->db->order_by('p.fechaPrestamo', 'DESC');
-
-    $prestamos = $this->db->get()->result();
-    
-    // Procesar los resultados
-    foreach ($prestamos as &$prestamo) {
-        $prestamo->titulos = explode(',', $prestamo->titulos);
-        // Usar el primer título como título principal
-        $prestamo->titulo = $prestamo->titulos[0];
-    }
-
-    log_message('debug', "Total de préstamos activos encontrados: " . count($prestamos));
-    return $prestamos;
-}
 
 public function obtener_prestamo($idPrestamo) {
     log_message('debug', "Obteniendo préstamo ID: {$idPrestamo}");

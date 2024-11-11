@@ -1389,22 +1389,22 @@ class Solicitud_model extends CI_Model {
     }
 
     public function tiene_tiempo_valido($idSolicitud) {
-        $this->db->select('ds.fechaExpiracionReserva');
-        $this->db->from('DETALLE_SOLICITUD ds');
-        $this->db->join('SOLICITUD_PRESTAMO sp', 'ds.idSolicitud = sp.idSolicitud');
-        $this->db->where([
-            'ds.idSolicitud' => $idSolicitud,
-            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
-            'sp.estado' => 1,
-            'ds.estadoReserva' => 1
-        ]);
-        $reserva = $this->db->get()->row();
+        $this->db->select('sp.fechaCreacion');
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        $this->db->where('sp.idSolicitud', $idSolicitud);
         
-        if (!$reserva) {
+        $solicitud = $this->db->get()->row();
+        
+        if (!$solicitud) {
             return false;
         }
         
-        return strtotime($reserva->fechaExpiracionReserva) > time();
+        $fechaCreacion = new DateTime($solicitud->fechaCreacion);
+        $ahora = new DateTime();
+        $diferencia = $fechaCreacion->diff($ahora);
+        
+        // La solicitud es válida si no han pasado más de 2 minutos
+        return $diferencia->i < 2;
     }
 
     public function verificar_expiraciones_pendientes() {
@@ -1643,6 +1643,73 @@ private function notificar_encargados_cancelacion($solicitud) {
             NOTIFICACION_CANCELACION_USUARIO,
             $mensaje
         );
+    }
+}
+// En Solicitud_model.php
+public function procesar_aprobacion($idSolicitud, $idEncargado) {
+    $this->db->trans_start();
+    
+    try {
+        $fechaActual = date('Y-m-d H:i:s');
+        
+        // Obtener la solicitud
+        $this->db->select('sp.idSolicitud, sp.idUsuario, ds.idPublicacion, p.titulo, p.estado')
+                 ->from('SOLICITUD_PRESTAMO sp')
+                 ->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud')
+                 ->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion')
+                 ->where('sp.idSolicitud', $idSolicitud)
+                 ->where('sp.estadoSolicitud', ESTADO_SOLICITUD_PENDIENTE);
+        
+        $publicaciones = $this->db->get()->result();
+        
+        if (empty($publicaciones)) {
+            throw new Exception('No se encontraron detalles de la solicitud');
+        }
+        
+        foreach ($publicaciones as $pub) {
+            // Verificar disponibilidad
+            if ($pub->estado != ESTADO_PUBLICACION_DISPONIBLE) {
+                continue;
+            }
+            
+            // Crear el préstamo
+            $data_prestamo = [
+                'idSolicitud' => $idSolicitud,
+                'idEncargadoPrestamo' => $idEncargado,
+                'fechaPrestamo' => $fechaActual,
+                'horaInicio' => date('H:i:s'),
+                'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
+                'estado' => 1,
+                'fechaCreacion' => $fechaActual,
+                'idUsuarioCreador' => $idEncargado
+            ];
+            
+            $this->db->insert('PRESTAMO', $data_prestamo);
+            
+            // Actualizar estado de la publicación
+            $this->db->where('idPublicacion', $pub->idPublicacion)
+                     ->update('PUBLICACION', [
+                         'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
+                         'fechaActualizacion' => $fechaActual
+                     ]);
+        }
+        
+        // Actualizar estado de la solicitud
+        $this->db->where('idSolicitud', $idSolicitud)
+                 ->update('SOLICITUD_PRESTAMO', [
+                     'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
+                     'fechaAprobacionRechazo' => $fechaActual,
+                     'fechaActualizacion' => $fechaActual,
+                     'idUsuarioCreador' => $idEncargado
+                 ]);
+        
+        $this->db->trans_complete();
+        return $this->db->trans_status() ? $publicaciones : false;
+        
+    } catch (Exception $e) {
+        $this->db->trans_rollback();
+        log_message('error', 'Error en procesar_aprobacion: ' . $e->getMessage());
+        return false;
     }
 }
 }
