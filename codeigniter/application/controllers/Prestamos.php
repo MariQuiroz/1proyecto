@@ -104,19 +104,24 @@ class Prestamos extends CI_Controller {
                     )
                 );
     
-                // Obtener y notificar a usuarios interesados
-                $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados($prestamo->idPublicacion);
-                foreach ($usuarios_interesados as $usuario) {
-                    // Crear notificación
-                    $this->Notificacion_model->crear_notificacion(
-                        $usuario->idUsuario,
-                        $prestamo->idPublicacion,
-                        NOTIFICACION_DISPONIBILIDAD,
-                        sprintf(
-                            'La publicación "%s" ya está disponible para préstamo.',
-                            $prestamo->titulo
-                        )
-                    );
+                 // Obtener usuarios interesados EXCLUYENDO al usuario que devolvió
+            $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados_excepto(
+                $prestamo->idPublicacion,
+                $prestamo->idUsuario
+            );
+
+            foreach ($usuarios_interesados as $usuario) {
+                // Crear notificación de disponibilidad solo para otros usuarios interesados
+                $this->Notificacion_model->crear_notificacion(
+                    $usuario->idUsuario,
+                    $prestamo->idPublicacion,
+                    NOTIFICACION_DISPONIBILIDAD,
+                    sprintf(
+                        'La publicación "%s" ya está disponible para préstamo.',
+                        $prestamo->titulo
+                    )
+                );
+
     
                     // Actualizar estado del interés a notificado
                     $this->Notificacion_model->actualizar_estado_interes(

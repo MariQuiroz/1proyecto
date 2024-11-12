@@ -196,6 +196,16 @@ public function obtener_usuarios_interesados($idPublicacion) {
     return $this->db->get('INTERES_PUBLICACION')->result();
 }
 
+public function obtener_usuarios_interesados_excepto($idPublicacion, $idUsuarioExcluir) {
+    $this->db->select('ip.idUsuario, u.email');
+    $this->db->from('INTERES_PUBLICACION ip');
+    $this->db->join('USUARIO u', 'u.idUsuario = ip.idUsuario');
+    $this->db->where('ip.idPublicacion', $idPublicacion);
+    $this->db->where('ip.estado', ESTADO_INTERES_SOLICITADO);
+    $this->db->where('ip.idUsuario !=', $idUsuarioExcluir); // Excluir al usuario que devolvió
+    
+    return $this->db->get()->result();
+}
 
 public function obtener_estado_interes($idUsuario, $idPublicacion) {
     $this->db->select('
