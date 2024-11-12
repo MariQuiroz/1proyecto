@@ -195,27 +195,7 @@ public function obtener_usuarios_interesados($idPublicacion) {
     $this->db->where('idPublicacion', $idPublicacion);
     return $this->db->get('INTERES_PUBLICACION')->result();
 }
-public function agregar_interes_publicacion($idUsuario, $idPublicacion) {
-    $this->db->where('idUsuario', $idUsuario);
-    $this->db->where('idPublicacion', $idPublicacion);
-    $query = $this->db->get('INTERES_PUBLICACION');
 
-    if ($query->num_rows() > 0) {
-        // Ya existe un interés, actualizar el estado
-        $this->db->where('idUsuario', $idUsuario);
-        $this->db->where('idPublicacion', $idPublicacion);
-        return $this->db->update('INTERES_PUBLICACION', ['estado' => ESTADO_INTERES_SOLICITADO]);
-    } else {
-        // No existe, insertar nuevo interés
-        $data = array(
-            'idUsuario' => $idUsuario,
-            'idPublicacion' => $idPublicacion,
-            'fechaInteres' => date('Y-m-d H:i:s'),
-            'estado' => ESTADO_INTERES_SOLICITADO
-        );
-        return $this->db->insert('INTERES_PUBLICACION', $data);
-    }
-}
 
 public function obtener_estado_interes($idUsuario, $idPublicacion) {
     $this->db->select('
@@ -365,5 +345,44 @@ public function crear_notificacion_disponibilidad($idUsuario, $idPublicacion, $m
         $this->db->trans_rollback();
         return false;
     }
+}
+public function actualizar_preferencias($idUsuario, $preferencias) {
+    $this->db->where('idUsuario', $idUsuario);
+    $query = $this->db->get('PREFERENCIAS_NOTIFICACION');
+    
+    $data = array(
+        'idUsuario' => $idUsuario,
+        'notificarDisponibilidad' => $preferencias['notificarDisponibilidad'],
+        'notificarEmail' => $preferencias['notificarEmail'],
+        'notificarSistema' => $preferencias['notificarSistema'],
+        'fechaActualizacion' => date('Y-m-d H:i:s')
+    );
+    
+    if ($query->num_rows() > 0) {
+        $this->db->where('idUsuario', $idUsuario);
+        return $this->db->update('PREFERENCIAS_NOTIFICACION', $data);
+    } else {
+        return $this->db->insert('PREFERENCIAS_NOTIFICACION', $data);
+    }
+}
+
+public function actualizar_estado_interes($idUsuario, $idPublicacion, $nuevoEstado) {
+    $this->db->where('idUsuario', $idUsuario);
+    $this->db->where('idPublicacion', $idPublicacion);
+    return $this->db->update('INTERES_PUBLICACION', [
+        'estado' => $nuevoEstado,
+        'fechaActualizacion' => date('Y-m-d H:i:s')
+    ]);
+}
+
+public function eliminar_interes($idUsuario, $idPublicacion) {
+    return $this->db->delete('INTERES_PUBLICACION', [
+        'idUsuario' => $idUsuario,
+        'idPublicacion' => $idPublicacion
+    ]);
+}
+
+public function agregar_interes_publicacion($data) {
+    return $this->db->insert('INTERES_PUBLICACION', $data);
 }
 }

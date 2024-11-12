@@ -7,6 +7,8 @@
     <meta name="description" content="A fully featured admin theme which can be used to build CRM, CMS, etc." />
     <meta name="author" content="Coderthemes" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- App favicon -->
     <link rel="shortcut icon" href="<?= base_url('adminXeria/light/dist/assets/images/favicon.ico'); ?>"/>

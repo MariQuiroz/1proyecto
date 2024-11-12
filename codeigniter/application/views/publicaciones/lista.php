@@ -208,39 +208,50 @@
                                                 <?php endif; ?>
 
                                                 <?php if ($this->session->userdata('rol') == 'lector'): ?>
-                                                    <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
-                                                        <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>" 
-                                                        class="btn btn-success btn-sm" 
-                                                        title="Solicitar préstamo">
-                                                            <i class="mdi mdi-book-open-page-variant"></i> Solicitar
-                                                        </a>
-                                                    <?php elseif (intval($publicacion->estado) === ESTADO_PUBLICACION_EN_CONSULTA || 
-                                                                intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
-                                                        <?php 
-                                                        // Verificar si la publicación está prestada o reservada por el usuario actual
-                                                        $es_mi_prestamo = ($publicacion->es_mi_reserva == 1 || 
-                                                                        (isset($publicacion->idUsuarioSolicitud) && 
-                                                                        $publicacion->idUsuarioSolicitud == $this->session->userdata('idUsuario')));
-                                                        
-                                                        if (!$es_mi_prestamo): 
-                                                            $interes_existente = $this->Notificacion_model->obtener_estado_interes(
-                                                                $this->session->userdata('idUsuario'), 
-                                                                $publicacion->idPublicacion
-                                                            );
-                                                            
-                                                            if (!$interes_existente && !$publicacion->tiene_interes): ?>
-                                                                <a href="<?php echo site_url('notificaciones/agregar_interes/'.$publicacion->idPublicacion); ?>" 
-                                                                class="btn btn-warning btn-sm">
-                                                                    <i class="mdi mdi-bell"></i> Notificarme
-                                                                </a>
-                                                            <?php else: ?>
-                                                                <button class="btn btn-secondary btn-sm" disabled>
-                                                                    <i class="mdi mdi-bell-check"></i> Notificación Registrada
-                                                                </button>
-                                                            <?php endif; ?>
-                                                        <?php endif; ?>
-                                                    <?php endif; ?>
-                                                <?php endif; ?>
+    <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
+        <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>" 
+           class="btn btn-success btn-sm" 
+           title="Solicitar préstamo">
+            <i class="mdi mdi-book-open-page-variant"></i> Solicitar
+        </a>
+    <?php elseif (intval($publicacion->estado) === ESTADO_PUBLICACION_EN_CONSULTA || 
+                  intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
+        <?php 
+        // Verificar si la publicación está prestada o reservada por el usuario actual
+        $es_mi_prestamo = ($publicacion->es_mi_reserva == 1 || 
+                        (isset($publicacion->idUsuarioSolicitud) && 
+                         $publicacion->idUsuarioSolicitud == $this->session->userdata('idUsuario')));
+        
+        if ($es_mi_prestamo): ?>
+            <button class="btn btn-info btn-sm" disabled>
+                <i class="mdi mdi-book-account"></i> En tu poder
+            </button>
+        <?php else: 
+            $interes_existente = $this->Notificacion_model->obtener_estado_interes(
+                $this->session->userdata('idUsuario'), 
+                $publicacion->idPublicacion
+            );
+            
+            if (!$interes_existente): ?>
+                <a href="<?php echo site_url('notificaciones/agregar_interes_simple/'.$publicacion->idPublicacion); ?>" 
+                   class="btn btn-warning btn-sm">
+                    <i class="mdi mdi-bell"></i> Notificarme cuando esté disponible
+                </a>
+            <?php else: ?>
+                <div class="btn-group">
+                    <button class="btn btn-secondary btn-sm" disabled>
+                        <i class="mdi mdi-bell-check"></i> Notificación Activa
+                    </button>
+                    <a href="<?php echo site_url('notificaciones/cancelar_interes/'.$publicacion->idPublicacion); ?>" 
+                       class="btn btn-secondary btn-sm" 
+                       title="Cancelar notificación">
+                        <i class="mdi mdi-bell-off"></i>
+                    </a>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    <?php endif; ?>
+<?php endif; ?>
                                             </td>
                                         </tr>
                                     <?php 
@@ -256,3 +267,44 @@
         </div>
     </div>
 </div>
+
+<script>
+function modificarPreferencias(idPublicacion) {
+    // Abrir modal de preferencias existente
+    $(`#modalNotificacion${idPublicacion}`).modal('show');
+}
+
+function cancelarNotificacion(idPublicacion) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Ya no recibirás notificaciones sobre esta publicación",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, cancelar',
+        cancelButtonText: 'No, mantener'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = `<?php echo site_url('notificaciones/cancelar_interes/'); ?>${idPublicacion}`;
+        }
+    });
+}
+
+// Validación del formulario
+$(document).ready(function() {
+    $('form[id^="formNotificacion"]').on('submit', function(e) {
+        const sistemaChecked = $(this).find('input[name="notificar_sistema"]').is(':checked');
+        const emailChecked = $(this).find('input[name="notificar_email"]').is(':checked');
+        
+        if (!sistemaChecked && !emailChecked) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Debes seleccionar al menos un método de notificación'
+            });
+        }
+    });
+});
+</script>

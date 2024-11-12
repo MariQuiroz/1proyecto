@@ -68,86 +68,236 @@ class Prestamos extends CI_Controller {
         $idPrestamo = $this->input->post('idPrestamo');
         $estadoDevolucion = $this->input->post('estadoDevolucion');
         
-        // Validar que exista el préstamo y esté activo
-        $prestamo = $this->Prestamo_model->obtener_prestamo($idPrestamo);
-        if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
-            $this->session->set_flashdata('error', 'El préstamo no es válido para ser finalizado.');
-            redirect('prestamos/activos');
-            return;
-        }
-    
         $this->db->trans_start();
-    
+        
         try {
+            // Obtener información completa del préstamo
+            $prestamo = $this->Prestamo_model->obtener_prestamo_detallado($idPrestamo);
+            if (!$prestamo || $prestamo->estadoPrestamo != ESTADO_PRESTAMO_ACTIVO) {
+                throw new Exception('El préstamo no es válido para ser finalizado.');
+            }
+    
             $idEncargado = $this->session->userdata('idUsuario');
             
-            // Finalizar el préstamo usando el modelo
+            // Finalizar el préstamo
             $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion);
-    
+            
             if ($resultado) {
-                // Generar ficha de devolución
-                $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
-                $envio_exitoso = false;
+                // Generar y enviar documentación de devolución
+                $documentacion = $this->_procesar_documentacion_devolucion($idPrestamo);
                 
-                if ($pdf_content) {
-                    // Enviar la ficha por correo electrónico
-                    $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
-                    
-                    // Almacenar el PDF temporalmente para acceso del encargado
-                    $filename = 'ficha_devolucion_' . $idPrestamo . '_' . date('YmdHis') . '.pdf';
-                    $filepath = FCPATH . 'uploads/temp/' . $filename;
-                    file_put_contents($filepath, $pdf_content);
-                    $this->session->set_flashdata('pdf_path', base_url('uploads/temp/' . $filename));
-                }
-    
-                // Crear notificación de devolución
-                $mensaje = "El préstamo de la publicación '{$prestamo->titulo}' ha sido finalizado. Estado: $estadoDevolucion";
+                // Cambiar estado de la publicación a disponible
+                $this->Publicacion_model->cambiar_estado_publicacion(
+                    $prestamo->idPublicacion, 
+                    ESTADO_PUBLICACION_DISPONIBLE
+                );
+                
+                // Notificar a usuario que devolvió
                 $this->Notificacion_model->crear_notificacion(
                     $prestamo->idUsuario,
                     $prestamo->idPublicacion,
                     NOTIFICACION_DEVOLUCION,
-                    $mensaje
+                    sprintf(
+                        'Has devuelto la publicación "%s". Estado: %s',
+                        $prestamo->titulo,
+                        $this->_obtener_texto_estado_devolucion($estadoDevolucion)
+                    )
                 );
     
-                // Actualizar el estado de la publicación a disponible
-                $this->Publicacion_model->cambiar_estado_publicacion($prestamo->idPublicacion, ESTADO_PUBLICACION_DISPONIBLE);
+                // Obtener y notificar a usuarios interesados
+                $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados($prestamo->idPublicacion);
+                foreach ($usuarios_interesados as $usuario) {
+                    // Crear notificación
+                    $this->Notificacion_model->crear_notificacion(
+                        $usuario->idUsuario,
+                        $prestamo->idPublicacion,
+                        NOTIFICACION_DISPONIBILIDAD,
+                        sprintf(
+                            'La publicación "%s" ya está disponible para préstamo.',
+                            $prestamo->titulo
+                        )
+                    );
     
-                // Notificar a los usuarios interesados
-                $this->_notificar_disponibilidad($prestamo->idPublicacion);
-    
+                    // Actualizar estado del interés a notificado
+                    $this->Notificacion_model->actualizar_estado_interes(
+                        $usuario->idUsuario,
+                        $prestamo->idPublicacion,
+                        ESTADO_INTERES_NOTIFICADO
+                    );
+                }
+                
+                
                 // Preparar mensaje de respuesta
-                $mensaje = 'Préstamo finalizado con éxito.';
-                if ($envio_exitoso) {
-                    $mensaje .= ' La ficha de devolución ha sido enviada por correo electrónico al lector.';
-                } else {
-                    $mensaje .= ' Sin embargo, hubo un problema al enviar el correo electrónico.';
+                $mensaje = 'Préstamo finalizado con éxito. ';
+                if (!empty($usuarios_interesados)) {
+                    $mensaje .= sprintf(
+                        'Se ha notificado a %d usuario(s) interesado(s). ', 
+                        count($usuarios_interesados)
+                    );
+                }
+                if ($documentacion['pdf_generado']) {
+                    $mensaje .= 'Se ha generado la ficha de devolución. ';
+                    if ($documentacion['email_enviado']) {
+                        $mensaje .= 'La ficha ha sido enviada por correo electrónico al lector.';
+                    }
                 }
                 
                 $this->session->set_flashdata('mensaje', $mensaje);
+                
+                // Si se generó PDF, guardarlo en sesión para descarga
+                if (!empty($documentacion['pdf_path'])) {
+                    $this->session->set_flashdata('pdf_path', $documentacion['pdf_path']);
+                }
                 
             } else {
                 throw new Exception('Error al finalizar el préstamo.');
             }
     
             $this->db->trans_complete();
+            
+            if ($this->db->trans_status() === FALSE) {
+                throw new Exception('Error en la transacción de la base de datos.');
+            }
     
         } catch (Exception $e) {
             $this->db->trans_rollback();
             log_message('error', 'Error al finalizar préstamo: ' . $e->getMessage());
-            $this->session->set_flashdata('error', 'Error al procesar la devolución.');
+            $this->session->set_flashdata('error', 'Error al procesar la devolución: ' . $e->getMessage());
         }
     
         redirect('prestamos/activos');
     }
-
+    
     private function _obtener_texto_estado_devolucion($estado) {
+        switch ($estado) {
+            case ESTADO_DEVOLUCION_BUENO:
+                return 'Buen estado';
+            case ESTADO_DEVOLUCION_DAÑADO:
+                return 'Dañado';
+            case ESTADO_DEVOLUCION_PERDIDO:
+                return 'Perdido';
+            default:
+                return 'Estado desconocido';
+        }
+    }
+   /* private function _obtener_texto_estado_devolucion($estado) {
         $estados = [
             ESTADO_DEVOLUCION_BUENO => 'Buen estado',
             ESTADO_DEVOLUCION_DAÑADO => 'Con daños',
             ESTADO_DEVOLUCION_PERDIDO => 'Perdido'
         ];
         return isset($estados[$estado]) ? $estados[$estado] : 'Estado desconocido';
+    }*/
+    private function _procesar_documentacion_devolucion($idPrestamo) {
+        $resultado = [
+            'pdf_generado' => false,
+            'email_enviado' => false,
+            'pdf_path' => null
+        ];
+    
+        // Generar PDF de ficha de devolución
+        $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
+        
+        if ($pdf_content) {
+            $resultado['pdf_generado'] = true;
+            
+            // Guardar PDF temporalmente
+            $filename = 'ficha_devolucion_' . $idPrestamo . '_' . date('YmdHis') . '.pdf';
+            $filepath = FCPATH . 'uploads/temp/' . $filename;
+            
+            if (file_put_contents($filepath, $pdf_content)) {
+                $resultado['pdf_path'] = base_url('uploads/temp/' . $filename);
+                
+                // Enviar por correo si está configurado
+                $resultado['email_enviado'] = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
+            }
+        }
+    
+        return $resultado;
     }
+    
+    private function _actualizar_estado_y_notificar($prestamo) {
+        // Cambiar estado de la publicación a disponible
+        $this->Publicacion_model->cambiar_estado_publicacion(
+            $prestamo->idPublicacion, 
+            ESTADO_PUBLICACION_DISPONIBLE
+        );
+    
+        // Obtener usuarios interesados con sus preferencias
+        $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados_con_preferencias($prestamo->idPublicacion);
+        
+        foreach ($usuarios_interesados as $usuario) {
+            if ($usuario->notificarSistema) {
+                // Notificación en el sistema
+                $this->Notificacion_model->crear_notificacion(
+                    $usuario->idUsuario,
+                    $prestamo->idPublicacion,
+                    NOTIFICACION_DISPONIBILIDAD,
+                    sprintf(
+                        'La publicación "%s" está nuevamente disponible para préstamo.',
+                        $prestamo->titulo
+                    )
+                );
+            }
+    
+            if ($usuario->notificarEmail) {
+                // Notificación por correo
+                $this->_enviar_email_disponibilidad(
+                    $usuario->idUsuario,
+                    $prestamo->idPublicacion
+                );
+            }
+        }
+    
+        // Notificar al usuario que devolvió la publicación
+        $this->Notificacion_model->crear_notificacion(
+            $prestamo->idUsuario,
+            $prestamo->idPublicacion,
+            NOTIFICACION_DEVOLUCION,
+            sprintf(
+                'Has devuelto la publicación "%s". Estado: %s',
+                $prestamo->titulo,
+                $this->_obtener_texto_estado_devolucion($prestamo->estadoDevolucion)
+            )
+        );
+    }
+    
+    private function _registrar_historial_devolucion($prestamo, $estadoDevolucion) {
+        $datos_historial = [
+            'idPrestamo' => $prestamo->idPrestamo,
+            'idPublicacion' => $prestamo->idPublicacion,
+            'idUsuario' => $prestamo->idUsuario,
+            'fechaDevolucion' => date('Y-m-d H:i:s'),
+            'estadoDevolucion' => $estadoDevolucion,
+            'idEncargado' => $this->session->userdata('idUsuario'),
+            'observaciones' => sprintf(
+                'Devolución procesada. Estado: %s',
+                $this->_obtener_texto_estado_devolucion($estadoDevolucion)
+            )
+        ];
+    
+        $this->Prestamo_model->registrar_historial_devolucion($datos_historial);
+    }
+    
+    private function _preparar_mensaje_respuesta($documentacion) {
+        $mensaje = 'Préstamo finalizado con éxito.';
+        
+        if ($documentacion['pdf_generado']) {
+            $mensaje .= ' Se ha generado la ficha de devolución.';
+            
+            if ($documentacion['email_enviado']) {
+                $mensaje .= ' La ficha ha sido enviada por correo electrónico al lector.';
+            } else {
+                $mensaje .= ' No se pudo enviar el correo electrónico con la ficha.';
+            }
+        } else {
+            $mensaje .= ' No se pudo generar la ficha de devolución.';
+        }
+        
+        return $mensaje;
+    }
+
+ 
 
 private function _notificar_disponibilidad($idPublicacion) {
     // Obtener la publicación
