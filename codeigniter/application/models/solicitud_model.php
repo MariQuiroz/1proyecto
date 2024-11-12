@@ -1288,6 +1288,32 @@ class Solicitud_model extends CI_Model {
                     NOTIFICACION_SOLICITUD_EXPIRADA,
                     $mensaje_usuario
                 );
+
+                // Notificar a usuarios interesados
+                $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados_excepto(
+                    $solicitud->idPublicacion,
+                    $solicitud->idUsuario // Excluimos al usuario cuya solicitud expiró
+                );
+
+                foreach ($usuarios_interesados as $usuario) {
+                    // Crear notificación de disponibilidad
+                    $this->Notificacion_model->crear_notificacion(
+                        $usuario->idUsuario,
+                        $solicitud->idPublicacion,
+                        NOTIFICACION_DISPONIBILIDAD,
+                        sprintf(
+                            'La publicación "%s" está nuevamente disponible para préstamo.',
+                            $solicitud->titulo
+                        )
+                    );
+
+                    // Actualizar estado del interés a notificado
+                    $this->Notificacion_model->actualizar_estado_interes(
+                        $usuario->idUsuario,
+                        $solicitud->idPublicacion,
+                        ESTADO_INTERES_NOTIFICADO
+                    );
+                }
     
                 // Notificar a los encargados
                 $encargados = $this->Usuario_model->obtener_encargados_activos();
