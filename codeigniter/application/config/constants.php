@@ -152,3 +152,8 @@ defined('ESTADO_DEVOLUCION_PERDIDO') OR define('ESTADO_DEVOLUCION_PERDIDO', 3);
 // Estados para DETALLE_SOLICITUD
 defined('ESTADO_RESERVA_ACTIVA') OR define('ESTADO_RESERVA_ACTIVA', 1);
 defined('ESTADO_RESERVA_EXPIRADA') OR define('ESTADO_RESERVA_EXPIRADA', 2);
+
+// Configuración de fechas
+define('TIMEZONE_DEFAULT', 'America/La_Paz');
+define('DATE_FORMAT_DB', 'Y-m-d H:i:s');
+define('DATE_FORMAT_DISPLAY', 'd/m/Y H:i:s');

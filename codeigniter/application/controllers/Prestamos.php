@@ -13,6 +13,7 @@ class Prestamos extends CI_Controller {
         $this->load->library('form_validation');
         $this->load->library('pdf');
         $this->load->library('email');
+       
     }
 
     private function _verificar_sesion() {

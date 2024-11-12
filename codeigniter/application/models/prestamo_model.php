@@ -6,6 +6,7 @@ class Prestamo_model extends CI_Model {
     public function __construct() {
         parent::__construct();
         $this->load->database();
+        
     }
 
 // En Prestamo_model.php
@@ -13,7 +14,12 @@ public function iniciar_prestamo($idSolicitud, $idEncargado) {
     $this->db->trans_start();
     
     try {
-        $fechaActual = date('Y-m-d H:i:s');
+        
+        // Establecer la zona horaria correcta para Bolivia
+        date_default_timezone_set('America/La_Paz');
+        
+        // Crear objeto DateTime para manejar las fechas correctamente
+        $fechaHoraActual = new DateTime();
         
         // Obtener detalles de la solicitud
         $this->db->select('
@@ -40,11 +46,11 @@ public function iniciar_prestamo($idSolicitud, $idEncargado) {
             $data_prestamo = array(
                 'idSolicitud' => $idSolicitud,
                 'idEncargadoPrestamo' => $idEncargado,
-                'fechaPrestamo' => $fechaActual,
-                'horaInicio' => date('H:i:s'),
+                'fechaPrestamo' => $fechaHoraActual->format('Y-m-d'),
+                'horaInicio' => $fechaHoraActual->format('H:i:s'),
                 'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
                 'estado' => 1,
-                'fechaCreacion' => $fechaActual,
+                'fechaCreacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $idEncargado
             );
             
@@ -55,7 +61,7 @@ public function iniciar_prestamo($idSolicitud, $idEncargado) {
             $this->db->where('idPublicacion', $pub->idPublicacion);
             $this->db->update('PUBLICACION', array(
                 'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
-                'fechaActualizacion' => $fechaActual,
+                'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $idEncargado
             ));
 
@@ -507,6 +513,11 @@ public function finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion)
     $this->db->trans_start();
     
     try {
+        // Establecer la zona horaria correcta para Bolivia
+        date_default_timezone_set('America/La_Paz');
+        
+        // Crear objeto DateTime para manejar las fechas correctamente
+        $fechaHoraActual = new DateTime();
         // Obtener datos completos del préstamo
         $this->db->select('
             p.idPrestamo,
@@ -534,8 +545,8 @@ public function finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion)
             'estadoPrestamo' => ESTADO_PRESTAMO_FINALIZADO,
             'estadoDevolucion' => $estadoDevolucion,
             'idEncargadoDevolucion' => $idEncargado,
-            'horaDevolucion' => date('H:i:s'),
-            'fechaActualizacion' => date('Y-m-d H:i:s')
+            'horaDevolucion' => $fechaHoraActual->format('H:i:s'),
+            'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
         ];
         
         $this->db->where('idPrestamo', $idPrestamo);
@@ -546,7 +557,7 @@ public function finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion)
         // Actualizar la publicación a DISPONIBLE
         $data_publicacion = [
             'estado' => ESTADO_PUBLICACION_DISPONIBLE,
-            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
             'idUsuarioCreador' => $idEncargado
         ];
         
@@ -558,7 +569,7 @@ public function finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion)
         // Actualizar la solicitud
         $data_solicitud = [
             'estadoSolicitud' => ESTADO_SOLICITUD_FINALIZADA,
-            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
             'idUsuarioCreador' => $idEncargado
         ];
         

@@ -20,12 +20,19 @@ class Solicitud_model extends CI_Model {
         $this->db->trans_start();
 
         try {
+
+             // Establecer la zona horaria correcta para Bolivia
+        date_default_timezone_set('America/La_Paz');
+        
+        // Crear objeto DateTime para manejar las fechas correctamente
+        $fechaHoraActual = new DateTime();
+
             $data_solicitud = array(
                 'idUsuario' => $idUsuario,
-                'fechaSolicitud' => date('Y-m-d H:i:s'),
+                'fechaSolicitud' => $fechaHoraActual->format('Y-m-d'),
                 'estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
                 'estado' => 1,
-                'fechaCreacion' => date('Y-m-d H:i:s'),
+                'fechaCreacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $idUsuario
             );
 
@@ -380,6 +387,9 @@ class Solicitud_model extends CI_Model {
         log_message('debug', "=== Iniciando aprobación de solicitud {$idSolicitud} ===");
     
         try {
+
+           
+
             // Verificar solicitud existente
             $solicitud = $this->db->get_where('SOLICITUD_PRESTAMO', [
                 'idSolicitud' => $idSolicitud,
@@ -448,15 +458,19 @@ class Solicitud_model extends CI_Model {
             
             log_message('info', "Total publicaciones únicas a procesar: " . count($publicacionesUnicas));
             
-            $fechaActual = date('Y-m-d H:i:s');
+           // Establecer la zona horaria correcta para Bolivia
+        date_default_timezone_set('America/La_Paz');
+        
+        // Crear objeto DateTime para manejar las fechas correctamente
+        $fechaHoraActual = new DateTime();
             
             // Actualizar estado de solicitud
             $this->db->where('idSolicitud', $idSolicitud);
             $this->db->update('SOLICITUD_PRESTAMO', [
                 'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
-                'fechaAprobacionRechazo' => $fechaActual,
-                'fechaActualizacion' => $fechaActual,
-                'idUsuarioCreador' => $idEncargado
+                'fechaAprobacionRechazo' => $fechaHoraActual->format('Y-m-d'),
+                'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
+                'idUsuarioCreador' =>$fechaHoraActual->format('Y-m-d H:i:s')
             ]);
             
             // Procesar cada publicación única
@@ -466,11 +480,11 @@ class Solicitud_model extends CI_Model {
                 $data_prestamo = [
                     'idSolicitud' => $idSolicitud,
                     'idEncargadoPrestamo' => $idEncargado,
-                    'fechaPrestamo' => $fechaActual,
-                    'horaInicio' => date('H:i:s'),
+                    'fechaPrestamo' => $fechaHoraActual->format('Y-m-d'),
+                    'horaInicio' => $fechaHoraActual->format('H:i:s'),
                     'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
                     'estado' => 1,
-                    'fechaCreacion' => $fechaActual,
+                    'fechaCreacion' =>$fechaHoraActual->format('Y-m-d H:i:s'),
                     'idUsuarioCreador' => $idEncargado
                 ];
                 
@@ -481,7 +495,7 @@ class Solicitud_model extends CI_Model {
                 $this->db->where('idPublicacion', $pub->idPublicacion);
                 $this->db->update('PUBLICACION', [
                     'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
-                    'fechaActualizacion' => $fechaActual,
+                    'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
                     'idUsuarioCreador' => $idEncargado
                 ]);
                 log_message('debug', "Estado de publicación {$pub->idPublicacion} actualizado");
@@ -503,13 +517,19 @@ class Solicitud_model extends CI_Model {
         $this->db->trans_start();
         
         try {
+            // Establecer la zona horaria correcta para Bolivia
+        date_default_timezone_set('America/La_Paz');
+        
+        // Crear objeto DateTime para manejar las fechas correctamente
+        $fechaHoraActual = new DateTime();
+        
             // Crear la solicitud principal
             $data_solicitud = array(
                 'idUsuario' => $idUsuario,
-                'fechaSolicitud' => date('Y-m-d H:i:s'),
+                'fechaSolicitud' => $fechaHoraActual->format('Y-m-d H:i:s'),
                 'estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
                 'estado' => 1,
-                'fechaCreacion' => date('Y-m-d H:i:s'),
+                'fechaCreacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $idUsuario
             );
             
@@ -661,6 +681,12 @@ class Solicitud_model extends CI_Model {
         $this->db->trans_start();
         
         try {
+
+            // Establecer la zona horaria correcta para Bolivia
+        date_default_timezone_set('America/La_Paz');
+        
+        // Crear objeto DateTime para manejar las fechas correctamente
+        $fechaHoraActual = new DateTime();
             // Obtener todas las publicaciones de la solicitud
             $this->db->select('p.idPublicacion');
             $this->db->from('DETALLE_SOLICITUD ds');
@@ -673,7 +699,7 @@ class Solicitud_model extends CI_Model {
                 $this->db->where('idPublicacion', $pub->idPublicacion);
                 $this->db->update('PUBLICACION', [
                     'estado' => $nuevoEstado,
-                    'fechaActualizacion' => date('Y-m-d H:i:s'),
+                    'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
                     'idUsuarioCreador' => $this->session->userdata('idUsuario')
                 ]);
             }
@@ -1205,87 +1231,6 @@ class Solicitud_model extends CI_Model {
         log_message('info', "Registrada verificación de expiración para solicitud {$idSolicitud} - Expira: {$fecha_expiracion}");
     }
     
-    /*public function verificar_y_procesar_expiraciones() {
-        $fecha_actual = date('Y-m-d H:i:s');
-        
-        // Obtener solicitudes con reservas expiradas
-        $this->db->select('
-            ds.idSolicitud, 
-            ds.idPublicacion, 
-            sp.idUsuario,
-            p.titulo,
-            ds.fechaExpiracionReserva
-        ');
-        $this->db->from('DETALLE_SOLICITUD ds');
-        $this->db->join('SOLICITUD_PRESTAMO sp', 'ds.idSolicitud = sp.idSolicitud');
-        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
-        $this->db->where([
-            'sp.estadoSolicitud' => ESTADO_SOLICITUD_PENDIENTE,
-            'sp.estado' => 1,
-            'ds.estadoReserva' => 1,
-            'ds.fechaExpiracionReserva <=' => $fecha_actual
-        ]);
-        
-        $reservas_expiradas = $this->db->get()->result();
-        
-        foreach ($reservas_expiradas as $reserva) {
-            $this->db->trans_start();
-            
-            try {
-                // Actualizar detalle de solicitud
-                $this->db->where([
-                    'idSolicitud' => $reserva->idSolicitud,
-                    'idPublicacion' => $reserva->idPublicacion
-                ]);
-                $this->db->update('DETALLE_SOLICITUD', [
-                    'estadoReserva' => 0,
-                    'observaciones' => "Reserva expirada el " . date('Y-m-d H:i:s')
-                ]);
-                
-                // Actualizar estado de la solicitud
-                $this->db->where('idSolicitud', $reserva->idSolicitud);
-                $this->db->update('SOLICITUD_PRESTAMO', [
-                    'estadoSolicitud' => ESTADO_SOLICITUD_EXPIRADA,
-                    'fechaActualizacion' => $fecha_actual
-                ]);
-                
-                // Actualizar estado de la publicación
-                $this->db->where('idPublicacion', $reserva->idPublicacion);
-                $this->db->update('PUBLICACION', [
-                    'estado' => ESTADO_PUBLICACION_DISPONIBLE,
-                    'fechaActualizacion' => $fecha_actual
-                ]);
-                
-                // Notificar al usuario
-                $mensaje = sprintf(
-                    "Tu reserva para la publicación '%s' ha expirado por exceder el tiempo límite.",
-                    $reserva->titulo
-                );
-                
-                $this->Notificacion_model->crear_notificacion(
-                    $reserva->idUsuario,
-                    $reserva->idPublicacion,
-                    NOTIFICACION_SOLICITUD_EXPIRADA,
-                    $mensaje
-                );
-                
-                $this->db->trans_complete();
-                
-                log_message('info', sprintf(
-                    "Reserva expirada procesada - Solicitud: %d, Publicación: %d, Usuario: %d",
-                    $reserva->idSolicitud,
-                    $reserva->idPublicacion,
-                    $reserva->idUsuario
-                ));
-                
-            } catch (Exception $e) {
-                $this->db->trans_rollback();
-                log_message('error', 'Error al procesar reserva expirada: ' . $e->getMessage());
-            }
-        }
-        
-        return count($reservas_expiradas);
-    }*/
     public function verificar_y_procesar_expiraciones() {
         $fecha_actual = date('Y-m-d H:i:s');
         
@@ -1507,6 +1452,11 @@ public function cancelar_solicitud_enviada($idSolicitud, $idUsuario) {
     $this->db->trans_start();
     
     try {
+         // Establecer la zona horaria correcta para Bolivia
+         date_default_timezone_set('America/La_Paz');
+        
+         // Crear objeto DateTime para manejar las fechas correctamente
+         $fechaHoraActual = new DateTime();
         // Obtener detalles de la solicitud
         $this->db->select('
             sp.idSolicitud,
@@ -1557,7 +1507,7 @@ public function cancelar_solicitud_enviada($idSolicitud, $idUsuario) {
         // Actualizar estado de la solicitud
         $data_actualizacion = [
             'estadoSolicitud' => ESTADO_SOLICITUD_CANCELADA,
-            'fechaActualizacion' => date('Y-m-d H:i:s'),
+            'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
             'observaciones' => 'Cancelada por el usuario',
             'idUsuarioCreador' => $idUsuario
         ];
@@ -1570,7 +1520,7 @@ public function cancelar_solicitud_enviada($idSolicitud, $idUsuario) {
             $this->db->where('idPublicacion', $solicitud->idPublicacion);
             $this->db->update('PUBLICACION', [
                 'estado' => ESTADO_PUBLICACION_DISPONIBLE,
-                'fechaActualizacion' => date('Y-m-d H:i:s')
+                'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s')
             ]);
         }
 
@@ -1581,7 +1531,7 @@ public function cancelar_solicitud_enviada($idSolicitud, $idUsuario) {
         ]);
         $this->db->update('DETALLE_SOLICITUD', [
             'observaciones' => 'Solicitud cancelada por el usuario',
-            'fechaActualizacion' => date('Y-m-d H:i:s')
+            'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s')
         ]);
 
         // Crear notificación para el usuario
@@ -1650,7 +1600,11 @@ public function procesar_aprobacion($idSolicitud, $idEncargado) {
     $this->db->trans_start();
     
     try {
-        $fechaActual = date('Y-m-d H:i:s');
+                // Establecer la zona horaria correcta para Bolivia
+                date_default_timezone_set('America/La_Paz');
+        
+                // Crear objeto DateTime para manejar las fechas correctamente
+                $fechaHoraActual = new DateTime();
         
         // Obtener la solicitud
         $this->db->select('sp.idSolicitud, sp.idUsuario, ds.idPublicacion, p.titulo, p.estado')
@@ -1676,11 +1630,11 @@ public function procesar_aprobacion($idSolicitud, $idEncargado) {
             $data_prestamo = [
                 'idSolicitud' => $idSolicitud,
                 'idEncargadoPrestamo' => $idEncargado,
-                'fechaPrestamo' => $fechaActual,
-                'horaInicio' => date('H:i:s'),
+                'fechaPrestamo' => $fechaHoraActual->format('Y-m-d'),
+                'horaInicio' =>  $fechaHoraActual->format('H:i:s'),
                 'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
                 'estado' => 1,
-                'fechaCreacion' => $fechaActual,
+                'fechaCreacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $idEncargado
             ];
             
@@ -1698,8 +1652,8 @@ public function procesar_aprobacion($idSolicitud, $idEncargado) {
         $this->db->where('idSolicitud', $idSolicitud)
                  ->update('SOLICITUD_PRESTAMO', [
                      'estadoSolicitud' => ESTADO_SOLICITUD_APROBADA,
-                     'fechaAprobacionRechazo' => $fechaActual,
-                     'fechaActualizacion' => $fechaActual,
+                     'fechaAprobacionRechazo' => $fechaHoraActual->format('Y-m-d H:i:s'),
+                     'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
                      'idUsuarioCreador' => $idEncargado
                  ]);
         

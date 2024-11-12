@@ -63,21 +63,28 @@
                                                 </td>
                                                 <td>
                                                     <?php
-                                                    $estado_class = '';
-                                                    switch($prestamo->estadoDevolucion) {
-                                                        case 'bueno':
+                                                    $estado_class = 'badge-secondary'; // Clase por defecto
+                                                    $nombre_estado = '';
+                                                    
+                                                    switch ($prestamo->estadoDevolucion) {
+                                                        case ESTADO_DEVOLUCION_BUENO:
                                                             $estado_class = 'badge-success';
+                                                            $nombre_estado = 'BUENO';
                                                             break;
-                                                        case 'dañado':
+                                                        case ESTADO_DEVOLUCION_DAÑADO:
                                                             $estado_class = 'badge-warning';
+                                                            $nombre_estado = 'DAÑADO';
                                                             break;
-                                                        case 'perdido':
+                                                        case ESTADO_DEVOLUCION_PERDIDO:
                                                             $estado_class = 'badge-danger';
+                                                            $nombre_estado = 'PERDIDO';
                                                             break;
+                                                        default:
+                                                            $nombre_estado = 'NO DEFINIDO';
                                                     }
                                                     ?>
                                                     <span class="badge <?php echo $estado_class; ?>">
-                                                        <?php echo strtoupper($prestamo->estadoDevolucion); ?>
+                                                        <?php echo $nombre_estado; ?>
                                                     </span>
                                                 </td>
                                                 <td>
