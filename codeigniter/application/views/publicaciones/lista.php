@@ -217,7 +217,6 @@
     <?php elseif (intval($publicacion->estado) === ESTADO_PUBLICACION_EN_CONSULTA || 
                   intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
         <?php 
-        // Verificar si la publicación está prestada o reservada por el usuario actual
         $es_mi_prestamo = ($publicacion->es_mi_reserva == 1 || 
                         (isset($publicacion->idUsuarioSolicitud) && 
                          $publicacion->idUsuarioSolicitud == $this->session->userdata('idUsuario')));
@@ -232,12 +231,13 @@
                 $publicacion->idPublicacion
             );
             
-            if (!$interes_existente): ?>
+            // Solo mostrar el botón si no hay interés o si el interés fue notificado
+            if (!$interes_existente || $interes_existente->estado == ESTADO_INTERES_NOTIFICADO): ?>
                 <a href="<?php echo site_url('notificaciones/agregar_interes_simple/'.$publicacion->idPublicacion); ?>" 
                    class="btn btn-warning btn-sm">
                     <i class="mdi mdi-bell"></i> Notificarme cuando esté disponible
                 </a>
-            <?php else: ?>
+            <?php elseif ($interes_existente->estado == ESTADO_INTERES_SOLICITADO): ?>
                 <div class="btn-group">
                     <button class="btn btn-secondary btn-sm" disabled>
                         <i class="mdi mdi-bell-check"></i> Notificación Activa

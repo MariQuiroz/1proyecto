@@ -408,14 +408,16 @@ class Notificaciones extends CI_Controller {
     
         $idUsuario = $this->session->userdata('idUsuario');
         
-        // Verificar que no exista un interés previo
-        if ($this->Notificacion_model->obtener_estado_interes($idUsuario, $idPublicacion)) {
+        // Verificar que no exista un interés activo
+        $interes_existente = $this->Notificacion_model->obtener_estado_interes($idUsuario, $idPublicacion);
+        
+        if ($interes_existente && $interes_existente->estado == ESTADO_INTERES_SOLICITADO) {
             $this->session->set_flashdata('error', 'Ya tienes una notificación activa para esta publicación.');
             redirect('publicaciones');
             return;
         }
     
-        // Registrar el interés con configuración por defecto
+        // Registrar el nuevo interés
         $data = [
             'idUsuario' => $idUsuario,
             'idPublicacion' => $idPublicacion,

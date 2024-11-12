@@ -208,20 +208,21 @@ public function obtener_usuarios_interesados_excepto($idPublicacion, $idUsuarioE
 }
 
 public function obtener_estado_interes($idUsuario, $idPublicacion) {
-    $this->db->select('
-        ip.estado,
-        ip.fechaInteres,
-        p.titulo
-    ');
+    $this->db->select('ip.*, p.titulo');
     $this->db->from('INTERES_PUBLICACION ip');
     $this->db->join('PUBLICACION p', 'p.idPublicacion = ip.idPublicacion');
-    $this->db->where([
-        'ip.idUsuario' => $idUsuario,
-        'ip.idPublicacion' => $idPublicacion
-    ]);
-    $query = $this->db->get();
+    $this->db->where('ip.idUsuario', $idUsuario);
+    $this->db->where('ip.idPublicacion', $idPublicacion);
     
-    return $query->num_rows() > 0 ? $query->row() : null;
+    $resultado = $this->db->get()->row();
+    
+    // Si el interés está en estado notificado, lo eliminamos y retornamos null
+    if ($resultado && $resultado->estado == ESTADO_INTERES_NOTIFICADO) {
+        $this->eliminar_interes($idUsuario, $idPublicacion);
+        return null;
+    }
+    
+    return $resultado;
 }
 
 public function marcar_todas_leidas($idUsuario, $rol) {
