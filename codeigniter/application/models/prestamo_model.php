@@ -327,27 +327,141 @@ public function obtener_prestamos_activos() {
     
     
     public function obtener_prestamos_activos_usuario($idUsuario) {
+        if (!$idUsuario) {
+            log_message('error', 'Se intentó obtener préstamos activos sin proporcionar un ID de usuario válido');
+            return array();
+        }
+
+        // Seleccionar solo campos requeridos y asegurar que no sean null
         $this->db->select('
             p.idPrestamo,
             p.fechaPrestamo,
             p.horaInicio,
             p.estadoPrestamo,
+            p.fechaCreacion,
             pub.titulo,
-            ds.observaciones,
-            e.nombreEditorial
+            pub.idPublicacion,
+            e.nombreEditorial,
+            t.nombreTipo,
+            CONCAT(
+                DATE_FORMAT(p.fechaPrestamo, "%d/%m/%Y"),
+                " ",
+                TIME_FORMAT(p.horaInicio, "%H:%i")
+            ) as fecha_hora_prestamo,
+            COALESCE(ds.observaciones, "") as observaciones
         ');
         $this->db->from('PRESTAMO p');
         $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = p.idSolicitud');
         $this->db->join('DETALLE_SOLICITUD ds', 'ds.idSolicitud = sp.idSolicitud');
         $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
         $this->db->join('EDITORIAL e', 'pub.idEditorial = e.idEditorial');
+        $this->db->join('TIPO t', 'pub.idTipo = t.idTipo');
+        
+        // Asegurar que todos los campos requeridos no sean null
+        $this->db->where('p.idPrestamo IS NOT NULL');
+        $this->db->where('p.fechaPrestamo IS NOT NULL');
+        $this->db->where('p.horaInicio IS NOT NULL');
+        $this->db->where('pub.titulo IS NOT NULL');
+        $this->db->where('e.nombreEditorial IS NOT NULL');
+        $this->db->where('t.nombreTipo IS NOT NULL');
+        
+        // Condiciones de préstamo activo
         $this->db->where([
             'sp.idUsuario' => $idUsuario,
             'p.estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
             'p.estado' => 1
         ]);
-        return $this->db->get()->result();
+        
+        $this->db->order_by('p.fechaPrestamo', 'DESC');
+        $this->db->order_by('p.horaInicio', 'DESC');
+        
+        $resultado = $this->db->get();
+        
+        if (!$resultado) {
+            log_message('error', 'Error en la consulta de préstamos activos: ' . $this->db->error()['message']);
+            return array();
+        }
+
+        // Validar cada registro antes de devolverlo
+        $prestamos_validados = array();
+        foreach ($resultado->result() as $prestamo) {
+            if ($this->_validar_prestamo($prestamo)) {
+                $prestamos_validados[] = $prestamo;
+            } else {
+                log_message('warning', 'Préstamo ID:' . $prestamo->idPrestamo . ' descartado por datos incompletos');
+            }
+        }
+
+        return $prestamos_validados;
     }
+
+    private function _validar_prestamo($prestamo) {
+        $campos_requeridos = [
+            'idPrestamo',
+            'fechaPrestamo',
+            'horaInicio',
+            'estadoPrestamo',
+            'fechaCreacion',
+            'titulo',
+            'idPublicacion',
+            'nombreEditorial',
+            'nombreTipo'
+        ];
+
+        foreach ($campos_requeridos as $campo) {
+            if (!isset($prestamo->$campo) || $prestamo->$campo === '' || $prestamo->$campo === null) {
+                log_message('error', "Campo requerido '$campo' faltante o null en préstamo ID: " . 
+                    (isset($prestamo->idPrestamo) ? $prestamo->idPrestamo : 'desconocido'));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Añadir un nuevo préstamo con validación estricta
+     */
+    public function agregar_prestamo($datos_prestamo) {
+        // Validar campos requeridos
+        $campos_requeridos = [
+            'idSolicitud',
+            'fechaPrestamo',
+            'horaInicio',
+            'estadoPrestamo',
+            'estado',
+            'idUsuarioCreador'
+        ];
+
+        foreach ($campos_requeridos as $campo) {
+            if (!isset($datos_prestamo[$campo]) || empty($datos_prestamo[$campo])) {
+                log_message('error', "Campo requerido '$campo' faltante al crear préstamo");
+                return false;
+            }
+        }
+
+        // Asegurar que la fecha de creación esté presente
+        $datos_prestamo['fechaCreacion'] = date('Y-m-d H:i:s');
+
+        try {
+            $this->db->trans_start();
+            $this->db->insert('PRESTAMO', $datos_prestamo);
+            $id_prestamo = $this->db->insert_id();
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+                log_message('error', 'Error al insertar préstamo: ' . $this->db->error()['message']);
+                return false;
+            }
+
+            return $id_prestamo;
+
+        } catch (Exception $e) {
+            log_message('error', 'Exception al crear préstamo: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function contar_prestamos_activos() {
         $this->db->where([
             'DATE(fechaCreacion)' => date('Y-m-d'),
