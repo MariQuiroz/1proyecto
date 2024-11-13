@@ -83,9 +83,28 @@ class Prestamos extends CI_Controller {
             $resultado = $this->Prestamo_model->finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion);
             
             if ($resultado) {
-                // Generar y enviar documentación de devolución
-                $documentacion = $this->_procesar_documentacion_devolucion($idPrestamo);
+                // Generar ficha de devolución y enviar por correo
+            $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
+            $envio_exitoso = false;
+            $pdf_path = '';
+            
+            if ($pdf_content) {
+                // Guardar PDF temporalmente
+                $filename = 'ficha_devolucion_' . $idPrestamo . '_' . date('YmdHis') . '.pdf';
+                $filepath = FCPATH . 'uploads/temp/' . $filename;
                 
+                // Asegurar que el directorio existe
+                if (!file_exists(FCPATH . 'uploads/temp/')) {
+                    mkdir(FCPATH . 'uploads/temp/', 0777, true);
+                }
+                
+                file_put_contents($filepath, $pdf_content);
+                $pdf_path = base_url('uploads/temp/' . $filename);
+                
+                // Enviar por correo electrónico
+                $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
+            }
+
                 // Cambiar estado de la publicación a disponible
                 $this->Publicacion_model->cambiar_estado_publicacion(
                     $prestamo->idPublicacion, 
@@ -132,27 +151,27 @@ class Prestamos extends CI_Controller {
                 }
                 
                 
-                // Preparar mensaje de respuesta
-                $mensaje = 'Préstamo finalizado con éxito. ';
-                if (!empty($usuarios_interesados)) {
-                    $mensaje .= sprintf(
-                        'Se ha notificado a %d usuario(s) interesado(s). ', 
-                        count($usuarios_interesados)
-                    );
+                 // Preparar mensaje de respuesta
+            $mensaje = 'Préstamo finalizado con éxito. ';
+            if (!empty($usuarios_interesados)) {
+                $mensaje .= sprintf('Se ha notificado a %d usuario(s) interesado(s). ', count($usuarios_interesados));
+            }
+            if ($pdf_content) {
+                $mensaje .= 'Se ha generado la ficha de devolución. ';
+                if ($envio_exitoso) {
+                    $mensaje .= 'La ficha ha sido enviada por correo electrónico al lector.';
+                } else {
+                    $mensaje .= 'Hubo un problema al enviar el correo electrónico.';
                 }
-                if ($documentacion['pdf_generado']) {
-                    $mensaje .= 'Se ha generado la ficha de devolución. ';
-                    if ($documentacion['email_enviado']) {
-                        $mensaje .= 'La ficha ha sido enviada por correo electrónico al lector.';
-                    }
-                }
+            }
                 
                 $this->session->set_flashdata('mensaje', $mensaje);
                 
                 // Si se generó PDF, guardarlo en sesión para descarga
-                if (!empty($documentacion['pdf_path'])) {
-                    $this->session->set_flashdata('pdf_path', $documentacion['pdf_path']);
-                }
+                // Guardar ruta del PDF en sesión para descarga
+            if ($pdf_path) {
+                $this->session->set_flashdata('pdf_path', $pdf_path);
+            }
                 
             } else {
                 throw new Exception('Error al finalizar el préstamo.');
