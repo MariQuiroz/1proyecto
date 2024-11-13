@@ -1,4 +1,3 @@
-<!-- En application/views/prestamos/devueltos.php -->
 <div class="content-page">
     <div class="content">
         <div class="container-fluid">
@@ -20,6 +19,20 @@
                             <?php if($this->session->flashdata('error')): ?>
                                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                     <?php echo $this->session->flashdata('error'); ?>
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if($this->session->flashdata('pdf_path')): ?>
+                                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                    <strong>¡Ficha generada!</strong> 
+                                    <a href="<?php echo $this->session->flashdata('pdf_path'); ?>" 
+                                       target="_blank" 
+                                       class="btn btn-info btn-sm ml-2">
+                                        <i class="mdi mdi-file-pdf"></i> Descargar Ficha
+                                    </a>
                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                         <span aria-hidden="true">&times;</span>
                                     </button>
@@ -63,7 +76,7 @@
                                                 </td>
                                                 <td>
                                                     <?php
-                                                    $estado_class = 'badge-secondary'; // Clase por defecto
+                                                    $estado_class = 'badge-secondary';
                                                     $nombre_estado = '';
                                                     
                                                     switch ($prestamo->estadoDevolucion) {
@@ -99,12 +112,32 @@
                                                             <i class="mdi mdi-eye"></i>
                                                         </a>
                                                         
-                                                        <a href="<?php echo site_url('prestamos/generar_ficha_manual/'.$prestamo->idPrestamo); ?>" 
-                                                           class="btn btn-primary btn-sm" 
-                                                           title="Generar ficha de devolución"
-                                                           target="_blank">
-                                                            <i class="mdi mdi-file-pdf"></i>
-                                                        </a>
+                                                        <button type="button" 
+                                                                class="btn btn-primary btn-sm dropdown-toggle" 
+                                                                data-toggle="dropdown" 
+                                                                aria-haspopup="true" 
+                                                                aria-expanded="false">
+                                                            <i class="mdi mdi-file-document"></i>
+                                                        </button>
+                                                        <div class="dropdown-menu">
+                                                            <a class="dropdown-item" 
+                                                            href="<?php echo site_url('prestamos/generar_ficha_manual/'.$prestamo->idPrestamo); ?>" 
+                                                            target="_blank">
+                                                                <i class="mdi mdi-file-pdf text-danger"></i> Generar PDF
+                                                            </a>
+                                                            <a class="dropdown-item" 
+                                                            href="<?php echo site_url('prestamos/reenviar_ficha_email/'.$prestamo->idPrestamo); ?>"
+                                                            onclick="return confirm('¿Desea enviar la ficha por correo electrónico?');">
+                                                                <i class="mdi mdi-email text-info"></i> Enviar por Email
+                                                            </a>
+                                                            <?php if(isset($prestamo->pdf_path)): ?>
+                                                            <a class="dropdown-item" 
+                                                            href="<?php echo $prestamo->pdf_path; ?>" 
+                                                            download>
+                                                                <i class="mdi mdi-download text-success"></i> Descargar Última Ficha
+                                                            </a>
+                                                            <?php endif; ?>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -120,22 +153,26 @@
     </div>
 </div>
 
-<!-- Agregar DataTables y otros scripts necesarios -->
 <script>
 $(document).ready(function() {
-    // Inicializar DataTables
     var table = $('#datatable-buttons').DataTable({
         lengthChange: false,
         buttons: ['copy', 'excel', 'pdf', 'colvis'],
         language: {
             url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
         },
-        order: [[4, 'desc']], // Ordenar por fecha de préstamo descendente
+        order: [[4, 'desc']],
         pageLength: 10
     });
 
-    // Posicionar botones
     table.buttons().container()
         .appendTo('#datatable-buttons_wrapper .col-md-6:eq(0)');
+
+    // Verificar si hay una ficha PDF recién generada
+    if ($('.alert-info').length) {
+        setTimeout(function() {
+            $('.alert-info').fadeOut('slow');
+        }, 10000); // Ocultar después de 10 segundos
+    }
 });
 </script>

@@ -771,5 +771,70 @@ private function _enviar_email_disponibilidad($idUsuario, $publicacion) {
             redirect('prestamos/activos');
         }
     }
+    public function generar_ficha_manual($idPrestamo) {
+        $this->_verificar_rol(['administrador', 'encargado']);
+        
+        try {
+            // Validar que el préstamo exista y esté finalizado
+            $prestamo = $this->Prestamo_model->obtener_prestamo_detallado($idPrestamo);
+            if (!$prestamo) {
+                throw new Exception('Préstamo no encontrado.');
+            }
+    
+            // Generar el PDF
+            $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
+            
+            if (!$pdf_content) {
+                throw new Exception('Error al generar la ficha de devolución.');
+            }
+    
+            // Configurar headers para descarga directa
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="ficha_devolucion_' . $idPrestamo . '.pdf"');
+            header('Cache-Control: private, max-age=0, must-revalidate');
+            header('Pragma: public');
+    
+            echo $pdf_content;
+            exit();
+    
+        } catch (Exception $e) {
+            log_message('error', 'Error al generar ficha manual: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Error al generar la ficha: ' . $e->getMessage());
+            redirect('prestamos/devueltos');
+        }
+    }
+    
+    public function reenviar_ficha_email($idPrestamo) {
+        $this->_verificar_rol(['administrador', 'encargado']);
+        
+        try {
+            // Validar que el préstamo exista y esté finalizado
+            $prestamo = $this->Prestamo_model->obtener_prestamo_detallado($idPrestamo);
+            if (!$prestamo) {
+                throw new Exception('Préstamo no encontrado.');
+            }
+    
+            // Generar el PDF primero
+            $pdf_content = $this->generar_ficha_devolucion($idPrestamo);
+            if (!$pdf_content) {
+                throw new Exception('Error al generar el PDF de la ficha.');
+            }
+    
+            // Intentar enviar el correo
+            $envio_exitoso = $this->enviar_ficha_por_correo($idPrestamo, $pdf_content);
+            
+            if ($envio_exitoso) {
+                $this->session->set_flashdata('mensaje', 'Ficha de devolución enviada por correo exitosamente.');
+            } else {
+                throw new Exception('Error al enviar el correo electrónico.');
+            }
+    
+        } catch (Exception $e) {
+            log_message('error', 'Error al reenviar ficha por email: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Error al enviar la ficha: ' . $e->getMessage());
+        }
+    
+        redirect('prestamos/devueltos');
+    }
     
 }
