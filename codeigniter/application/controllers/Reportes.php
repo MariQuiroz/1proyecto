@@ -2,39 +2,81 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Reportes extends CI_Controller {
-    
     public function __construct() {
         parent::__construct();
-        $this->load->model('Reporte_model');
-        $this->load->library('session');
-        $this->load->helper('url');
+        $this->load->model(['Reporte_model', 'Tipo_model', 'Usuario_model']);
+        $this->load->library(['session', 'form_validation']);
+        $this->load->helper(['url', 'form', 'download']);
         $this->_verificar_acceso();
-        $this->load->model('tipo_model');
     }
 
     private function _verificar_acceso() {
         if (!$this->session->userdata('login')) {
             redirect('usuarios/login');
         }
-        
-        $rol = $this->session->userdata('rol');
-        if ($rol != 'administrador' && $rol != 'encargado') {
+
+        $roles_permitidos = ['administrador', 'encargado'];
+        if (!in_array($this->session->userdata('rol'), $roles_permitidos)) {
             $this->session->set_flashdata('error', 'No tienes permisos para acceder a esta sección.');
             redirect('usuarios/panel');
         }
     }
 
     public function prestamos() {
-        $filtros = array(
+        try {
+            $filtros = $this->_obtener_filtros();
+            $this->_validar_filtros($filtros);
+    
+            $data = [
+                'prestamos' => $this->Reporte_model->obtener_reporte_prestamos($filtros),
+                'estadisticas' => $this->Reporte_model->obtener_estadisticas_prestamos($filtros),
+                'estadisticas_mensuales' => $this->Reporte_model->obtener_estadisticas_mensuales(),
+                'filtros' => $filtros,
+                'estados_prestamo' => $this->_obtener_estados_prestamo(),
+                'encargados' => $this->Usuario_model->obtener_encargados_activos()
+            ];
+    
+            $this->_cargar_vista_reporte($data);
+    
+        } catch (Exception $e) {
+            log_message('error', 'Error en reporte de préstamos: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Error al generar el reporte: ' . $e->getMessage());
+            redirect('usuarios/panel');
+        }
+    }
+
+    private function _obtener_filtros() {
+        return [
             'fecha_inicio' => $this->input->get('fecha_inicio'),
             'fecha_fin' => $this->input->get('fecha_fin'),
-            'estado' => $this->input->get('estado')
-        );
+            'estado' => $this->input->get('estado'),
+            'id_encargado' => $this->input->get('id_encargado'),
+            'id_publicacion' => $this->input->get('id_publicacion')
+        ];
+    }
 
-        $data['prestamos'] = $this->Reporte_model->obtener_reporte_prestamos($filtros);
-        $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_prestamos($filtros);
-        $data['filtros'] = $filtros;
+    private function _validar_filtros($filtros) {
+        $this->form_validation->set_rules('fecha_inicio', 'Fecha Inicio', 'callback__validar_fecha');
+        $this->form_validation->set_rules('fecha_fin', 'Fecha Fin', 'callback__validar_fecha');
+        
+        if (!empty($filtros['fecha_inicio']) && !empty($filtros['fecha_fin'])) {
+            if (strtotime($filtros['fecha_fin']) < strtotime($filtros['fecha_inicio'])) {
+                $this->form_validation->set_message('_validar_fecha', 'La fecha fin no puede ser menor a la fecha inicio');
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
 
+    private function _obtener_estados_prestamo() {
+        return [
+            'activo' => 'Activos',
+            'devuelto' => 'Devueltos',
+            'vencido' => 'Vencidos'
+        ];
+    }
+
+    private function _cargar_vista_reporte($data) {
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
         $this->load->view('inc/aside');
@@ -42,6 +84,24 @@ class Reportes extends CI_Controller {
         $this->load->view('inc/footer');
     }
 
+    public function exportar_prestamos() {
+        try {
+            $filtros = $this->_obtener_filtros();
+            $prestamos = $this->Reporte_model->obtener_reporte_prestamos($filtros);
+            
+            $this->load->library('excel');
+            $excel_data = $this->_generar_excel_prestamos($prestamos);
+            
+            $filename = 'reporte_prestamos_' . date('Y-m-d_H-i-s') . '.xlsx';
+            force_download($filename, $excel_data);
+
+        } catch (Exception $e) {
+            log_message('error', 'Error al exportar reporte: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Error al exportar el reporte.');
+            redirect('reportes/prestamos');
+        }
+    }
+  
     
     public function publicaciones() {
         // Cargar modelos necesarios
@@ -87,9 +147,11 @@ class Reportes extends CI_Controller {
         $this->load->view('reportes/usuarios', $data);
         $this->load->view('inc/footer');
     }
+
+
     
    
-    public function exportar_prestamos() {
+    /*public function exportar_prestamos() {
         $filtros = array(
             'fecha_inicio' => $this->input->get('fecha_inicio'),
             'fecha_fin' => $this->input->get('fecha_fin'),
@@ -114,7 +176,7 @@ class Reportes extends CI_Controller {
     
         $this->load->library('excel');
         $this->excel->export_to_excel($export_data, 'Reporte_Prestamos');
-    }
+    }*/
     
     public function exportar_publicaciones() {
         $filtros = array(
