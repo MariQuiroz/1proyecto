@@ -24,39 +24,31 @@ class Reportes extends CI_Controller {
 
     public function prestamos() {
         try {
-            // Obtener y validar filtros
-            $estado = $this->input->get('estado');
+            // Obtener rol del usuario
+            $rol = $this->session->userdata('rol');
             
-            $filtros = [
-                'fecha_inicio' => $this->input->get('fecha_inicio'),
-                'fecha_fin' => $this->input->get('fecha_fin'),
-                'estado' => $estado ? strtolower($estado) : '',  // Verificar que no sea null
-                'id_encargado' => $this->input->get('id_encargado')
-            ];
-
+            // Obtener y validar filtros
+            $filtros = $this->_obtener_filtros_prestamos();
+            
             // Validar fechas
-            if (!empty($filtros['fecha_inicio']) && !empty($filtros['fecha_fin'])) {
-                if (strtotime($filtros['fecha_fin']) < strtotime($filtros['fecha_inicio'])) {
-                    throw new Exception('La fecha fin no puede ser menor a la fecha inicio.');
-                }
+            if (!$this->_validar_fechas($filtros)) {
+                throw new Exception('El rango de fechas no es válido');
             }
 
-            // Obtener datos para la vista
-            $data = [
-                'prestamos' => $this->Reporte_model->obtener_reporte_prestamos($filtros),
-                'estadisticas' => $this->Reporte_model->obtener_estadisticas_prestamos($filtros),
-                'estadisticas_mensuales' => $this->Reporte_model->obtener_estadisticas_mensuales(),
-                'filtros' => $filtros,
-                'estados_prestamo' => [
-                    'activo' => 'Activos',
-                    'devuelto' => 'Devueltos',
-                    'vencido' => 'Vencidos'
-                ],
-                'encargados' => $this->Usuario_model->obtener_encargados_activos()
-            ];
+            // Obtener datos según el rol
+            $datos_reporte = $this->_obtener_datos_reporte_prestamos($filtros, $rol);
+            
+            if (empty($datos_reporte['prestamos'])) {
+                $this->session->set_flashdata('info', 'No se encontraron datos para los filtros seleccionados.');
+            }
 
-            // Cargar la vista
-            $this->_cargar_vista_reporte($data);
+            // Agregar métricas adicionales según rol
+            if ($rol === 'administrador') {
+                $datos_reporte['metricas_avanzadas'] = $this->_obtener_metricas_avanzadas($filtros);
+            }
+
+            // Cargar la vista con los datos
+            $this->_cargar_vista_reporte($datos_reporte);
 
         } catch (Exception $e) {
             log_message('error', 'Error en reporte de préstamos: ' . $e->getMessage());
@@ -64,6 +56,307 @@ class Reportes extends CI_Controller {
             redirect('usuarios/panel');
         }
     }
+
+    private function _obtener_filtros_prestamos() {
+        return [
+            'fecha_inicio' => $this->input->get('fecha_inicio'),
+            'fecha_fin' => $this->input->get('fecha_fin'),
+            'estado' => $this->input->get('estado'),
+            'id_encargado' => $this->input->get('id_encargado'),
+            'demora_devolucion' => $this->input->get('demora_devolucion'),
+            'tipo_publicacion' => $this->input->get('tipo_publicacion')
+        ];
+    }
+
+    private function _validar_fechas($filtros) {
+        if (!empty($filtros['fecha_inicio']) && !empty($filtros['fecha_fin'])) {
+            if (strtotime($filtros['fecha_fin']) < strtotime($filtros['fecha_inicio'])) {
+                return false;
+            }
+            // Validar que el rango no sea mayor a 1 año
+            $diff = strtotime($filtros['fecha_fin']) - strtotime($filtros['fecha_inicio']);
+            if ($diff > (365 * 24 * 60 * 60)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function _obtener_datos_reporte_prestamos($filtros, $rol) {
+        // Datos base del reporte
+        $datos = [
+            'prestamos' => $this->Reporte_model->obtener_reporte_prestamos($filtros, $rol),
+            'estadisticas' => $this->Reporte_model->obtener_estadisticas_prestamos($filtros),
+            'estadisticas_mensuales' => $this->Reporte_model->obtener_estadisticas_mensuales(),
+            'filtros' => $filtros,
+            'estados_prestamo' => $this->_obtener_estados_prestamo(),
+            'encargados' => $this->Usuario_model->obtener_encargados_activos(),
+            'tipos_publicacion' => $this->Tipo_model->obtener_tipos()
+        ];
+
+        // Datos específicos según rol
+        if ($rol === 'administrador') {
+            $datos['analisis_tendencias'] = $this->Reporte_model->obtener_analisis_tendencias($filtros);
+            $datos['metricas_eficiencia'] = $this->Reporte_model->calcular_metricas_eficiencia($filtros);
+            $datos['predicciones_demanda'] = $this->Reporte_model->calcular_predicciones_demanda();
+        } else {
+            $datos['prestamos_por_estado'] = $this->Reporte_model->obtener_prestamos_por_estado($filtros);
+            $datos['tiempos_devolucion'] = $this->Reporte_model->calcular_tiempos_devolucion($filtros);
+        }
+
+        return $datos;
+    }
+
+    private function _obtener_metricas_avanzadas($filtros) {
+        return [
+            'tiempos_promedio_devolucion' => $this->Reporte_model->calcular_tiempos_promedio_devolucion($filtros),
+            'tasa_renovacion' => $this->Reporte_model->calcular_tasa_renovacion($filtros),
+            'publicaciones_mas_solicitadas' => $this->Reporte_model->obtener_publicaciones_mas_solicitadas($filtros),
+            'usuarios_frecuentes' => $this->Reporte_model->obtener_usuarios_frecuentes($filtros),
+            'dias_mayor_demanda' => $this->Reporte_model->analizar_dias_mayor_demanda($filtros)
+        ];
+    }
+
+    public function exportar_prestamos() {
+        try {
+            $rol = $this->session->userdata('rol');
+            $filtros = $this->_obtener_filtros_prestamos();
+            $formato = $this->input->get('formato') ?? 'excel';
+            
+            // Obtener datos según rol
+            $prestamos = $this->Reporte_model->obtener_reporte_prestamos($filtros, $rol);
+            $estadisticas = $this->Reporte_model->obtener_estadisticas_prestamos($filtros);
+            
+            if (empty($prestamos)) {
+                throw new Exception('No hay datos para exportar en el período seleccionado');
+            }
+
+            switch ($formato) {
+                case 'pdf':
+                    return $this->_exportar_pdf_prestamos($prestamos, $estadisticas);
+                case 'excel':
+                    return $this->_exportar_excel_prestamos($prestamos);
+                default:
+                    throw new Exception('Formato de exportación no válido');
+            }
+
+        } catch (Exception $e) {
+            log_message('error', 'Error en exportación: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Error al exportar: ' . $e->getMessage());
+            redirect('reportes/prestamos');
+        }
+    }
+
+    private function _exportar_pdf_prestamos($prestamos, $estadisticas) {
+        // Cargar Dompdf
+        require_once APPPATH . '../vendor/autoload.php';
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isPhpEnabled', true);
+        $options->set('isRemoteEnabled', true);
+        
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        // Construcción del HTML
+        $html = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    font-size: 12px;
+                }
+                .header {
+                    text-align: center;
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                }
+                .subheader {
+                    text-align: center;
+                    font-size: 14px;
+                    margin-bottom: 15px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 15px;
+                }
+                table.info td, table.info th {
+                    border: 1px solid #000;
+                    padding: 8px;
+                }
+                table.info th {
+                    background-color: #f2f2f2;
+                    font-weight: bold;
+                    text-align: center;
+                }
+                .estado-activo { color: #28a745; }
+                .estado-vencido { color: #dc3545; }
+                .estado-devuelto { color: #17a2b8; }
+                .footer {
+                    position: fixed;
+                    bottom: 0;
+                    width: 100%;
+                    font-size: 10px;
+                    text-align: center;
+                    border-top: 1px solid #000;
+                    padding-top: 5px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">HEMEROTECA UMSS</div>
+            <div class="subheader">Reporte de Préstamos - ' . date('d/m/Y H:i:s') . '</div>
+
+            <!-- Resumen Estadístico -->
+            <table class="info" style="margin-bottom: 20px;">
+                <tr>
+                    <th colspan="2" style="background-color: #f8f9fa;">Resumen Estadístico</th>
+                </tr>
+                <tr>
+                    <td style="width: 50%"><strong>Préstamos Activos:</strong></td>
+                    <td>' . $estadisticas->activos . '</td>
+                </tr>
+                <tr>
+                    <td><strong>Préstamos Devueltos:</strong></td>
+                    <td>' . $estadisticas->devueltos . '</td>
+                </tr>
+                <tr>
+                    <td><strong>Préstamos Vencidos:</strong></td>
+                    <td>' . $estadisticas->vencidos . '</td>
+                </tr>
+            </table>
+
+            <!-- Tabla de Préstamos -->
+            <table class="info">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Publicación</th>
+                        <th>Estado</th>
+                        <th>Encargado</th>
+                    </tr>
+                </thead>
+                <tbody>';
+
+        foreach ($prestamos as $prestamo) {
+            $estado_class = '';
+            switch($prestamo->estado_prestamo) {
+                case 'Activo': $estado_class = 'estado-activo'; break;
+                case 'Vencido': $estado_class = 'estado-vencido'; break;
+                case 'Devuelto': $estado_class = 'estado-devuelto'; break;
+            }
+
+            $html .= '
+                <tr>
+                    <td style="text-align: center;">' . $this->sanitize_for_pdf($prestamo->idPrestamo) . '</td>
+                    <td>' . date('d/m/Y', strtotime($prestamo->fechaPrestamo)) . '</td>
+                    <td>' . $this->sanitize_for_pdf($prestamo->nombres . ' ' . $prestamo->apellidoPaterno) . '</td>
+                    <td>' . $this->sanitize_for_pdf($prestamo->titulo) . '</td>
+                    <td class="' . $estado_class . '" style="text-align: center;">' . 
+                        $this->sanitize_for_pdf($prestamo->estado_prestamo) . '</td>
+                    <td>' . $this->sanitize_for_pdf($prestamo->nombre_encargado . ' ' . 
+                        $prestamo->apellido_encargado) . '</td>
+                </tr>';
+        }
+
+        $html .= '</tbody>
+            </table>
+
+            <div class="footer">
+                <p>Este documento es generado automáticamente por el sistema.</p>
+                <p>Fecha y hora de generación: ' . date('d/m/Y H:i:s') . '</p>
+            </div>
+        </body>
+        </html>';
+
+        // Configurar y generar PDF
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+
+        // Generar nombre único
+        $pdfFileName = 'reporte_prestamos_' . date('Y-m-d_H-i-s') . '.pdf';
+        
+        // Descargar PDF
+        $dompdf->stream($pdfFileName, array('Attachment' => true));
+    }
+
+    private function _exportar_excel_prestamos($prestamos) {
+        // Implementar exportación a Excel
+        $filename = 'Reporte_Prestamos_' . date('Y-m-d_H-i-s');
+        $headers = [
+            'ID',
+            'Fecha',
+            'Usuario',
+            'Publicación',
+            'Estado',
+            'Encargado',
+            'Tiempo Préstamo'
+        ];
+
+        $data = [];
+        foreach ($prestamos as $prestamo) {
+            $data[] = [
+                $prestamo->idPrestamo,
+                date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)),
+                $prestamo->nombres . ' ' . $prestamo->apellidoPaterno,
+                $prestamo->titulo,
+                $prestamo->estado_prestamo,
+                $prestamo->nombre_encargado . ' ' . $prestamo->apellido_encargado,
+                $prestamo->tiempo_prestamo . ' minutos'
+            ];
+        }
+
+        // Crear archivo Excel
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Agregar encabezados
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($col, 1, $header);
+            $col++;
+        }
+
+        // Agregar datos
+        $row = 2;
+        foreach ($data as $rowData) {
+            $col = 1;
+            foreach ($rowData as $value) {
+                $sheet->setCellValueByColumnAndRow($col, $row, $value);
+                $col++;
+            }
+            $row++;
+        }
+
+        // Autoajustar columnas
+        foreach (range('A', $sheet->getHighestColumn()) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Configurar encabezados HTTP para la descarga
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '.xlsx"');
+        header('Cache-Control: max-age=0');
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save('php://output');
+        exit;
+    }
+
+    private function sanitize_for_pdf($text) {
+        if (empty($text)) {
+            return '';
+        }
+        return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    }
+
 
     private function _cargar_vista_reporte($data) {
         $this->load->view('inc/header');
@@ -73,7 +366,7 @@ class Reportes extends CI_Controller {
         $this->load->view('inc/footer');
     }
 
-    public function exportar_prestamos() {
+    private function exportar_pdf_prestamos() {
         try {
             $this->_verificar_acceso();
             $filtros = $this->_obtener_filtros();
@@ -230,16 +523,6 @@ class Reportes extends CI_Controller {
             $this->session->set_flashdata('error', 'Error al exportar el reporte: ' . $e->getMessage());
             redirect('reportes/prestamos');
         }
-    }
-    
-    private function sanitize_for_pdf($text) {
-        if (empty($text)) {
-            return '';
-        }
-        // Convertir caracteres especiales a entidades HTML
-        $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
-        // Convertir entidades HTML a sus equivalentes Unicode
-        return html_entity_decode($text, ENT_QUOTES, 'UTF-8');
     }
 
     private function _obtener_filtros() {
