@@ -9,6 +9,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+     <!-- Reportes -->
+    <link href="<?php echo base_url('assets/css/sweetalert2.min.css'); ?>" rel="stylesheet" type="text/css" />
+    <script src="<?php echo base_url('assets/js/sweetalert2.min.js'); ?>"></script>
+    <link href="<?php echo base_url('assets/libs/sweetalert2/sweetalert2.min.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?php echo base_url('assets/libs/select2/select2.min.css'); ?>" rel="stylesheet" type="text/css" />
     
     <!-- App favicon -->
     <link rel="shortcut icon" href="<?= base_url('adminXeria/light/dist/assets/images/favicon.ico'); ?>"/>

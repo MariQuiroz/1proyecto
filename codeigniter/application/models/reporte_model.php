@@ -25,11 +25,13 @@ class Reporte_model extends CI_Model {
             'enc.apellidoPaterno as apellido_encargado',
             'ds.observaciones',
             'CASE 
-                WHEN p.estadoPrestamo = 1 AND p.horaDevolucion IS NULL 
+                WHEN p.estadoPrestamo = ' . ESTADO_PRESTAMO_ACTIVO . ' 
+                    AND p.horaDevolucion IS NULL 
                     AND DATEDIFF(NOW(), p.fechaPrestamo) <= 1 THEN "Activo"
-                WHEN p.estadoPrestamo = 2 THEN "Devuelto"
-                WHEN p.estadoPrestamo = 1 AND DATEDIFF(NOW(), p.fechaPrestamo) > 1 
-                    THEN "Vencido"
+                WHEN p.estadoPrestamo = ' . ESTADO_PRESTAMO_FINALIZADO . ' THEN "Devuelto"
+                WHEN p.estadoPrestamo = ' . ESTADO_PRESTAMO_ACTIVO . ' 
+                    AND DATEDIFF(NOW(), p.fechaPrestamo) > 1 THEN "Vencido"
+                ELSE "Desconocido"
             END as estado_prestamo'
         ]);
 
@@ -39,37 +41,79 @@ class Reporte_model extends CI_Model {
         return $this->db->get()->result();
     }
 
+
     private function _aplicar_joins_prestamos() {
-        $this->db->from('PRESTAMO p')
-            ->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud')
-            ->join('USUARIO u', 'sp.idUsuario = u.idUsuario')
-            ->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud')
-            ->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion')
-            ->join('USUARIO enc', 'p.idEncargadoPrestamo = enc.idUsuario');
+        $this->db->from('PRESTAMO p');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
+        $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+        $this->db->join('USUARIO enc', 'p.idEncargadoPrestamo = enc.idUsuario');
     }
 
     private function _aplicar_filtros_prestamos($filtros) {
         if (!empty($filtros['fecha_inicio'])) {
             $this->db->where('DATE(p.fechaPrestamo) >=', $filtros['fecha_inicio']);
         }
+        
         if (!empty($filtros['fecha_fin'])) {
             $this->db->where('DATE(p.fechaPrestamo) <=', $filtros['fecha_fin']);
         }
+        
         if (!empty($filtros['id_encargado'])) {
             $this->db->where('p.idEncargadoPrestamo', $filtros['id_encargado']);
         }
+        
         if (!empty($filtros['estado'])) {
-            $this->_aplicar_filtro_estado($filtros['estado']);
+            $this->_aplicar_filtro_por_estado($filtros['estado']);
         }
 
         $this->db->order_by('p.fechaPrestamo', 'DESC');
     }
 
+    private function _aplicar_filtro_por_estado($estado) {
+        if (empty($estado)) {
+            return;  // Si no hay estado, no aplicar filtro
+        }
+    
+        switch($estado) {
+            case 'activo':
+                $this->db->where('p.estadoPrestamo', ESTADO_PRESTAMO_ACTIVO);
+                $this->db->where('p.horaDevolucion IS NULL');
+                $this->db->where('DATEDIFF(NOW(), p.fechaPrestamo) <= 1');
+                break;
+            
+            case 'devuelto':
+                $this->db->where('p.estadoPrestamo', ESTADO_PRESTAMO_FINALIZADO);
+                break;
+                
+            case 'vencido':
+                $this->db->where('p.estadoPrestamo', ESTADO_PRESTAMO_ACTIVO);
+                $this->db->where('p.horaDevolucion IS NULL');
+                $this->db->where('DATEDIFF(NOW(), p.fechaPrestamo) > 1');
+                break;
+                
+            default:
+                log_message('debug', 'Estado de préstamo no reconocido: ' . $estado);
+                break;
+        }
+    }
+
     public function obtener_estadisticas_prestamos($filtros) {
         $this->db->select('
-            COUNT(CASE WHEN p.estadoPrestamo = 1 AND p.horaDevolucion IS NULL AND DATEDIFF(NOW(), p.fechaPrestamo) <= 1 THEN 1 END) as activos,
-            COUNT(CASE WHEN p.estadoPrestamo = 2 THEN 1 END) as devueltos,
-            COUNT(CASE WHEN p.estadoPrestamo = 1 AND p.horaDevolucion IS NULL AND DATEDIFF(NOW(), p.fechaPrestamo) > 1 THEN 1 END) as vencidos
+            COUNT(CASE 
+                WHEN p.estadoPrestamo = ' . ESTADO_PRESTAMO_ACTIVO . ' 
+                AND p.horaDevolucion IS NULL 
+                AND DATEDIFF(NOW(), p.fechaPrestamo) <= 1 THEN 1 
+            END) as activos,
+            COUNT(CASE 
+                WHEN p.estadoPrestamo = ' . ESTADO_PRESTAMO_FINALIZADO . ' THEN 1 
+            END) as devueltos,
+            COUNT(CASE 
+                WHEN p.estadoPrestamo = ' . ESTADO_PRESTAMO_ACTIVO . ' 
+                AND p.horaDevolucion IS NULL 
+                AND DATEDIFF(NOW(), p.fechaPrestamo) > 1 THEN 1 
+            END) as vencidos
         ');
         
         $this->db->from('PRESTAMO p');
@@ -88,21 +132,29 @@ class Reporte_model extends CI_Model {
         $this->db->select([
             'MONTH(p.fechaPrestamo) as mes',
             'YEAR(p.fechaPrestamo) as año',
-            'COUNT(CASE WHEN p.estadoPrestamo = 1 AND p.horaDevolucion IS NULL 
-                AND DATEDIFF(NOW(), p.fechaPrestamo) <= 1 THEN 1 END) as activos',
-            'COUNT(CASE WHEN p.estadoPrestamo = 2 THEN 1 END) as devueltos',
-            'COUNT(CASE WHEN p.estadoPrestamo = 1 AND p.horaDevolucion IS NULL 
-                AND DATEDIFF(NOW(), p.fechaPrestamo) > 1 THEN 1 END) as vencidos'
+            'COUNT(CASE 
+                WHEN p.estadoPrestamo = ' . ESTADO_PRESTAMO_ACTIVO . ' 
+                AND p.horaDevolucion IS NULL 
+                AND DATEDIFF(NOW(), p.fechaPrestamo) <= 1 THEN 1 
+            END) as activos',
+            'COUNT(CASE 
+                WHEN p.estadoPrestamo = ' . ESTADO_PRESTAMO_FINALIZADO . ' THEN 1 
+            END) as devueltos',
+            'COUNT(CASE 
+                WHEN p.estadoPrestamo = ' . ESTADO_PRESTAMO_ACTIVO . ' 
+                AND p.horaDevolucion IS NULL 
+                AND DATEDIFF(NOW(), p.fechaPrestamo) > 1 THEN 1 
+            END) as vencidos'
         ]);
         
         $this->db->from('PRESTAMO p');
         $this->db->where('p.fechaPrestamo >= DATE_SUB(NOW(), INTERVAL 6 MONTH)');
-        $this->db->group_by('YEAR(p.fechaPrestamo), MONTH(p.fechaPrestamo)');
-        $this->db->order_by('YEAR(p.fechaPrestamo), MONTH(p.fechaPrestamo)');
+        $this->db->group_by(['YEAR(p.fechaPrestamo)', 'MONTH(p.fechaPrestamo)']);
+        $this->db->order_by('YEAR(p.fechaPrestamo)', 'MONTH(p.fechaPrestamo)');
         
         return $this->db->get()->result();
     }
-    
+
     public function obtener_reporte_publicaciones($filtros) {
         $this->db->select('
             p.idPublicacion,

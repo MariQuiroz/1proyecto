@@ -18,16 +18,6 @@ class Publicacion_model extends CI_Model {
         $query = $this->db->get('PUBLICACION');
         return $query->result();
     }
-
-    /*public function obtener_publicaciones_disponibles() {
-        $this->db->select('p.idPublicacion, p.titulo, p.portada, e.nombreEditorial, t.nombreTipo');
-        $this->db->from('PUBLICACION p');
-        $this->db->join('EDITORIAL e', 'p.idEditorial = e.idEditorial');
-        $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
-        $this->db->where('p.estado', ESTADO_PUBLICACION_DISPONIBLE);
-        return $this->db->get()->result();
-    }*/
-
     public function get_publicacion($idPublicacion) {
         $this->db->select('p.*, e.nombreEditorial, t.nombreTipo');
         $this->db->from('PUBLICACION p');

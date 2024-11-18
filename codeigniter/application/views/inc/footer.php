@@ -40,5 +40,14 @@
 
     <!-- App js -->
     <script src="<?= base_url('adminXeria/light/dist/assets/js/app.min.js'); ?>"></script>
+
+    <!-- Reportes -->
+    <script src="<?php echo base_url('assets/js/jquery.counterup.min.js'); ?>"></script>
+    <script src="<?php echo base_url('assets/js/jquery.waypoints.min.js'); ?>"></script>
+
+    <script src="<?php echo base_url('assets/libs/sweetalert2/sweetalert2.min.js'); ?>"></script>
+    <script src="<?php echo base_url('assets/libs/select2/select2.min.js'); ?>"></script>
+    <script src="<?php echo base_url('assets/libs/jquery-waypoints/jquery.waypoints.min.js'); ?>"></script>
+    <script src="<?php echo base_url('assets/libs/jquery-counterup/jquery.counterup.min.js'); ?>"></script>
 </body>
 </html>
