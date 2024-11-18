@@ -141,16 +141,7 @@
                                         <button type="button" class="btn btn-secondary" id="btn-limpiar">
                                             <i class="fe-refresh-cw mr-1"></i> Limpiar
                                         </button>
-                                        <div class="btn-group">
-    <a href="<?php echo site_url('reportes/exportar_prestamos').'?'.http_build_query($filtros).'&formato=pdf'; ?>" 
-       class="btn btn-danger">
-        <i class="fe-file-text mr-1"></i> Exportar PDF
-    </a>
-    <a href="<?php echo site_url('reportes/exportar_prestamos').'?'.http_build_query($filtros).'&formato=excel'; ?>" 
-       class="btn btn-success">
-        <i class="fe-file mr-1"></i> Exportar Excel
-    </a>
-</div>
+                                        
                                     </div>
                                 </div>
                             <?php echo form_close(); ?>
@@ -163,9 +154,23 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card">
+
+                    
                         <div class="card-body">
                             <h4 class="header-title d-inline-block mb-3">Lista de Préstamos</h4>
+                            
                             <div class="table-responsive">
+
+                            <div class="btn-group">
+    <a href="<?php echo site_url('reportes/exportar_prestamos').'?'.http_build_query($filtros).'&formato=pdf'; ?>" 
+       class="btn btn-danger">
+        <i class="fe-file-text mr-1"></i> Exportar PDF
+    </a>
+    <a href="<?php echo site_url('reportes/exportar_prestamos').'?'.http_build_query($filtros).'&formato=excel'; ?>" 
+       class="btn btn-success">
+        <i class="fe-file mr-1"></i> Exportar Excel
+    </a>
+</div>
                                 <table id="prestamos-table" class="table table-striped table-bordered dt-responsive nowrap w-100">
                                     <thead>
                                         <tr>

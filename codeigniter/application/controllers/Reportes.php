@@ -87,138 +87,142 @@ class Reportes extends CI_Controller {
                 throw new Exception('No hay datos para exportar');
             }
     
-            // Preparar datos para exportación
-            $export_data = array();
-            foreach ($prestamos as $prestamo) {
-                $export_data[] = array(
-                    'ID Préstamo' => $prestamo->idPrestamo,
-                    'Fecha' => date('d/m/Y', strtotime($prestamo->fechaPrestamo)),
-                    'Hora' => $prestamo->horaInicio,
-                    'Usuario' => $prestamo->nombres . ' ' . $prestamo->apellidoPaterno,
-                    'Publicación' => $prestamo->titulo,
-                    'Estado' => $prestamo->estado_prestamo,
-                    'Encargado' => $prestamo->nombre_encargado . ' ' . $prestamo->apellido_encargado,
-                    'Fecha Devolución' => $prestamo->horaDevolucion ? date('d/m/Y H:i', strtotime($prestamo->horaDevolucion)) : 'Pendiente',
-                    'Observaciones' => $prestamo->observaciones ?? ''
-                );
-            }
-    
             if ($formato === 'pdf') {
                 // Cargar Dompdf
-                require_once APPPATH . 'third_party/dompdf/autoload.inc.php';
-                $dompdf = new \Dompdf\Dompdf();
+                require_once APPPATH . '../vendor/autoload.php';
                 $options = new \Dompdf\Options();
                 $options->set('isHtml5ParserEnabled', true);
                 $options->set('isPhpEnabled', true);
-                $dompdf->setOptions($options);
+                $options->set('isRemoteEnabled', true);
+                
+                $dompdf = new \Dompdf\Dompdf($options);
     
-                // Generar HTML para el PDF
+                // Construcción del HTML
                 $html = '
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <meta charset="UTF-8">
                     <style>
-                        body { font-family: Arial, sans-serif; }
-                        .header { text-align: center; margin-bottom: 20px; }
-                        .titulo { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
-                        .estadisticas { margin-bottom: 20px; }
-                        .estadisticas table { width: 50%; border-collapse: collapse; }
-                        .estadisticas td { padding: 5px; border: 1px solid #ddd; }
-                        .tabla-datos { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        .tabla-datos th, .tabla-datos td { 
-                            border: 1px solid #ddd; 
-                            padding: 8px; 
-                            font-size: 12px; 
+                        body {
+                            font-family: Arial, sans-serif;
+                            font-size: 12px;
                         }
-                        .tabla-datos th { 
-                            background-color: #f5f5f5; 
-                            font-weight: bold; 
+                        .header {
+                            text-align: center;
+                            font-size: 18px;
+                            font-weight: bold;
+                            margin-bottom: 20px;
+                        }
+                        .subheader {
+                            text-align: center;
+                            font-size: 14px;
+                            margin-bottom: 15px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 15px;
+                        }
+                        table.info td, table.info th {
+                            border: 1px solid #000;
+                            padding: 8px;
+                        }
+                        table.info th {
+                            background-color: #f2f2f2;
+                            font-weight: bold;
+                            text-align: center;
                         }
                         .estado-activo { color: green; }
                         .estado-vencido { color: red; }
                         .estado-devuelto { color: blue; }
+                        .footer {
+                            position: absolute;
+                            bottom: 0;
+                            right: 0;
+                            font-size: 8px;
+                            text-align: right;
+                        }
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                        <div class="titulo">Reporte de Préstamos</div>
-                        <div>Fecha de generación: ' . date('d/m/Y H:i:s') . '</div>
-                    </div>
-                    
-                    <div class="estadisticas">
-                        <h3>Resumen General</h3>
-                        <table>
-                            <tr>
-                                <td>Préstamos Activos:</td>
-                                <td>' . $estadisticas->activos . '</td>
-                            </tr>
-                            <tr>
-                                <td>Préstamos Devueltos:</td>
-                                <td>' . $estadisticas->devueltos . '</td>
-                            </tr>
-                            <tr>
-                                <td>Préstamos Vencidos:</td>
-                                <td>' . $estadisticas->vencidos . '</td>
-                            </tr>
-                        </table>
-                    </div>
-                    
-                    <h3>Detalle de Préstamos</h3>
-                    <table class="tabla-datos">
+                    <div class="header">Reporte de Préstamos - Hemeroteca UMSS</div>
+                    <div class="subheader">Fecha de generación: ' . date('d/m/Y H:i:s') . '</div>
+    
+                    <table class="info">
+                        <tr>
+                            <td width="30%"><strong>Préstamos Activos:</strong></td>
+                            <td>' . $this->sanitize_for_pdf($estadisticas->activos) . '</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Préstamos Devueltos:</strong></td>
+                            <td>' . $this->sanitize_for_pdf($estadisticas->devueltos) . '</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Préstamos Vencidos:</strong></td>
+                            <td>' . $this->sanitize_for_pdf($estadisticas->vencidos) . '</td>
+                        </tr>
+                    </table>
+    
+                    <h4>Detalle de Préstamos:</h4>
+                    <table class="info">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Fecha</th>
-                                <th>Hora</th>
                                 <th>Usuario</th>
                                 <th>Publicación</th>
                                 <th>Estado</th>
                                 <th>Encargado</th>
                                 <th>Devolución</th>
-                                <th>Observaciones</th>
                             </tr>
                         </thead>
                         <tbody>';
-                
-                foreach ($export_data as $row) {
-                    $estado_class = '';
-                    if ($row['Estado'] === 'Activo') {
-                        $estado_class = 'estado-activo';
-                    } elseif ($row['Estado'] === 'Vencido') {
-                        $estado_class = 'estado-vencido';
-                    } elseif ($row['Estado'] === 'Devuelto') {
-                        $estado_class = 'estado-devuelto';
-                    }
-                    
-                    $html .= '<tr>
-                        <td>' . htmlspecialchars($row['ID Préstamo']) . '</td>
-                        <td>' . htmlspecialchars($row['Fecha']) . '</td>
-                        <td>' . htmlspecialchars($row['Hora']) . '</td>
-                        <td>' . htmlspecialchars($row['Usuario']) . '</td>
-                        <td>' . htmlspecialchars($row['Publicación']) . '</td>
-                        <td class="' . $estado_class . '">' . htmlspecialchars($row['Estado']) . '</td>
-                        <td>' . htmlspecialchars($row['Encargado']) . '</td>
-                        <td>' . htmlspecialchars($row['Fecha Devolución']) . '</td>
-                        <td>' . htmlspecialchars($row['Observaciones']) . '</td>
-                    </tr>';
-                }
-                
-                $html .= '</tbody></table></body></html>';
     
-                // Generar PDF
-                $dompdf->loadHtml($html);
+                foreach ($prestamos as $prestamo) {
+                    $estado_class = '';
+                    switch($prestamo->estado_prestamo) {
+                        case 'Activo': $estado_class = 'estado-activo'; break;
+                        case 'Vencido': $estado_class = 'estado-vencido'; break;
+                        case 'Devuelto': $estado_class = 'estado-devuelto'; break;
+                    }
+    
+                    $html .= '
+                        <tr>
+                            <td style="text-align: center;">' . $this->sanitize_for_pdf($prestamo->idPrestamo) . '</td>
+                            <td>' . date('d/m/Y', strtotime($prestamo->fechaPrestamo)) . '</td>
+                            <td>' . $this->sanitize_for_pdf($prestamo->nombres . ' ' . $prestamo->apellidoPaterno) . '</td>
+                            <td>' . $this->sanitize_for_pdf($prestamo->titulo) . '</td>
+                            <td class="' . $estado_class . '">' . $this->sanitize_for_pdf($prestamo->estado_prestamo) . '</td>
+                            <td>' . $this->sanitize_for_pdf($prestamo->nombre_encargado . ' ' . $prestamo->apellido_encargado) . '</td>
+                            <td>' . ($prestamo->horaDevolucion ? date('d/m/Y H:i', strtotime($prestamo->horaDevolucion)) : 'Pendiente') . '</td>
+                        </tr>';
+                }
+    
+                $html .= '</tbody></table>
+                    
+                    <div class="footer">
+                        <p>Documento generado el: ' . date('d/m/Y H:i:s') . '</p>
+                    </div>
+                </body>
+                </html>';
+    
+                // Configurar y generar PDF
                 $dompdf->setPaper('A4', 'landscape');
+                $dompdf->loadHtml($html);
                 $dompdf->render();
+    
+                // Generar nombre único
+                $pdfFileName = 'reporte_prestamos_' . date('Y-m-d_H-i-s') . '.pdf';
                 
                 // Descargar PDF
-                $dompdf->stream('Reporte_Prestamos_' . date('Y-m-d') . '.pdf', array('Attachment' => true));
+                $dompdf->stream($pdfFileName, array('Attachment' => true));
                 
             } else {
-                // Exportar a Excel usando la librería existente
+                // Exportar a Excel
                 $this->load->library('excel');
                 $filename = 'Reporte_Prestamos_' . date('Y-m-d_H-i-s');
-                $this->excel->export_to_excel($export_data, $filename);
+                $this->excel->export_to_excel($prestamos, $filename);
             }
             
         } catch (Exception $e) {
@@ -226,6 +230,16 @@ class Reportes extends CI_Controller {
             $this->session->set_flashdata('error', 'Error al exportar el reporte: ' . $e->getMessage());
             redirect('reportes/prestamos');
         }
+    }
+    
+    private function sanitize_for_pdf($text) {
+        if (empty($text)) {
+            return '';
+        }
+        // Convertir caracteres especiales a entidades HTML
+        $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+        // Convertir entidades HTML a sus equivalentes Unicode
+        return html_entity_decode($text, ENT_QUOTES, 'UTF-8');
     }
 
     private function _obtener_filtros() {
