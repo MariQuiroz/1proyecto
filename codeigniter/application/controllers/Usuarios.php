@@ -190,7 +190,8 @@ public function agregar() {
 
 public function agregarbd() {
     $this->_verificar_permisos_creacion();
-    
+
+    // Validación del formulario
     $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim');
     $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required|trim');
     $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|is_unique[USUARIO.carnet]');
@@ -198,33 +199,42 @@ public function agregarbd() {
 
     if ($this->form_validation->run() == FALSE) {
         $data['es_admin'] = ($this->session->userdata('rol') === 'administrador');
-        $this->load->view('inc/header');
-        $this->load->view('inc/nabvar');
-        $this->load->view('inc/aside');
-        $this->load->view('admin/formulario', $data);
-        $this->load->view('inc/footer');
+        $this->cargar_vistas('admin/formulario', $data);
         return;
     }
 
-    try {
-        $this->db->trans_start();
+    $this->db->trans_start();
 
-        // Datos del usuario
+    try {
+        // Preparar datos de usuario
         $data = $this->_preparar_datos_usuario();
         
+        // Verificar email antes de registrar
+        if (!$this->_verificar_email($data['email'])) {
+            throw new Exception('El email ingresado no es válido o ya está registrado.');
+        }
+
         // Registrar usuario
         $id_nuevo_usuario = $this->usuario_model->registrarUsuario($data);
         
         if (!$id_nuevo_usuario) {
-            throw new Exception('Error al registrar el usuario');
+            throw new Exception('Error al registrar el usuario en la base de datos.');
         }
+
+        // Guardar contraseña temporal para el email
+        $contrasena_temporal = $this->session->flashdata('contrasena_temporal');
 
         // Enviar email
         $email_enviado = $this->_enviar_email_bienvenida(
-            $data['email'], 
-            $data['username'], 
-            $this->input->post('contrasena_temporal')
+            $data['email'],
+            $data['username'],
+            $contrasena_temporal
         );
+
+        if (!$email_enviado) {
+            // Log del error pero permitir continuar
+            log_message('warning', 'No se pudo enviar el email de bienvenida a: ' . $data['email']);
+        }
 
         $this->db->trans_complete();
 
@@ -234,7 +244,7 @@ public function agregarbd() {
 
         $mensaje = 'Usuario registrado con éxito.';
         if (!$email_enviado) {
-            $mensaje .= ' Nota: No se pudo enviar el correo de bienvenida.';
+            $mensaje .= ' El correo de bienvenida no pudo ser enviado.';
         }
 
         $this->session->set_flashdata('mensaje', $mensaje);
@@ -243,22 +253,33 @@ public function agregarbd() {
     } catch (Exception $e) {
         $this->db->trans_rollback();
         log_message('error', 'Error en agregarbd: ' . $e->getMessage());
-        $this->session->set_flashdata('error', 'Error al registrar el usuario: ' . $e->getMessage());
+        $this->session->set_flashdata('error', $e->getMessage());
         redirect('usuarios/agregar');
     }
 }
 
 private function _verificar_email($email) {
+    // Validar formato del email
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        log_message('debug', 'Formato de email inválido: ' . $email);
         return false;
     }
     
-    $this->db->select('idUsuario');
-    $this->db->from('USUARIO');
+    // Verificar si el email ya existe, excluyendo el usuario actual si es una modificación
     $this->db->where('email', $email);
+    if ($this->input->post('idUsuario')) {
+        $this->db->where('idUsuario !=', $this->input->post('idUsuario'));
+    }
+    $existe = $this->db->get('USUARIO')->num_rows() > 0;
     
-    return $this->db->get()->num_rows() === 0;
+    if ($existe) {
+        log_message('debug', 'Email ya existe en la base de datos: ' . $email);
+        return false;
+    }
+    
+    return true;
 }
+
 private function _get_email_config() {
     return array(
         'protocol' => 'smtp',
@@ -280,38 +301,65 @@ private function _get_email_config() {
 
 private function _enviar_email_bienvenida($email, $username, $contrasena_temporal) {
     try {
-        // Verificar el email primero
-        if (!$this->_verificar_email($email)) {
-            log_message('error', 'Email inválido o ya existe: ' . $email);
-            return false;
-        }
+        log_message('debug', 'Iniciando envío de email de bienvenida a: ' . $email);
 
-        $this->email->initialize($this->_get_email_config());
+        // Configuración de email
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'smtp.gmail.com',
+            'smtp_port' => 587,
+            'smtp_user' => 'quirozmolinamaritza@gmail.com',
+            'smtp_pass' => 'zdmk qkfw wgdf lshq',
+            'smtp_crypto' => 'tls',
+            'mailtype' => 'html',
+            'charset' => 'utf-8',
+            'newline' => "\r\n",
+            'wordwrap' => TRUE,
+            'validate' => TRUE,
+            'smtp_timeout' => 30
+        );
 
+        $this->email->initialize($config);
+
+        $this->email->set_mailtype("html");
         $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
         $this->email->to($email);
-        $this->email->subject('Bienvenido a la Hemeroteca UMSS');
+        $this->email->subject('Información de tu cuenta - Hemeroteca UMSS');
 
-        $mensaje = $this->load->view('emails/bienvenida', array(
-            'username' => $username,
-            'contrasena' => $contrasena_temporal
-        ), true);
+        $mensaje = "
+        <html>
+        <head>
+            <title>Bienvenido a la Hemeroteca UMSS</title>
+        </head>
+        <body>
+            <h2>Bienvenido/a a la Hemeroteca UMSS</h2>
+            <p>Tu cuenta ha sido creada exitosamente.</p>
+            <p><strong>Usuario:</strong> {$username}</p>
+            <p><strong>Contraseña temporal:</strong> {$contrasena_temporal}</p>
+            <p>Por razones de seguridad, te pedimos que cambies tu contraseña en tu primer inicio de sesión.</p>
+            <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+            <br>
+            <p>Saludos cordiales,</p>
+            <p>Equipo de la Hemeroteca</p>
+        </body>
+        </html>";
 
         $this->email->message($mensaje);
 
+        // Intentar enviar el email
         if (!$this->email->send()) {
-            log_message('error', 'Error al enviar email: ' . $this->email->print_debugger());
-            throw new Exception('Error al enviar el correo electrónico');
+            log_message('error', 'Error al enviar email: ' . $this->email->print_debugger(['headers']));
+            return false;
         }
 
+        log_message('debug', 'Email enviado exitosamente a: ' . $email);
         return true;
 
     } catch (Exception $e) {
-        log_message('error', 'Exception al enviar email: ' . $e->getMessage());
+        log_message('error', 'Excepción al enviar email: ' . $e->getMessage());
         return false;
     }
 }
-
 /**
  * Prepara los datos del usuario para su registro
  * @return array Datos del usuario formateados
