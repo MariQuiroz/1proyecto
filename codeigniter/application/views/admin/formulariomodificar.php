@@ -28,7 +28,7 @@
         </div>
         
     
-        <div class="form-group">
+<div class="form-group">
   <label for="profesion">Profesión</label>
   <select id="profesion" name="profesion" class="form-control" <?= ($infoUsuario->rol != 'lector') ? 'readonly' : ''; ?>>
     <option value="<?= htmlspecialchars($infoUsuario->profesion); ?>">

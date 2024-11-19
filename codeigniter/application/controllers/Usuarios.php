@@ -175,27 +175,50 @@ class Usuarios extends CI_Controller {
     }
 
 
-public function agregar() {
-    $this->_verificar_permisos_creacion();
-
-    $rol_usuario_actual = $this->session->userdata('rol');
-    $data['es_admin'] = ($rol_usuario_actual === 'administrador');
+    private function _obtener_profesiones_lector() {
+        return [
+            '' => 'Seleccione una profesión',
+            'Estudiante' => 'Estudiante',
+            'Docente' => 'Docente',
+            'Investigador' => 'Investigador',
+            'Profesional' => 'Profesional',
+            'Otro' => 'Otro'
+        ];
+    }
     
-    $this->load->view('inc/header');
-    $this->load->view('inc/nabvar');
-    $this->load->view('inc/aside');
-    $this->load->view('admin/formulario', $data);
-    $this->load->view('inc/footer');
-}
+    public function agregar() {
+        $this->_verificar_permisos_creacion();
+        $data['tipos'] = $this->tipo_model->obtener_tipos();
+        $data['editoriales'] = $this->editorial_model->obtener_editoriales();
+        $data['es_admin'] = ($this->session->userdata('rol') === 'administrador');
+        $data['profesiones_lector'] = $this->_obtener_profesiones_lector();
+        
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('admin/formulario', $data);
+        $this->load->view('inc/footer');
+    }
 
-public function agregarbd() {
-    $this->_verificar_permisos_creacion();
-
-    // Validación del formulario
-    $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim');
-    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required|trim');
-    $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|is_unique[USUARIO.carnet]');
-    $this->form_validation->set_rules('email', 'Email', 'required|trim|valid_email|is_unique[USUARIO.email]');
+    public function agregarbd() {
+        $this->_verificar_permisos_creacion();
+    
+        $rol_usuario_actual = $this->session->userdata('rol');
+        $rol_nuevo_usuario = $this->input->post('rol');
+    
+        // Reglas de validación base
+        $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim');
+        $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required|trim');
+        $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|is_unique[USUARIO.carnet]');
+        $this->form_validation->set_rules('email', 'Email', 'required|trim|valid_email|is_unique[USUARIO.email]');
+        
+        // Validación específica para profesión según rol
+        if ($rol_nuevo_usuario === 'lector') {
+            $this->form_validation->set_rules('profesion', 'Profesión', 'required|in_list[' . 
+                implode(',', array_keys($this->_obtener_profesiones_lector())) . ']');
+        } else {
+            $this->form_validation->set_rules('profesion', 'Profesión', 'required|trim');
+        }
 
     if ($this->form_validation->run() == FALSE) {
         $data['es_admin'] = ($this->session->userdata('rol') === 'administrador');
@@ -402,15 +425,6 @@ private function _preparar_datos_usuario() {
     } else {
         // Si es encargado, solo puede crear lectores
         $data['rol'] = 'lector';
-    }
-
-    // Validar profesión solo para lectores
-    if ($data['rol'] === 'lector') {
-        if (empty($data['profesion'])) {
-            throw new Exception('La profesión es requerida para usuarios lectores.');
-        }
-    } else {
-        $data['profesion'] = null; // No aplica para admin/encargado
     }
 
     // Guardar la contraseña temporal en sesión para el email
@@ -720,6 +734,7 @@ private function _generar_contrasena_temporal() {
             $this->load->view('admin/formulariomodificar', $data);
             $this->load->view('inc/footer');
         }
+
         public function modificarbd() {
             $this->_verificar_sesion();
             if ($this->session->userdata('rol') != 'administrador') {

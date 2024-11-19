@@ -51,18 +51,7 @@
                                         <input type="text" name="carnet" id="carnet" class="form-control" placeholder="Ingrese su carnet" required>
                                     </div>
                                 </div>
-                                <div class="form-group row mb-3">
-                                    <label for="profesion" class="col-3 col-form-label">Profesión</label>
-                                    <div class="col-9">
-                                        <select name="profesion" id="profesion" class="form-control">
-                                            <option value="">Seleccione su profesión</option>
-                                            <option value="Estudiante Umss">Estudiante UMSS</option>
-                                            <option value="Docente Umss">Docente UMSS</option>
-                                            <option value="Investigador">Investigador</option>
-                                            <option value="Publico en General">Público en General</option>
-                                        </select>
-                                    </div>
-                                </div>
+                                
                                 <div class="form-group row mb-3">
                                     <label for="fechaNacimiento" class="col-3 col-form-label">Fecha de Nacimiento</label>
                                     <div class="col-9">
@@ -85,19 +74,37 @@
                                         <input type="email" name="email" id="email" class="form-control" placeholder="Ingrese su email" required>
                                     </div>
                                 </div>
-                                
-                                <?php if ($this->session->userdata('rol') === 'administrador'): ?>
-                                <div class="form-group row mb-3">
-                                    <label for="rol" class="col-3 col-form-label">Rol</label>
-                                    <div class="col-9">
-                                        <select name="rol" id="rol" class="form-control" required>
-                                            <option value="">Seleccione el rol</option>
-                                            <option value="administrador">Administrador</option>
-                                            <option value="encargado">Encargado</option>
-                                            <option value="lector">Lector</option>
-                                        </select>
-                                    </div>
-                                </div>
+                                <!-- Campo de profesión dinámico según rol -->
+
+
+<?php if($es_admin): ?>
+<div class="form-group">
+    <label for="rol">Rol</label>
+    <select class="form-control" id="rol" name="rol" required onchange="toggleProfesionField()">
+        <option value="">Seleccione un rol</option>
+        <option value="administrador">Administrador</option>
+        <option value="encargado">Encargado</option>
+        <option value="lector">Lector</option>
+    </select>
+    <?php echo form_error('rol', '<div class="text-danger">', '</div>'); ?>
+</div>
+<div class="form-group">
+    <label for="profesion">Profesión</label>
+    <?php if ($this->input->post('rol') == 'lector' || (!$es_admin)): ?>
+        <!-- Para lectores: mostrar select con opciones predefinidas -->
+        <?php echo form_dropdown('profesion', $profesiones_lector, set_value('profesion'), 'class="form-control" required'); ?>
+    <?php else: ?>
+        <!-- Para admin/encargado: campo de texto -->
+        <input type="text" 
+               class="form-control" 
+               id="profesion" 
+               name="profesion" 
+               value="<?php echo set_value('profesion'); ?>"
+               required>
+    <?php endif; ?>
+    <?php echo form_error('profesion', '<div class="text-danger">', '</div>'); ?>
+</div>
+
                                 <?php else: ?>
                                 <input type="hidden" name="rol" value="lector">
                                 <?php endif; ?>
@@ -125,3 +132,49 @@
         </div>   
     </div> <!-- container -->
 </div> <!-- content -->
+<script>
+function toggleProfesionField() {
+    var rolSelect = document.getElementById('rol');
+    var profesionDiv = document.getElementById('profesion').parentElement;
+    var profesionInput = document.getElementById('profesion');
+    var profesionSelect = document.createElement('select');
+    
+    if (rolSelect.value === 'lector') {
+        // Convertir a select con opciones predefinidas
+        profesionSelect.className = 'form-control';
+        profesionSelect.id = 'profesion';
+        profesionSelect.name = 'profesion';
+        profesionSelect.required = true;
+        
+        // Agregar opciones
+        var opciones = <?php echo json_encode($profesiones_lector); ?>;
+        for (var valor in opciones) {
+            var option = document.createElement('option');
+            option.value = valor;
+            option.text = opciones[valor];
+            profesionSelect.appendChild(option);
+        }
+        
+        profesionInput.parentNode.replaceChild(profesionSelect, profesionInput);
+    } else {
+        // Convertir a input text
+        var inputText = document.createElement('input');
+        inputText.type = 'text';
+        inputText.className = 'form-control';
+        inputText.id = 'profesion';
+        inputText.name = 'profesion';
+        inputText.required = true;
+        
+        if (document.getElementById('profesion').tagName === 'SELECT') {
+            document.getElementById('profesion').parentNode.replaceChild(inputText, document.getElementById('profesion'));
+        }
+    }
+}
+
+// Ejecutar al cargar la página para establecer el estado inicial
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('rol')) {
+        toggleProfesionField();
+    }
+});
+</script>
