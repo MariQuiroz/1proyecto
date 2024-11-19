@@ -190,112 +190,236 @@ public function agregar() {
 
 public function agregarbd() {
     $this->_verificar_permisos_creacion();
-    $rol_usuario_actual = $this->session->userdata('rol');
-
-    // Configurar reglas de validación
-    $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim|max_length[100]');
-    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required|trim|max_length[50]');
-    $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|max_length[20]|is_unique[USUARIO.carnet]');
-    $this->form_validation->set_rules('email', 'Correo electrónico', 'required|trim|valid_email|max_length[100]|is_unique[USUARIO.email]');
-    $this->form_validation->set_rules('fechaNacimiento', 'Fecha de Nacimiento', 'required');
-    $this->form_validation->set_rules('sexo', 'Sexo', 'required|trim|max_length[1]');
     
-    // Mensajes de error personalizados
-    $this->form_validation->set_message('required', 'El campo {field} es obligatorio.');
-    $this->form_validation->set_message('is_unique', 'El {field} ya está registrado.');
-    $this->form_validation->set_message('valid_email', 'El correo electrónico no tiene un formato válido.');
+    $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim');
+    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required|trim');
+    $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|is_unique[USUARIO.carnet]');
+    $this->form_validation->set_rules('email', 'Email', 'required|trim|valid_email|is_unique[USUARIO.email]');
 
     if ($this->form_validation->run() == FALSE) {
-        // Si la validación falla, volver al formulario con los errores
-        $data['es_admin'] = ($rol_usuario_actual === 'administrador');
-        
-        // Obtener lista de usuarios para la vista lista.php
-        $data['usuarios'] = $this->usuario_model->listaUsuarios();
-        
+        $data['es_admin'] = ($this->session->userdata('rol') === 'administrador');
         $this->load->view('inc/header');
         $this->load->view('inc/nabvar');
         $this->load->view('inc/aside');
-        $this->load->view('admin/formulario', $data); // Cambio de vista a formulario
+        $this->load->view('admin/formulario', $data);
         $this->load->view('inc/footer');
-    } else {
-        try {
-            $idUsuarioCreador = $this->session->userdata('idUsuario');
-            
-            // Generar nombre de usuario y contraseña temporal
-            $nombres = trim($this->input->post('nombres'));
-            $apellidoPaterno = trim($this->input->post('apellidoPaterno'));
-            $username = $this->_generar_username($nombres, $apellidoPaterno);
-            $contrasena_temporal = $this->_generar_contrasena_temporal();
+        return;
+    }
 
-            // Preparar datos del usuario
-            $data = array(
-                'nombres' => strtoupper($nombres),
-                'apellidoPaterno' => strtoupper($apellidoPaterno),
-                'apellidoMaterno' => strtoupper($this->input->post('apellidoMaterno')),
-                'carnet' => strtoupper($this->input->post('carnet')),
-                'profesion' => $this->input->post('profesion'),
-                'fechaNacimiento' => $this->input->post('fechaNacimiento'),
-                'sexo' => strtoupper($this->input->post('sexo')),
-                'email' => strtolower($this->input->post('email')),
-                'username' => $username,
-                'password' => password_hash($contrasena_temporal, PASSWORD_DEFAULT),
-                'rol' => ($rol_usuario_actual === 'administrador') ? $this->input->post('rol') : 'lector',
-                'verificado' => 1,
-                'estado' => 1,
-                'cambioPasswordRequerido' => 1,
-                'fechaCreacion' => date('Y-m-d H:i:s'),
-                'idUsuarioCreador' => $idUsuarioCreador
-            );
+    try {
+        $this->db->trans_start();
 
-            // Iniciar transacción
-            $this->db->trans_start();
-
-            $id_nuevo_usuario = $this->usuario_model->registrarUsuario($data);
-
-            if ($id_nuevo_usuario) {
-                if ($this->_enviar_email_bienvenida($data['email'], $username, $contrasena_temporal)) {
-                    $this->session->set_flashdata('mensaje', 'Usuario registrado con éxito. Se ha enviado un correo con las credenciales.');
-                } else {
-                    $this->session->set_flashdata('error', 'Usuario registrado, pero hubo un problema al enviar el correo. Por favor, contacte al nuevo usuario.');
-                }
-
-                $this->db->trans_complete();
-                redirect('usuarios/mostrar', 'refresh');
-            } else {
-                throw new Exception('Error al registrar el usuario en la base de datos.');
-            }
-
-        } catch (Exception $e) {
-            $this->db->trans_rollback();
-            log_message('error', 'Error en agregarbd: ' . $e->getMessage());
-            $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Por favor, inténtelo de nuevo.');
-            redirect('usuarios/agregar', 'refresh');
+        // Datos del usuario
+        $data = $this->_preparar_datos_usuario();
+        
+        // Registrar usuario
+        $id_nuevo_usuario = $this->usuario_model->registrarUsuario($data);
+        
+        if (!$id_nuevo_usuario) {
+            throw new Exception('Error al registrar el usuario');
         }
+
+        // Enviar email
+        $email_enviado = $this->_enviar_email_bienvenida(
+            $data['email'], 
+            $data['username'], 
+            $this->input->post('contrasena_temporal')
+        );
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            throw new Exception('Error en la transacción de base de datos');
+        }
+
+        $mensaje = 'Usuario registrado con éxito.';
+        if (!$email_enviado) {
+            $mensaje .= ' Nota: No se pudo enviar el correo de bienvenida.';
+        }
+
+        $this->session->set_flashdata('mensaje', $mensaje);
+        redirect('usuarios/mostrar');
+
+    } catch (Exception $e) {
+        $this->db->trans_rollback();
+        log_message('error', 'Error en agregarbd: ' . $e->getMessage());
+        $this->session->set_flashdata('error', 'Error al registrar el usuario: ' . $e->getMessage());
+        redirect('usuarios/agregar');
     }
 }
 
+private function _verificar_email($email) {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    
+    $this->db->select('idUsuario');
+    $this->db->from('USUARIO');
+    $this->db->where('email', $email);
+    
+    return $this->db->get()->num_rows() === 0;
+}
+private function _get_email_config() {
+    return array(
+        'protocol' => 'smtp',
+        'smtp_host' => 'smtp.gmail.com',
+        'smtp_port' => 587,
+        'smtp_user' => 'quirozmolinamaritza@gmail.com',
+        'smtp_pass' => 'zdmk qkfw wgdf lshq',
+        'smtp_crypto' => 'tls',
+        'mailtype' => 'html',
+        'charset' => 'utf-8',
+        'newline' => "\r\n",
+        'smtp_timeout' => 30,
+        'smtp_keepalive' => true,
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true
+    );
+}
+
+private function _enviar_email_bienvenida($email, $username, $contrasena_temporal) {
+    try {
+        // Verificar el email primero
+        if (!$this->_verificar_email($email)) {
+            log_message('error', 'Email inválido o ya existe: ' . $email);
+            return false;
+        }
+
+        $this->email->initialize($this->_get_email_config());
+
+        $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca UMSS');
+        $this->email->to($email);
+        $this->email->subject('Bienvenido a la Hemeroteca UMSS');
+
+        $mensaje = $this->load->view('emails/bienvenida', array(
+            'username' => $username,
+            'contrasena' => $contrasena_temporal
+        ), true);
+
+        $this->email->message($mensaje);
+
+        if (!$this->email->send()) {
+            log_message('error', 'Error al enviar email: ' . $this->email->print_debugger());
+            throw new Exception('Error al enviar el correo electrónico');
+        }
+
+        return true;
+
+    } catch (Exception $e) {
+        log_message('error', 'Exception al enviar email: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Prepara los datos del usuario para su registro
+ * @return array Datos del usuario formateados
+ */
+private function _preparar_datos_usuario() {
+    // Obtener el rol del usuario actual para determinar el rol que puede asignar
+    $rol_usuario_actual = $this->session->userdata('rol');
+    $idUsuarioCreador = $this->session->userdata('idUsuario');
+    
+    // Generar nombre de usuario a partir de nombres y apellido
+    $nombres = $this->input->post('nombres');
+    $apellidoPaterno = $this->input->post('apellidoPaterno');
+    $username = $this->_generar_username($nombres, $apellidoPaterno);
+    
+    // Generar contraseña temporal
+    $contrasena_temporal = $this->_generar_contrasena_temporal();
+    
+    // Preparar datos base del usuario
+    $data = array(
+        'nombres' => trim(strtoupper($nombres)),
+        'apellidoPaterno' => trim(strtoupper($apellidoPaterno)),
+        'apellidoMaterno' => trim(strtoupper($this->input->post('apellidoMaterno'))),
+        'carnet' => trim(strtoupper($this->input->post('carnet'))),
+        'profesion' => trim($this->input->post('profesion')),
+        'fechaNacimiento' => $this->input->post('fechaNacimiento'),
+        'sexo' => $this->input->post('sexo'),
+        'email' => trim(strtolower($this->input->post('email'))),
+        'username' => $username,
+        'password' => password_hash($contrasena_temporal, PASSWORD_DEFAULT),
+        'verificado' => 1, // Usuario creado por admin/encargado ya está verificado
+        'estado' => 1,
+        'cambioPasswordRequerido' => 1, // Forzar cambio de contraseña en primer login
+        'fechaCreacion' => date('Y-m-d H:i:s'),
+        'idUsuarioCreador' => $idUsuarioCreador
+    );
+
+    // Determinar el rol según quien crea el usuario
+    if ($rol_usuario_actual === 'administrador') {
+        $data['rol'] = $this->input->post('rol');
+    } else {
+        // Si es encargado, solo puede crear lectores
+        $data['rol'] = 'lector';
+    }
+
+    // Validar profesión solo para lectores
+    if ($data['rol'] === 'lector') {
+        if (empty($data['profesion'])) {
+            throw new Exception('La profesión es requerida para usuarios lectores.');
+        }
+    } else {
+        $data['profesion'] = null; // No aplica para admin/encargado
+    }
+
+    // Guardar la contraseña temporal en sesión para el email
+    $this->session->set_flashdata('contrasena_temporal', $contrasena_temporal);
+
+    log_message('debug', 'Datos de usuario preparados para: ' . $username);
+    
+    return $data;
+}
+
+/**
+ * Genera un nombre de usuario único basado en el nombre y apellido
+ * @param string $nombres
+ * @param string $apellidoPaterno
+ * @return string
+ */
 private function _generar_username($nombres, $apellidoPaterno) {
-    $nombres = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nombres));
-    $apellidoPaterno = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $apellidoPaterno));
+    $nombres = strtolower($nombres);
+    $apellidoPaterno = strtolower($apellidoPaterno);
+    
+    // Limpiar caracteres especiales y espacios
+    $nombres = preg_replace('/[^a-z0-9]/', '', $nombres);
+    $apellidoPaterno = preg_replace('/[^a-z0-9]/', '', $apellidoPaterno);
+    
+    // Crear username base: primera letra del nombre + apellido
     $base_username = substr($nombres, 0, 1) . $apellidoPaterno;
     
     $username = $base_username;
-    $i = 1;
+    $contador = 1;
+    
+    // Verificar si ya existe y generar uno único
     while ($this->usuario_model->username_existe($username)) {
-        $username = $base_username . $i;
-        $i++;
+        $username = $base_username . $contador;
+        $contador++;
     }
     
     return $username;
 }
 
+/**
+ * Genera una contraseña temporal segura
+ * @return string
+ */
 private function _generar_contrasena_temporal() {
-    return bin2hex(random_bytes(4)); // Genera una contraseña de 8 caracteres hexadecimales
+    $length = 8;
+    $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $str = '';
+    $max = mb_strlen($keyspace, '8bit') - 1;
+    
+    for ($i = 0; $i < $length; ++$i) {
+        $str .= $keyspace[random_int(0, $max)];
+    }
+    
+    return $str;
 }
 
-
-
-private function _enviar_email_bienvenida($email, $username, $contrasena_temporal) {
+/*private function _enviar_email_bienvenida($email, $username, $contrasena_temporal) {
     try {
         // Cargar la librería de email
         $this->load->library('email');
@@ -425,6 +549,7 @@ private function _enviar_email_bienvenida($email, $username, $contrasena_tempora
         return false;
     }
 }
+*/
 
     public function auto_registro() {
         $this->form_validation->set_rules('nombres', 'Nombres', 'required');
