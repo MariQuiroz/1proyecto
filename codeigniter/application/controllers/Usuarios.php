@@ -190,56 +190,85 @@ public function agregar() {
 
 public function agregarbd() {
     $this->_verificar_permisos_creacion();
-
     $rol_usuario_actual = $this->session->userdata('rol');
 
-    $this->form_validation->set_rules('nombres', 'Nombres', 'required');
-    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
-    $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
-    $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email|is_unique[USUARIO.email]');
+    // Configurar reglas de validación
+    $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim|max_length[100]');
+    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required|trim|max_length[50]');
+    $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|max_length[20]|is_unique[USUARIO.carnet]');
+    $this->form_validation->set_rules('email', 'Correo electrónico', 'required|trim|valid_email|max_length[100]|is_unique[USUARIO.email]');
+    $this->form_validation->set_rules('fechaNacimiento', 'Fecha de Nacimiento', 'required');
+    $this->form_validation->set_rules('sexo', 'Sexo', 'required|trim|max_length[1]');
+    
+    // Mensajes de error personalizados
+    $this->form_validation->set_message('required', 'El campo {field} es obligatorio.');
+    $this->form_validation->set_message('is_unique', 'El {field} ya está registrado.');
+    $this->form_validation->set_message('valid_email', 'El correo electrónico no tiene un formato válido.');
 
     if ($this->form_validation->run() == FALSE) {
+        // Si la validación falla, volver al formulario con los errores
         $data['es_admin'] = ($rol_usuario_actual === 'administrador');
-        $this->load->view('admin/registrarform', $data);
+        
+        // Obtener lista de usuarios para la vista lista.php
+        $data['usuarios'] = $this->usuario_model->listaUsuarios();
+        
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('admin/formulario', $data); // Cambio de vista a formulario
+        $this->load->view('inc/footer');
     } else {
-        $idUsuarioCreador = $this->session->userdata('idUsuario');
-        
-        // Generar nombre de usuario
-        $nombres = $this->input->post('nombres');
-        $apellidoPaterno = $this->input->post('apellidoPaterno');
-        $username = $this->_generar_username($nombres, $apellidoPaterno);
-        
-        // Generar contraseña temporal
-        $contrasena_temporal = $this->_generar_contrasena_temporal();
+        try {
+            $idUsuarioCreador = $this->session->userdata('idUsuario');
+            
+            // Generar nombre de usuario y contraseña temporal
+            $nombres = trim($this->input->post('nombres'));
+            $apellidoPaterno = trim($this->input->post('apellidoPaterno'));
+            $username = $this->_generar_username($nombres, $apellidoPaterno);
+            $contrasena_temporal = $this->_generar_contrasena_temporal();
 
-        $data = array(
-            'nombres' => $nombres,
-            'apellidoPaterno' => $apellidoPaterno,
-            'apellidoMaterno' => $this->input->post('apellidoMaterno'),
-            'carnet' => $this->input->post('carnet'),
-            'profesion' => $this->input->post('profesion'),
-            'fechaNacimiento' => $this->input->post('fechaNacimiento'),
-            'sexo' => $this->input->post('sexo'),
-            'email' => $this->input->post('email'),
-            'username' => $username,
-            'password' => password_hash($contrasena_temporal, PASSWORD_DEFAULT),
-            'rol' => ($rol_usuario_actual === 'administrador') ? $this->input->post('rol') : 'lector',
-            'verificado' => 1,
-            'estado' => 1,
-            'cambioPasswordRequerido' => 1,
-            'fechaCreacion' => date('Y-m-d H:i:s'),
-            'idUsuarioCreador' => $idUsuarioCreador
-        );
+            // Preparar datos del usuario
+            $data = array(
+                'nombres' => strtoupper($nombres),
+                'apellidoPaterno' => strtoupper($apellidoPaterno),
+                'apellidoMaterno' => strtoupper($this->input->post('apellidoMaterno')),
+                'carnet' => strtoupper($this->input->post('carnet')),
+                'profesion' => $this->input->post('profesion'),
+                'fechaNacimiento' => $this->input->post('fechaNacimiento'),
+                'sexo' => strtoupper($this->input->post('sexo')),
+                'email' => strtolower($this->input->post('email')),
+                'username' => $username,
+                'password' => password_hash($contrasena_temporal, PASSWORD_DEFAULT),
+                'rol' => ($rol_usuario_actual === 'administrador') ? $this->input->post('rol') : 'lector',
+                'verificado' => 1,
+                'estado' => 1,
+                'cambioPasswordRequerido' => 1,
+                'fechaCreacion' => date('Y-m-d H:i:s'),
+                'idUsuarioCreador' => $idUsuarioCreador
+            );
 
-        if ($id_nuevo_usuario = $this->usuario_model->registrarUsuario($data)) {
-            if ($this->_enviar_email_bienvenida($data['email'], $username, $contrasena_temporal)) {
-                $this->session->set_flashdata('mensaje', 'Usuario registrado con éxito. Se ha enviado un correo con las credenciales.');
+            // Iniciar transacción
+            $this->db->trans_start();
+
+            $id_nuevo_usuario = $this->usuario_model->registrarUsuario($data);
+
+            if ($id_nuevo_usuario) {
+                if ($this->_enviar_email_bienvenida($data['email'], $username, $contrasena_temporal)) {
+                    $this->session->set_flashdata('mensaje', 'Usuario registrado con éxito. Se ha enviado un correo con las credenciales.');
+                } else {
+                    $this->session->set_flashdata('error', 'Usuario registrado, pero hubo un problema al enviar el correo. Por favor, contacte al nuevo usuario.');
+                }
+
+                $this->db->trans_complete();
+                redirect('usuarios/mostrar', 'refresh');
             } else {
-                $this->session->set_flashdata('error', 'Usuario registrado, pero hubo un problema al enviar el correo. Por favor, contacte al nuevo usuario.');
+                throw new Exception('Error al registrar el usuario en la base de datos.');
             }
-            redirect('usuarios/mostrar', 'refresh');
-        } else {
-            $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
+
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Error en agregarbd: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Por favor, inténtelo de nuevo.');
             redirect('usuarios/agregar', 'refresh');
         }
     }
@@ -267,46 +296,134 @@ private function _generar_contrasena_temporal() {
 
 
 private function _enviar_email_bienvenida($email, $username, $contrasena_temporal) {
-    $this->load->library('email');
+    try {
+        // Cargar la librería de email
+        $this->load->library('email');
 
-    $config = array(
-        'protocol' => 'smtp',
-        'smtp_host' => 'smtp.gmail.com',
-        'smtp_port' => 587,
-        'smtp_user' => 'quirozmolinamaritza@gmail.com',
-        'smtp_pass' => 'zdmk qkfw wgdf lshq',
-        'smtp_crypto' => 'tls',
-        'mailtype' => 'html',
-        'charset' => 'utf-8',
-        'newline' => "\r\n"
-    );
+        // Validar parámetros
+        if (empty($email) || empty($username) || empty($contrasena_temporal)) {
+            log_message('error', 'Parámetros incompletos para envío de email');
+            return false;
+        }
 
-    $this->email->initialize($config);
+        // Configuración actualizada de SMTP
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'smtp.gmail.com',
+            'smtp_port' => 587,
+            'smtp_user' => 'quirozmolinamaritza@gmail.com',
+            'smtp_pass' => 'zdmk qkfw wgdf lshq',
+            'smtp_crypto' => 'tls',
+            'mailtype' => 'html',
+            'charset' => 'utf-8',
+            'wordwrap' => TRUE,
+            'newline' => "\r\n",
+            'crlf' => "\r\n",
+            // Configuraciones adicionales para SSL
+            'smtp_timeout' => '30',
+            'validate' => TRUE,
+            'priority' => 1,
+            'smtp_keepalive' => TRUE,
+            // Deshabilitar verificación de SSL
+            'smtp_verify' => FALSE,
+            'smtp_auto_tls' => FALSE
+        );
 
-    $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca "José Antonio Arze"');
-    $this->email->to($email);
-    $this->email->subject('Información de tu cuenta');
+        // Inicializar email con la nueva configuración
+        $this->email->initialize($config);
+        
+        // Limpiar cualquier configuración previa
+        $this->email->clear(TRUE);
 
-    $mensaje = "
-    <html>
-    <head>
-        <title>Bienvenido a la Hemeroteca José Antonio Arze</title>
-    </head>
-    <body>
-        <h2>Bienvenido!!</h2>
-        <p>Tu cuenta ha sido creada exitosamente. Aquí están tus credenciales de acceso:</p>
-        <p><strong>Usuario:</strong> $username</p>
-        <p><strong>Contraseña temporal:</strong> $contrasena_temporal</p>
-        <p>Por razones de seguridad, te pedimos que cambies tu contraseña en tu primer inicio de sesión.</p>
-        <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
-        <p>¡Gracias por unirte a nosotros!</p>
-    </body>
-    </html>
-    ";
+        // Configurar el email
+        $this->email->set_mailtype('html');
+        $this->email->set_newline("\r\n");
+        $this->email->from($config['smtp_user'], 'Hemeroteca "José Antonio Arze"');
+        $this->email->to($email);
+        $this->email->subject('Bienvenido a la Hemeroteca - Información de tu cuenta');
 
-    $this->email->message($mensaje);
+        // Contenido del email
+        $mensaje = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style type="text/css">
+                body {
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333333;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                .header {
+                    background-color: #003366;
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                    border-radius: 5px 5px 0 0;
+                }
+                .content {
+                    background-color: #ffffff;
+                    padding: 20px;
+                    border: 1px solid #dddddd;
+                    border-radius: 0 0 5px 5px;
+                }
+                .credentials {
+                    background-color: #f5f5f5;
+                    padding: 15px;
+                    margin: 20px 0;
+                    border-radius: 5px;
+                    border-left: 4px solid #003366;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>¡Bienvenido a la Hemeroteca!</h1>
+            </div>
+            <div class="content">
+                <h2>¡Hola!</h2>
+                <p>Tu cuenta ha sido creada exitosamente en la Hemeroteca "José Antonio Arze".</p>
+                
+                <div class="credentials">
+                    <h3>Tus credenciales de acceso:</h3>
+                    <p><strong>Usuario:</strong> ' . htmlspecialchars($username) . '</p>
+                    <p><strong>Contraseña temporal:</strong> ' . htmlspecialchars($contrasena_temporal) . '</p>
+                </div>
 
-    return $this->email->send();
+                <p><strong>Importante:</strong> Por razones de seguridad, deberás cambiar tu contraseña en tu primer inicio de sesión.</p>
+            </div>
+        </body>
+        </html>';
+
+        $this->email->message($mensaje);
+
+        // Intentar enviar el email con manejo de errores detallado
+        if (!$this->email->send()) {
+            $error = $this->email->print_debugger(['headers']);
+            log_message('error', 'Error detallado al enviar email: ' . $error);
+            
+            // Intentar un segundo envío con configuración alternativa si el primero falla
+            $config['smtp_port'] = 465; // Puerto alternativo
+            $config['smtp_crypto'] = 'ssl'; // Cambiar a SSL
+            
+            $this->email->initialize($config);
+            if (!$this->email->send()) {
+                log_message('error', 'Segundo intento fallido: ' . $this->email->print_debugger(['headers']));
+                return false;
+            }
+        }
+
+        log_message('info', 'Email de bienvenida enviado exitosamente a: ' . $email);
+        return true;
+
+    } catch (Exception $e) {
+        log_message('error', 'Exception al enviar email: ' . $e->getMessage());
+        return false;
+    }
 }
 
     public function auto_registro() {

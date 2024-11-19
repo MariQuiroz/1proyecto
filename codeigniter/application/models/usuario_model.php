@@ -24,24 +24,136 @@ class Usuario_model extends CI_Model {
         return $this->db->get_where('USUARIO', ['username' => $username])->row();
     }
 
-
-    public function registrarUsuario($data)
-    {
-        // Asegurarse de que la contraseña esté hasheada
-        if (isset($data['password']) && !password_get_info($data['password'])['algo']) {
-            $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+    public function registrarUsuario($data) {
+        $this->db->trans_start();
+        
+        try {
+            // Validar campos requeridos
+            $campos_requeridos = ['nombres', 'apellidoPaterno', 'carnet', 'email', 'username', 'password', 'rol'];
+            foreach ($campos_requeridos as $campo) {
+                if (!isset($data[$campo]) || empty($data[$campo])) {
+                    log_message('error', 'Campo requerido faltante en registrarUsuario: ' . $campo);
+                    return false;
+                }
+            }
+    
+            // Verificar si el usuario ya existe
+            if ($this->_usuario_existe($data['email'], $data['carnet'])) {
+                log_message('error', 'Intento de registro con email o carnet duplicado');
+                return false;
+            }
+    
+            // Asegurarse de que la contraseña esté hasheada
+            if (isset($data['password']) && !password_get_info($data['password'])['algo']) {
+                $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+            }
+    
+            // Establecer valores por defecto
+            $defaults = [
+                'verificado' => 0,
+                'estado' => 1,
+                'fechaCreacion' => date('Y-m-d H:i:s'),
+                'cambioPasswordRequerido' => 1,
+                'intentosVerificacion' => 0
+            ];
+    
+            foreach ($defaults as $key => $value) {
+                if (!isset($data[$key])) {
+                    $data[$key] = $value;
+                }
+            }
+    
+            // Formatear datos
+            $data['nombres'] = strtoupper(trim($data['nombres']));
+            $data['apellidoPaterno'] = strtoupper(trim($data['apellidoPaterno']));
+            if (isset($data['apellidoMaterno'])) {
+                $data['apellidoMaterno'] = strtoupper(trim($data['apellidoMaterno']));
+            }
+            $data['email'] = strtolower(trim($data['email']));
+            $data['username'] = trim($data['username']);
+    
+            // Insertar el usuario
+            $resultado = $this->db->insert('USUARIO', $data);
+            
+            if (!$resultado) {
+                log_message('error', 'Error al insertar usuario: ' . $this->db->error()['message']);
+                throw new Exception('Error al insertar el usuario en la base de datos');
+            }
+    
+            $idUsuario = $this->db->insert_id();
+    
+            // Si se especificó un rol de lector, crear registro en tabla de preferencias
+            if ($data['rol'] === 'lector') {
+                $preferencias = [
+                    'idUsuario' => $idUsuario,
+                    'notificarDisponibilidad' => 1,
+                    'notificarEmail' => 1,
+                    'notificarSistema' => 1,
+                    'fechaCreacion' => date('Y-m-d H:i:s')
+                ];
+                
+                $this->db->insert('PREFERENCIAS_NOTIFICACION', $preferencias);
+            }
+    
+            $this->db->trans_complete();
+    
+            if ($this->db->trans_status() === FALSE) {
+                log_message('error', 'Error en transacción al registrar usuario');
+                return false;
+            }
+    
+            // Registrar en el log del sistema
+            log_message('info', 'Usuario registrado exitosamente - ID: ' . $idUsuario . 
+                              ' - Username: ' . $data['username'] . 
+                              ' - Rol: ' . $data['rol']);
+    
+            return $idUsuario;
+    
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Exception en registrarUsuario: ' . $e->getMessage());
+            return false;
         }
-
-        // Establecer valores por defecto si no están presentes
-        $data['verificado'] = $data['verificado'] ?? 0;
-        $data['estado'] = $data['estado'] ?? 1;
-        $data['fechaCreacion'] = date('Y-m-d H:i:s');
-        $data['cambioPasswordRequerido'] = $data['cambioPasswordRequerido'] ?? 1;
-
-        $this->db->insert('USUARIO', $data);
-        return $this->db->insert_id();
     }
     
+    /**
+     * Verifica si ya existe un usuario con el email o carnet proporcionado
+     */
+    private function _usuario_existe($email, $carnet) {
+        $this->db->where('email', $email);
+        $this->db->or_where('carnet', $carnet);
+        return $this->db->get('USUARIO')->num_rows() > 0;
+    }
+  
+    /**
+     * Obtiene un usuario por su ID
+     */
+    public function obtener_usuario($idUsuario) {
+        $this->db->select([
+            'idUsuario',
+            'nombres',
+            'apellidoPaterno',
+            'apellidoMaterno',
+            'carnet',
+            'profesion',
+            'fechaNacimiento',
+            'sexo',
+            'telefono',
+            'email',
+            'username',
+            'rol',
+            'verificado',
+            'estado'
+        ]);
+        
+        $this->db->where('idUsuario', $idUsuario);
+        return $this->db->get('USUARIO')->row();
+    }
+    
+    public function username_existe($username) {
+        $this->db->where('username', $username);
+        return $this->db->get('USUARIO')->num_rows() > 0;
+    }
 
     public function listaUsuarios() {
         $this->db->select('
@@ -62,12 +174,6 @@ class Usuario_model extends CI_Model {
         $this->db->group_by('u.idUsuario');
         $this->db->order_by('u.nombres');
         return $this->db->get()->result();
-    }
-
-
-    public function obtener_usuario($idUsuario)
-    {
-        return $this->db->get_where('USUARIO', ['idUsuario' => $idUsuario])->row();
     }
 
     public function modificarUsuario($idUsuario, $data)
@@ -327,11 +433,7 @@ class Usuario_model extends CI_Model {
         return $resultado;
     }
 
-    public function username_existe($username) {
-        $this->db->where('username', $username);
-        $query = $this->db->get('USUARIO');
-        return $query->num_rows() > 0;
-    }
+ 
     public function actualizar_configuracion($idUsuario, $nuevo_username, $nueva_password) {
         $data = [
             'username' => $nuevo_username,
