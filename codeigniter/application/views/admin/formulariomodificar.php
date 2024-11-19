@@ -27,16 +27,23 @@
           <input type="text" id="carnet" name="carnet" class="form-control" placeholder="Ingrese su carnet" value="<?= htmlspecialchars($infoUsuario->carnet); ?>" required>
         </div>
         
-        <?php if ($infoUsuario->rol == 'lector'): ?>
-          <div class="form-group">
-            <label for="profesion">Profesión</label>
-            <select id="profesion" name="profesion" class="form-control">
-              <option value="">Seleccione su profesión</option>
-              <option value="Estudiante" <?= ($infoUsuario->profesion == 'Estudiante') ? 'selected' : ''; ?>>Estudiante</option>
-              <option value="Docente" <?= ($infoUsuario->profesion == 'Docente') ? 'selected' : ''; ?>>Docente</option>
-            </select>
-          </div>
-        <?php endif; ?>
+    
+        <div class="form-group">
+  <label for="profesion">Profesión</label>
+  <select id="profesion" name="profesion" class="form-control" <?= ($infoUsuario->rol != 'lector') ? 'readonly' : ''; ?>>
+    <option value="<?= htmlspecialchars($infoUsuario->profesion); ?>">
+      <?= htmlspecialchars($infoUsuario->profesion); ?>
+    </option>
+    <?php if ($infoUsuario->rol == 'lector'): ?>
+      <option value="ESTUDIANTE">Estudiante</option>
+      <option value="DOCENTE">Docente</option>
+      <option value="INVESTIGADOR">Investigador</option>
+      <option value="ADMINISTRATIVO">Administrativo</option>
+      <option value="OTRO">Otro</option>
+    <?php endif; ?>
+  </select>
+</div>
+    
 
         <div class="form-group">
           <label for="fechaNacimiento">Fecha de Nacimiento</label>
