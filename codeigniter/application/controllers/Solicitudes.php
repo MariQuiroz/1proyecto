@@ -285,82 +285,114 @@ class Solicitudes extends CI_Controller {
                 redirect('prestamos/activos');
             }
         }
-
-public function rechazar($idSolicitud) {
-    $this->_verificar_rol(['administrador', 'encargado']);
-    
-    $this->db->trans_start();
-    
-    try {
-        $idEncargado = $this->session->userdata('idUsuario');
-        
-        // Obtener detalles de la solicitud
-        $solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
-        
-        if (!$solicitud) {
-            throw new Exception('Solicitud no encontrada');
-        }
-
-        // Verificar que la solicitud esté en estado pendiente
-        if ($solicitud[0]->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
-            throw new Exception('La solicitud no está en estado pendiente');
-        }
-
-        // Actualizar el estado de la solicitud a rechazada
-        $data_solicitud = array(
-            'estadoSolicitud' => ESTADO_SOLICITUD_RECHAZADA,
-            'fechaAprobacionRechazo' => date('Y-m-d H:i:s'),
-            'fechaActualizacion' => date('Y-m-d H:i:s'),
-            'idUsuarioCreador' => $idEncargado
-        );
-
-        $this->db->where('idSolicitud', $idSolicitud);
-        $this->db->update('SOLICITUD_PRESTAMO', $data_solicitud);
-        
-        // Recolectar títulos y crear notificación
-        $titulos = array_map(function($pub) {
-            return $pub->titulo;
-        }, $solicitud);
-        
-        $mensaje = "Tu solicitud de préstamo ha sido rechazada para las siguientes publicaciones: " . 
-                  implode(", ", $titulos);
-
-        // Crear notificación para el usuario
-        $this->Notificacion_model->crear_notificacion(
-            $solicitud[0]->idUsuario,
-            $solicitud[0]->idPublicacion,
-            NOTIFICACION_RECHAZO_PRESTAMO,
-            $mensaje
-        );
-
-        // Asegurar que las publicaciones estén disponibles
-        foreach ($solicitud as $pub) {
-            $this->Publicacion_model->cambiar_estado_publicacion(
-                $pub->idPublicacion,
-                ESTADO_PUBLICACION_DISPONIBLE
-            );
+        public function rechazar($idSolicitud) {
+            $this->_verificar_rol(['administrador', 'encargado']);
             
-            // Notificar a usuarios en lista de espera
-            $this->_notificar_disponibilidad($pub->idPublicacion);
-        }
-
-        $this->db->trans_complete();
+            $this->db->trans_start();
+            
+            try {
+                // Establecer la zona horaria correcta para Bolivia
+                date_default_timezone_set('America/La_Paz');
+                
+                // Crear objeto DateTime para manejar las fechas correctamente
+                $fechaHoraActual = new DateTime();
+                
+                $idEncargado = $this->session->userdata('idUsuario');
+                
+                // Obtener detalles de la solicitud con campos específicos
+                $solicitud = $this->Solicitud_model->obtener_detalle_solicitud_multiple($idSolicitud);
+                
+                if (!$solicitud) {
+                    throw new Exception('Solicitud no encontrada');
+                }
         
-        if ($this->db->trans_status() === FALSE) {
-            throw new Exception('Error en la transacción');
+                // Verificar que la solicitud esté en estado pendiente
+                if ($solicitud[0]->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE) {
+                    throw new Exception('La solicitud no está en estado pendiente');
+                }
+        
+                // Actualizar el estado de la solicitud a rechazada
+                $data_solicitud = array(
+                    'estadoSolicitud' => ESTADO_SOLICITUD_RECHAZADA,
+                    'fechaAprobacionRechazo' => $fechaHoraActual->format('Y-m-d H:i:s'),
+                    'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
+                    'idUsuarioCreador' => $idEncargado
+                );
+        
+                $this->db->where('idSolicitud', $idSolicitud);
+                $this->db->update('SOLICITUD_PRESTAMO', $data_solicitud);
+        
+                // Recolectar títulos para la notificación
+                $titulos = array_map(function($pub) {
+                    return $pub->titulo;
+                }, $solicitud);
+        
+                // Procesar cada publicación de la solicitud
+                foreach ($solicitud as $pub) {
+                    // Actualizar estado de la publicación a disponible
+                    $data_publicacion = array(
+                        'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                        'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
+                        'idUsuarioCreador' => $idEncargado
+                    );
+                    
+                    $this->db->where('idPublicacion', $pub->idPublicacion);
+                    $this->db->update('PUBLICACION', $data_publicacion);
+        
+                    // Actualizar detalle de solicitud
+                    $data_detalle = array(
+                        'observaciones' => 'Solicitud rechazada el ' . $fechaHoraActual->format('Y-m-d H:i:s'),
+                        'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s')
+                    );
+                    
+                    $this->db->where('idSolicitud', $idSolicitud);
+                    $this->db->where('idPublicacion', $pub->idPublicacion);
+                    $this->db->update('DETALLE_SOLICITUD', $data_detalle);
+        
+                    // Notificar a usuarios en lista de espera
+                    $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados_excepto(
+                        $pub->idPublicacion,
+                        $solicitud[0]->idUsuario
+                    );
+        
+                    foreach ($usuarios_interesados as $usuario) {
+                        $this->Notificacion_model->crear_notificacion(
+                            $usuario->idUsuario,
+                            $pub->idPublicacion,
+                            NOTIFICACION_DISPONIBILIDAD,
+                            sprintf('La publicación "%s" está nuevamente disponible para préstamo.', $pub->titulo)
+                        );
+                    }
+                }
+        
+                // Crear notificación de rechazo para el solicitante
+                $mensaje = "Tu solicitud de préstamo ha sido rechazada para las siguientes publicaciones: " . 
+                          implode(", ", $titulos);
+        
+                $this->Notificacion_model->crear_notificacion(
+                    $solicitud[0]->idUsuario,
+                    $solicitud[0]->idPublicacion,
+                    NOTIFICACION_RECHAZO_PRESTAMO,
+                    $mensaje
+                );
+        
+                $this->db->trans_complete();
+        
+                if ($this->db->trans_status() === FALSE) {
+                    throw new Exception('Error en la transacción');
+                }
+        
+                $this->session->set_flashdata('mensaje', 'Solicitud rechazada correctamente y publicaciones disponibles.');
+        
+            } catch (Exception $e) {
+                $this->db->trans_rollback();
+                log_message('error', 'Error al rechazar solicitud: ' . $e->getMessage());
+                $this->session->set_flashdata('error', $e->getMessage());
+            }
+        
+            redirect('solicitudes/pendientes');
         }
-
-        $this->session->set_flashdata('mensaje', 'Solicitud rechazada correctamente.');
-
-    } catch (Exception $e) {
-        $this->db->trans_rollback();
-        log_message('error', 'Error al rechazar solicitud: ' . $e->getMessage());
-        $this->session->set_flashdata('error', $e->getMessage());
-    }
-
-    redirect('solicitudes/pendientes');
-}
-
+        
 // Método auxiliar para notificar disponibilidad
 private function _notificar_disponibilidad($idPublicacion) {
     $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados($idPublicacion);

@@ -56,25 +56,71 @@ class Solicitud_model extends CI_Model {
         }
     }
 
-
     public function rechazar_solicitud($idSolicitud, $idEncargado) {
         if (!$this->_verificar_rol(['administrador', 'encargado'])) {
             return false;
         }
     
         $this->db->trans_start();
+        
+        try {
+            // Establecer la zona horaria correcta para Bolivia
+            date_default_timezone_set('America/La_Paz');
+            
+            // Crear objeto DateTime para manejar las fechas correctamente
+            $fechaHoraActual = new DateTime();
     
-        $this->db->where('idSolicitud', $idSolicitud);
-        $this->db->update('SOLICITUD_PRESTAMO', [
-            'estadoSolicitud' => ESTADO_SOLICITUD_RECHAZADA,
-            'fechaAprobacionRechazo' => date('Y-m-d H:i:s'),
-            'fechaActualizacion' => date('Y-m-d H:i:s'),
-            'idUsuarioCreador' => $idEncargado
-        ]);
+            // Obtener los detalles de la solicitud primero
+            $detalles = $this->obtener_detalle_solicitud_multiple($idSolicitud);
+            if (!$detalles) {
+                throw new Exception('No se encontraron detalles de la solicitud');
+            }
     
-        $this->db->trans_complete();
+            // Actualizar estado de la solicitud
+            $data_solicitud = [
+                'estadoSolicitud' => ESTADO_SOLICITUD_RECHAZADA,
+                'fechaAprobacionRechazo' => $fechaHoraActual->format('Y-m-d H:i:s'),
+                'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
+                'idUsuarioCreador' => $idEncargado
+            ];
     
-        return $this->db->trans_status();
+            $this->db->where('idSolicitud', $idSolicitud);
+            $this->db->update('SOLICITUD_PRESTAMO', $data_solicitud);
+    
+            // Actualizar cada publicación asociada
+            foreach ($detalles as $detalle) {
+                // Actualizar estado de la publicación a disponible
+                $data_publicacion = [
+                    'estado' => ESTADO_PUBLICACION_DISPONIBLE,
+                    'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
+                    'idUsuarioCreador' => $idEncargado
+                ];
+                
+                $this->db->where('idPublicacion', $detalle->idPublicacion);
+                $this->db->update('PUBLICACION', $data_publicacion);
+    
+                // Registrar la actualización en el historial si existe
+                if (method_exists($this, 'registrar_historial_solicitud')) {
+                    $this->registrar_historial_solicitud([
+                        'idSolicitud' => $idSolicitud,
+                        'idPublicacion' => $detalle->idPublicacion,
+                        'estadoAnterior' => $detalle->estado,
+                        'estadoNuevo' => ESTADO_PUBLICACION_DISPONIBLE,
+                        'fechaCambio' => $fechaHoraActual->format('Y-m-d H:i:s'),
+                        'idUsuario' => $idEncargado,
+                        'observacion' => 'Cambio de estado por rechazo de solicitud'
+                    ]);
+                }
+            }
+    
+            $this->db->trans_complete();
+            return $this->db->trans_status();
+    
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Error en rechazar_solicitud: ' . $e->getMessage());
+            return false;
+        }
     }
 
     public function obtener_solicitudes_pendientes() {

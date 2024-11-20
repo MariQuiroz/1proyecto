@@ -3,10 +3,24 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Prestamo_model extends CI_Model {
 
+    private $tabla = 'PRESTAMO';
+    private $campos_base = [
+        'p.idPrestamo',
+        'p.idSolicitud',
+        'p.fechaPrestamo',
+        'p.horaInicio',
+        'p.horaDevolucion',
+        'p.fechaDevolucion', // Nuevo campo añadido
+        'p.estadoPrestamo',
+        'p.estadoDevolucion',
+        'p.estado',
+        'p.idEncargadoPrestamo',
+        'p.idEncargadoDevolucion'
+    ];
+
     public function __construct() {
         parent::__construct();
         $this->load->database();
-        
     }
 
 // En Prestamo_model.php
@@ -497,55 +511,6 @@ public function obtener_prestamos_activos() {
         return $this->db->get()->row()->total;
     }
    
-
-public function obtener_prestamo($idPrestamo) {
-    log_message('debug', "Obteniendo préstamo ID: {$idPrestamo}");
-
-    $this->db->select('
-        p.idPrestamo,
-        p.idSolicitud,
-        p.fechaPrestamo,
-        p.horaInicio,
-        p.horaDevolucion,
-        p.estadoPrestamo,
-        sp.idUsuario,
-        GROUP_CONCAT(DISTINCT pub.titulo) as titulos,
-        MIN(pub.idPublicacion) as idPublicacion,
-        MIN(ds.observaciones) as observaciones
-    ');
-    $this->db->from('PRESTAMO p');
-    $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
-    $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
-    $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
-    $this->db->where('p.idPrestamo', $idPrestamo);
-    $this->db->group_by('
-        p.idPrestamo,
-        p.idSolicitud,
-        p.fechaPrestamo,
-        p.horaInicio,
-        p.horaDevolucion,
-        p.estadoPrestamo,
-        sp.idUsuario
-    ');
-
-    $prestamo = $this->db->get()->row();
-    
-    if ($prestamo) {
-        $prestamo->titulos = explode(',', $prestamo->titulos);
-        $prestamo->titulo = $prestamo->titulos[0];
-        
-        // Obtener detalles adicionales de las publicaciones
-        $publicaciones = $this->obtener_publicaciones_prestamo($idPrestamo);
-        $prestamo->publicaciones = $publicaciones;
-        
-        log_message('debug', "Préstamo encontrado con {$prestamo->titulo}");
-    } else {
-        log_message('debug', "No se encontró el préstamo {$idPrestamo}");
-    }
-
-    return $prestamo;
-}
-
 private function obtener_publicaciones_prestamo($idPrestamo) {
     $this->db->select('
         pub.idPublicacion,
@@ -736,6 +701,7 @@ public function obtener_prestamos_devueltos() {
         p.fechaPrestamo,
         p.horaInicio,
         p.horaDevolucion,
+        p.fechaDevolucion,
         p.estadoDevolucion,
         p.fechaCreacion,
         p.idEncargadoPrestamo,

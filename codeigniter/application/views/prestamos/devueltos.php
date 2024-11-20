@@ -43,7 +43,7 @@
                                 <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                       
                                             <th>Lector</th>
                                             <th>Carnet</th>
                                             <th>Publicación</th>
@@ -57,7 +57,7 @@
                                     <tbody>
                                         <?php foreach ($prestamos as $prestamo): ?>
                                             <tr>
-                                                <td><?php echo $prestamo->idPrestamo; ?></td>
+                                               
                                                 <td>
                                                     <?php echo htmlspecialchars($prestamo->nombre_lector . ' ' . 
                                                         $prestamo->apellido_lector); ?>
