@@ -22,7 +22,7 @@ class Reportes extends CI_Controller {
         }
     }
 
-    public function prestamos() {
+  /*  public function prestamos() {
         try {
             // Obtener rol del usuario
             $rol = $this->session->userdata('rol');
@@ -629,7 +629,7 @@ class Reportes extends CI_Controller {
     
         $this->load->library('excel');
         $this->excel->export_to_excel($export_data, 'Reporte_Prestamos');
-    }*/
+    }
     
     public function exportar_publicaciones() {
         $filtros = array(
@@ -680,5 +680,222 @@ class Reportes extends CI_Controller {
     
         $this->load->library('excel');
         $this->excel->export_to_excel($export_data, 'Reporte_Usuarios');
+ 
+    }*/
+
+    
+    public function index() {
+        $data['metricas'] = $this->Reporte_model->obtener_metricas_generales();
+        
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('reportes/dashboard', $data);
+        $this->load->view('inc/footer');
+    }
+
+    public function por_profesion() {
+        $filtros = array(
+            'fecha_inicio' => $this->input->get('fecha_inicio'),
+            'fecha_fin' => $this->input->get('fecha_fin')
+        );
+        
+        $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_profesion($filtros);
+        $data['filtros'] = $filtros;
+        
+        if ($this->input->get('export') === 'pdf') {
+            $this->_generar_pdf_profesiones($data);
+        } else if ($this->input->get('export') === 'excel') {
+            $this->_generar_excel_profesiones($data);
+        } else {
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('reportes/por_profesion', $data);
+            $this->load->view('inc/footer');
+        }
+    }
+
+    public function solicitudes() {
+        $filtros = array(
+            'fecha_inicio' => $this->input->get('fecha_inicio'),
+            'fecha_fin' => $this->input->get('fecha_fin')
+        );
+        
+        $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_solicitudes($filtros);
+        $data['filtros'] = $filtros;
+        
+        if ($this->input->get('export') === 'pdf') {
+            $this->_generar_pdf_solicitudes($data);
+        } else if ($this->input->get('export') === 'excel') {
+            $this->_generar_excel_solicitudes($data);
+        } else {
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('reportes/solicitudes', $data);
+            $this->load->view('inc/footer');
+        }
+    }
+    public function tipos_publicaciones() {
+        $filtros = array(
+            'fecha_inicio' => $this->input->get('fecha_inicio'),
+            'fecha_fin' => $this->input->get('fecha_fin')
+        );
+        
+        $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_tipos($filtros);
+        $data['filtros'] = $filtros;
+        if ($this->input->get('export') === 'pdf') {
+            $this->_generar_pdf_devoluciones($data);
+        } else if ($this->input->get('export') === 'excel') {
+            $this->_generar_excel_devoluciones($data);
+        } else {
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('reportes/tipos_publicaciones', $data);
+            $this->load->view('inc/footer');
+        }
+    } 
+
+    public function devoluciones() {
+        $filtros = array(
+            'fecha_inicio' => $this->input->get('fecha_inicio'),
+            'fecha_fin' => $this->input->get('fecha_fin')
+        );
+        
+        $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_devoluciones($filtros);
+        $data['filtros'] = $filtros;
+        
+        if ($this->input->get('export') === 'pdf') {
+            $this->_generar_pdf_devoluciones($data);
+        } else if ($this->input->get('export') === 'excel') {
+            $this->_generar_excel_devoluciones($data);
+        } else {
+            $this->load->view('inc/header');
+            $this->load->view('inc/nabvar');
+            $this->load->view('inc/aside');
+            $this->load->view('reportes/devoluciones', $data);
+            $this->load->view('inc/footer');
+        }
+    }
+
+    private function _generar_pdf_profesiones($data) {
+        require_once APPPATH . 'third_party/fpdf/fpdf.php';
+        
+        $pdf = new FPDF();
+        $pdf->AddPage();
+        
+        // Título
+        $pdf->SetFont('Arial', 'B', 16);
+        $pdf->Cell(190, 10, 'Reporte por Profesiones', 0, 1, 'C');
+        
+        // Filtros aplicados
+        $pdf->SetFont('Arial', '', 10);
+        $pdf->Cell(190, 10, 'Periodo: ' . $data['filtros']['fecha_inicio'] . ' - ' . $data['filtros']['fecha_fin'], 0, 1, 'L');
+        
+        // Cabeceras
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->Cell(50, 7, 'Profesión', 1);
+        $pdf->Cell(35, 7, 'Total Lectores', 1);
+        $pdf->Cell(35, 7, 'Solicitudes', 1);
+        $pdf->Cell(35, 7, 'Préstamos', 1);
+        $pdf->Cell(35, 7, 'Prom. Días', 1);
+        $pdf->Ln();
+        
+        // Datos
+        $pdf->SetFont('Arial', '', 10);
+        foreach ($data['estadisticas'] as $est) {
+            $pdf->Cell(50, 6, utf8_decode($est->profesion), 1);
+            $pdf->Cell(35, 6, $est->total_lectores, 1, 0, 'R');
+            $pdf->Cell(35, 6, $est->total_solicitudes, 1, 0, 'R');
+            $pdf->Cell(35, 6, $est->total_prestamos, 1, 0, 'R');
+            $pdf->Cell(35, 6, $est->promedio_dias_prestamo, 1, 0, 'R');
+            $pdf->Ln();
+        }
+        
+        $pdf->Output('reporte_profesiones.pdf', 'D');
+    }
+
+    private function _generar_excel_profesiones($data) {
+        require_once APPPATH . 'third_party/PHPExcel/PHPExcel.php';
+        
+        $excel = new PHPExcel();
+        
+        // Configuración básica
+        $excel->getProperties()
+              ->setCreator("Hemeroteca UMSS")
+              ->setTitle("Reporte por Profesiones")
+              ->setDescription("Estadísticas de uso por profesión de lectores");
+        
+        // Encabezados
+        $excel->setActiveSheetIndex(0)
+              ->setCellValue('A1', 'Profesión')
+              ->setCellValue('B1', 'Total Lectores')
+              ->setCellValue('C1', 'Total Solicitudes')
+              ->setCellValue('D1', 'Total Préstamos')
+              ->setCellValue('E1', 'Promedio Días Préstamo');
+        
+        // Datos
+        $row = 2;
+        foreach ($data['estadisticas'] as $est) {
+            $excel->setActiveSheetIndex(0)
+                  ->setCellValue('A'.$row, $est->profesion)
+                  ->setCellValue('B'.$row, $est->total_lectores)
+                  ->setCellValue('C'.$row, $est->total_solicitudes)
+                  ->setCellValue('D'.$row, $est->total_prestamos)
+                  ->setCellValue('E'.$row, $est->promedio_dias_prestamo);
+            $row++;
+        }
+        
+        // Autoajustar columnas
+        foreach(range('A','E') as $col) {
+            $excel->getActiveSheet()->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Descargar archivo
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="reporte_profesiones.xlsx"');
+        header('Cache-Control: max-age=0');
+        
+        $writer = PHPExcel_IOFactory::createWriter($excel, 'Excel2007');
+        $writer->save('php://output');
+    }
+
+    private function _generar_pdf_solicitudes($data) {
+        // Similar a _generar_pdf_profesiones pero adaptado para solicitudes
+        require_once APPPATH . 'third_party/fpdf/fpdf.php';
+        
+        $pdf = new FPDF();
+        $pdf->AddPage();
+        
+        $pdf->SetFont('Arial', 'B', 16);
+        $pdf->Cell(190, 10, 'Reporte de Estado de Solicitudes', 0, 1, 'C');
+        
+        $pdf->SetFont('Arial', '', 10);
+        $pdf->Cell(190, 10, 'Periodo: ' . $data['filtros']['fecha_inicio'] . ' - ' . $data['filtros']['fecha_fin'], 0, 1, 'L');
+        
+        // Cabeceras
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->Cell(25, 7, 'Mes/Año', 1);
+        $pdf->Cell(30, 7, 'Total', 1);
+        $pdf->Cell(30, 7, 'Aprobadas', 1);
+        $pdf->Cell(30, 7, 'Rechazadas', 1);
+        $pdf->Cell(30, 7, 'Pendientes', 1);
+        $pdf->Cell(45, 7, '% Aprobación', 1);
+        $pdf->Ln();
+        
+        foreach ($data['estadisticas'] as $est) {
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->Cell(25, 6, $est->mes . '/' . $est->anio, 1);
+            $pdf->Cell(30, 6, $est->total_solicitudes, 1, 0, 'R');
+            $pdf->Cell(30, 6, $est->aprobadas, 1, 0, 'R');
+            $pdf->Cell(30, 6, $est->rechazadas, 1, 0, 'R');
+            $pdf->Cell(30, 6, $est->pendientes, 1, 0, 'R');
+            $pdf->Cell(45, 6, $est->porcentaje_aprobacion . '%', 1, 0, 'R');
+            $pdf->Ln();
+        }
+        
+        $pdf->Output('reporte_solicitudes.pdf', 'D');
     }
 }

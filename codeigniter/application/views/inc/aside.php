@@ -100,13 +100,13 @@
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
                         <li>
-                            <a href="<?php echo site_url('reportes/prestamos'); ?>">
+                            <a href="<?php echo site_url('reportes/index'); ?>">
                                 <i class="fe-file-text mr-1"></i>
                                 Préstamos Activos e Históricos
                             </a>
                         </li>
                         <li>
-                            <a href="<?php echo site_url('reportes/publicaciones'); ?>">
+                            <a href="<?php echo site_url('reportes/index'); ?>">
                                 <i class="fe-book mr-1"></i>
                                 Publicaciones Más Solicitadas
                             </a>
