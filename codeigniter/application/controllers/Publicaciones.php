@@ -203,7 +203,7 @@ class Publicaciones extends CI_Controller {
         }
     }
 
-    public function modificar($idPublicacion)
+   /* public function modificar($idPublicacion)
     {
         $this->_verificar_permisos_admin_encargado();
         $data['publicacion'] = $this->publicacion_model->obtener_publicacion($idPublicacion);
@@ -313,6 +313,113 @@ class Publicaciones extends CI_Controller {
                 $this->session->set_flashdata('error', 'Error al subir la portada: ' . $upload_error);
             }
             return false;
+        }
+    }*/
+    public function modificar($idPublicacion) {
+        $this->_verificar_permisos_admin_encargado();
+        
+        // Obtener datos de la publicación
+        $data['publicacion'] = $this->publicacion_model->obtener_publicacion1($idPublicacion);
+        
+        if (!$data['publicacion']) {
+            $this->session->set_flashdata('error', 'No se encontró la publicación.');
+            redirect('publicaciones/index');
+            return;
+        }
+    
+        // Obtener datos adicionales necesarios
+        $data['tipos'] = $this->tipo_model->obtener_tipos();
+        $data['editoriales'] = $this->editorial_model->obtener_editoriales();
+        $data['ubicaciones'] = array(
+            'Estante A' => 'Estante A',
+            'Estante B' => 'Estante B',
+            'Archivo' => 'Archivo',
+            'Hemeroteca' => 'Hemeroteca'
+        );
+    
+        // Cargar las vistas con los datos
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('publicaciones/editar', $data);
+        $this->load->view('inc/footer');
+    }
+    
+    public function modificarbd() {
+        $this->_verificar_permisos_admin_encargado();
+        $idPublicacion = $this->input->post('idPublicacion');
+    
+        // Verificar si la publicación existe y obtener su estado actual
+        $publicacion_actual = $this->publicacion_model->obtener_publicacion($idPublicacion);
+        if (!$publicacion_actual) {
+            $this->session->set_flashdata('error', 'La publicación no existe.');
+            redirect('publicaciones/index');
+            return;
+        }
+    
+        // Verificar si la publicación está en préstamo o reservada
+        if ($publicacion_actual->estado == ESTADO_PUBLICACION_EN_CONSULTA || 
+            $publicacion_actual->estado == ESTADO_PUBLICACION_RESERVADA) {
+            $this->session->set_flashdata('error', 'No se puede editar una publicación que está en préstamo o reservada.');
+            redirect('publicaciones/index');
+            return;
+        }
+    
+        $this->form_validation->set_rules('titulo', 'Título', 'required');
+        $this->form_validation->set_rules('idEditorial', 'Editorial', 'required|numeric');
+        $this->form_validation->set_rules('idTipo', 'Tipo', 'required|numeric');
+        $this->form_validation->set_rules('fechaPublicacion', 'Fecha de Publicación', 'required');
+        $this->form_validation->set_rules('numeroPaginas', 'Número de Páginas', 'numeric');
+        $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required');
+    
+        if ($this->form_validation->run() == FALSE) {
+            $this->modificar($idPublicacion);
+        } else {
+            $data = array(
+                'idTipo' => $this->input->post('idTipo'),
+                'idEditorial' => $this->input->post('idEditorial'),
+                'titulo' => $this->input->post('titulo'),
+                'fechaPublicacion' => $this->input->post('fechaPublicacion'),
+                'numeroPaginas' => $this->input->post('numeroPaginas'),
+                'descripcion' => $this->input->post('descripcion'),
+                'ubicacionFisica' => $this->input->post('ubicacionFisica'),
+                'fechaActualizacion' => date('Y-m-d H:i:s'),
+                'idUsuarioCreador' => $this->session->userdata('idUsuario')
+            );
+    
+            // Manejar la carga de la portada
+            if (!empty($_FILES['portada']['name'])) {
+                $resultado_portada = $this->_manejar_carga_portada($idPublicacion);
+                if ($resultado_portada['success']) {
+                    $data['portada'] = $resultado_portada['filename'];
+                }
+            }
+    
+            if ($this->publicacion_model->actualizar_publicacion($idPublicacion, $data)) {
+                $this->session->set_flashdata('mensaje', 'Publicación actualizada correctamente.');
+                
+                // Notificar a usuarios interesados si hay cambios relevantes
+                if ($publicacion_actual->titulo != $data['titulo']) {
+                    $this->_notificar_cambios_publicacion($idPublicacion, $data['titulo']);
+                }
+            } else {
+                $this->session->set_flashdata('error', 'Error al actualizar la publicación.');
+            }
+            redirect('publicaciones/index');
+        }
+    }
+    
+    private function _notificar_cambios_publicacion($idPublicacion, $nuevo_titulo) {
+        // Notificar a usuarios que tienen interés en esta publicación
+        $usuarios_interesados = $this->Notificacion_model->obtener_usuarios_interesados($idPublicacion);
+        foreach ($usuarios_interesados as $usuario) {
+            $mensaje = "La publicación que te interesa ha sido actualizada. Nuevo título: " . $nuevo_titulo;
+            $this->Notificacion_model->crear_notificacion(
+                $usuario->idUsuario,
+                $idPublicacion,
+                NOTIFICACION_ACTUALIZACION,
+                $mensaje
+            );
         }
     }
     public function eliminar($idPublicacion) {

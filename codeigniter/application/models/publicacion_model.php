@@ -36,6 +36,25 @@ class Publicacion_model extends CI_Model {
         $this->db->where('idPublicacion', $idPublicacion);
         return $this->db->update('PUBLICACION', $data);
     }
+
+    public function obtener_publicacion1($idPublicacion) {
+        $this->db->select('
+            p.*,
+            t.nombreTipo,
+            e.nombreEditorial,
+            COALESCE(sp.idUsuario, NULL) as idUsuarioReserva,
+            COALESCE(sp.fechaCreacion, NULL) as fechaReserva
+        ');
+        $this->db->from('PUBLICACION p');
+        $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
+        $this->db->where('p.idPublicacion', $idPublicacion);
+        
+        $resultado = $this->db->get();
+        return $resultado->row(); // Aseguramos que devuelva un objeto
+    }
     public function obtener_publicacion() {
         $this->db->select('
             p.idPublicacion,
