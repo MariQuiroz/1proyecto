@@ -139,15 +139,18 @@ class Editoriales extends CI_Controller {
 
     public function eliminar($idEditorial) {
         $this->_verificar_permisos();
+        
         $data = array(
-            'estado' => 0,
+            'estado' => $this->input->post('estado'),
             'fechaActualizacion' => date('Y-m-d H:i:s'),
             'idUsuarioCreador' => $this->session->userdata('idUsuario')
         );
+    
         if ($this->editorial_model->eliminar_editorial($idEditorial, $data)) {
-            $this->session->set_flashdata('mensaje', 'Editorial eliminada correctamente.');
+            $mensaje = $data['estado'] == 0 ? 'Editorial eliminada correctamente.' : 'Editorial habilitada correctamente.';
+            $this->session->set_flashdata('mensaje', $mensaje);
         } else {
-            $this->session->set_flashdata('error', 'Error al eliminar la editorial.');
+            $this->session->set_flashdata('error', 'Error al modificar el estado de la editorial.');
         }
         redirect('editoriales/index');
     }

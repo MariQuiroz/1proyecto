@@ -1,23 +1,23 @@
-<!-- ============================================================== -->
-<!-- Start Page Content here -->
-<!-- ============================================================== -->
-
 <div class="content-page">
     <div class="content">
-        <!-- Start Content-->
         <div class="container-fluid">
             <div class="row">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body">
                             <h4 class="header-title">Lista de Editoriales</h4>
-                            <p class="text-muted font-13 mb-4">
-                                Aquí se muestran todas las editoriales disponibles.
-                            </p>
+                            <p class="text-muted font-13 mb-4">Aquí se muestran todas las editoriales disponibles.</p>
 
                             <?php if($this->session->flashdata('mensaje')): ?>
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <?php echo $this->session->flashdata('mensaje'); ?>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if($this->session->flashdata('error')): ?>
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <?php echo $this->session->flashdata('error'); ?>
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             <?php endif; ?>
@@ -28,6 +28,7 @@
                                 <thead>
                                     <tr>
                                         <th>Nombre de la Editorial</th>
+                                      
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -35,12 +36,21 @@
                                     <?php foreach ($editoriales as $editorial): ?>
                                     <tr>
                                         <td><?php echo $editorial->nombreEditorial; ?></td>
+                                       
                                         <td>
-                                            <a href="<?php echo site_url('editoriales/editar/'.$editorial->idEditorial); ?>" class="btn btn-primary btn-sm" data-toggle="tooltip" title="Editar" aria-label="Editar Editorial">
+                                            <a href="<?php echo site_url('editoriales/editar/'.$editorial->idEditorial); ?>" 
+                                               class="btn btn-primary btn-sm" 
+                                               data-toggle="tooltip" 
+                                               title="Editar">
                                                 <i class="mdi mdi-pencil"></i>
                                             </a>
-                                            <button class="btn btn-danger btn-sm" data-toggle="tooltip" title="Deshabilitar" aria-label="Deshabilitar Editorial" onclick="confirmDelete('<?php echo site_url('editoriales/eliminar/'.$editorial->idEditorial); ?>')">
-                                                 <i class="fe-trash-2"></i> 
+                                            
+                                            <button type="button" 
+                                                    class="btn <?php echo $editorial->estado ? 'btn-danger' : 'btn-success'; ?> btn-sm"
+                                                    onclick="confirmarAccion(<?php echo $editorial->idEditorial; ?>, <?php echo $editorial->estado; ?>)"
+                                                    data-toggle="tooltip" 
+                                                    title="<?php echo $editorial->estado ? 'Deshabilitar' : 'Habilitar'; ?>">
+                                                <i class="fe-<?php echo $editorial->estado ? 'trash-2' : 'refresh-cw'; ?>"></i>
                                             </button>
                                         </td>
                                     </tr>
@@ -51,73 +61,35 @@
                     </div>
                 </div>
             </div>
-        </div> <!-- container -->
-    </div> <!-- content -->
+        </div>
+    </div>
 </div>
 
-<!-- ============================================================== -->
-<!-- End Page content -->
-<!-- ============================================================== -->
-
-<!-- Vendor js -->
-<script src="<?php echo base_url('adminXeria/dist/assets/js/vendor.min.js'); ?>"></script>
-
-<!-- App js -->
-<script src="<?php echo base_url('adminXeria/dist/assets/js/app.min.js'); ?>"></script>
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar DataTable
-    var dataTable = new DataTable('#datatable-buttons', {
-        language: {
-            url: "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
-        },
-        buttons: ["copy", "excel", "pdf"]
-    });
-
-    // Inicializar tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    });
-
-    // Función para confirmar eliminación
-    window.confirmDelete = function(url) {
-        const modalHtml = `
-            <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="confirmDeleteLabel">Confirmar Eliminación</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            ¿Está seguro de eliminar esta editorial?
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <a href="${url}" class="btn btn-danger">Eliminar</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+    function confirmarAccion(idEditorial, estadoActual) {
+    const accion = estadoActual ? 'deshabilitar' : 'habilitar';
+    const mensaje = `¿Está seguro de ${accion} esta editorial?`;
+    
+    if (confirm(mensaje)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '<?php echo site_url('editoriales/eliminar/'); ?>' + idEditorial;
         
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        var modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
-        modal.show();
+        // Agregar token CSRF
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '<?php echo $this->security->get_csrf_token_name(); ?>';
+        csrfInput.value = '<?php echo $this->security->get_csrf_hash(); ?>';
+        form.appendChild(csrfInput);
         
-        document.getElementById('confirmDeleteModal').addEventListener('hidden.bs.modal', function () {
-            this.remove();
-        });
-    };
-
-    // Aquí puedes agregar la inicialización de ApexCharts si es necesario
-    // Ejemplo:
-    // var options = {
-    //     // ... opciones del gráfico
-    // };
-    // var chart = new ApexCharts(document.querySelector("#id-del-grafico"), options);
-    // chart.render();
-});
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'estado';
+        hiddenInput.value = estadoActual ? '0' : '1';
+        
+        form.appendChild(hiddenInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>

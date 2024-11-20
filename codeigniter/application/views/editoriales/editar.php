@@ -67,44 +67,37 @@
 </div>
 
 <!-- Modal de Confirmación de Cancelación -->
-<div class="modal fade" id="confirmCancelModal" tabindex="-1" aria-labelledby="confirmCancelLabel" aria-hidden="true">
+<div class="modal fade" id="confirmCancelModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="confirmCancelLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="confirmCancelLabel">Confirmar Cancelación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 ¿Estás seguro de que deseas cancelar? Los cambios no guardados se perderán.
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <a href="<?php echo site_url('editoriales'); ?>" class="btn btn-danger">Cancelar</a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <a href="<?php echo site_url('editoriales'); ?>" class="btn btn-danger">Confirmar</a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ============================================================== -->
-<!-- End Page content -->
-<!-- ============================================================== -->
-
 <script>
-    document.getElementById('btnCancelar').addEventListener('click', function() {
-        var form = document.querySelector('form');
-        var formChanged = false;
-
-        // Verificar si algún campo del formulario ha sido modificado
-        form.querySelectorAll('input, select, textarea').forEach(function(element) {
-            if (element.type !== 'submit' && element.value !== element.defaultValue) {
-                formChanged = true;
-            }
-        });
-
-        if (formChanged) {
-            $('#confirmCancelModal').modal('show'); // Muestra el modal si el formulario ha cambiado
-        } else {
-            window.location.href = "<?php echo site_url('editoriales'); ?>"; // Redirigir si no hay cambios
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    const btnCancelar = document.getElementById('btnCancelar');
+    const modal = new bootstrap.Modal(document.getElementById('confirmCancelModal'), {
+        backdrop: 'static',
+        keyboard: false
     });
+
+    btnCancelar.addEventListener('click', function(e) {
+        e.preventDefault();
+        modal.show();
+    });
+});
 </script>
