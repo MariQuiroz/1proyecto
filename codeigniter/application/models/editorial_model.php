@@ -27,7 +27,15 @@ class Editorial_model extends CI_Model {
         $this->db->insert('EDITORIAL', $data);
         return $this->db->insert_id();
     }
-
+    public function verificar_existencia($nombreEditorial) {
+        $query = $this->db->query(
+            "SELECT COUNT(*) as total FROM EDITORIAL 
+             WHERE UPPER(nombreEditorial) = UPPER(?) 
+             AND estado = 1",
+            array($nombreEditorial)
+        );
+        return $query->row()->total > 0;
+    }
     public function actualizar_editorial($idEditorial, $data) {
         $this->db->where('idEditorial', $idEditorial);
         return $this->db->update('EDITORIAL', $data);
