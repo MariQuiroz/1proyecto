@@ -1692,4 +1692,26 @@ public function procesar_aprobacion($idSolicitud, $idEncargado) {
         return false;
     }
 }
+
+public function obtener_solicitud_por_publicacion($idPublicacion, $idUsuario) {
+    $this->db->select('
+        sp.idSolicitud,
+        sp.fechaSolicitud,
+        sp.estadoSolicitud,
+        sp.idUsuario,
+        ds.idPublicacion,
+        ds.observaciones
+    ');
+    $this->db->from('SOLICITUD_PRESTAMO sp');
+    $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+    $this->db->where([
+        'ds.idPublicacion' => $idPublicacion,
+        'sp.idUsuario' => $idUsuario,
+        'sp.estado' => 1
+    ]);
+    $this->db->order_by('sp.fechaSolicitud', 'DESC');
+    $this->db->limit(1);
+    
+    return $this->db->get()->row();
+}
 }

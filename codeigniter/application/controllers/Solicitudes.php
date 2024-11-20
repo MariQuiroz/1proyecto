@@ -113,27 +113,47 @@ class Solicitudes extends CI_Controller {
             $this->email->message($message);
             return $this->email->send();
         }
-    
-        public function detalle($idSolicitud) {
+        public function detalle($idSolicitud = null) {
             $this->_verificar_sesion();
-            // Verificar y procesar expiraciones antes de mostrar
-        $this->Solicitud_model->verificar_y_procesar_expiraciones();
             
+            // Validar que se proporcionó un ID de solicitud
+            if ($idSolicitud === null) {
+                $this->session->set_flashdata('error', 'No se especificó una solicitud para ver.');
+                redirect('solicitudes/mis_solicitudes');
+                return;
+            }
+            
+            // Verificar y procesar expiraciones
+            $this->Solicitud_model->verificar_y_procesar_expiraciones();
+            
+            // Obtener detalles de la solicitud con información completa
             $solicitud = $this->Solicitud_model->obtener_detalle_solicitud($idSolicitud);
             
             if (!$solicitud) {
-                $this->session->set_flashdata('error', 'La solicitud no existe.');
+                $this->session->set_flashdata('error', 'La solicitud no existe o ha sido eliminada.');
                 redirect('solicitudes/mis_solicitudes');
+                return;
             }
             
-            // Verificar si el usuario actual tiene permiso para ver esta solicitud
-            if ($this->session->userdata('rol') == 'lector' && $solicitud->idUsuario != $this->session->userdata('idUsuario')) {
+            // Verificar permisos de acceso
+            $rol = $this->session->userdata('rol');
+            $idUsuario = $this->session->userdata('idUsuario');
+            
+            if ($rol == 'lector' && $solicitud->idUsuario != $idUsuario) {
                 $this->session->set_flashdata('error', 'No tienes permiso para ver esta solicitud.');
                 redirect('solicitudes/mis_solicitudes');
+                return;
             }
             
-            $data['solicitud'] = $solicitud;
+            // Preparar datos adicionales para la vista
+            $data = array(
+                'solicitud' => $solicitud,
+                'es_lector' => ($rol == 'lector'),
+                'puede_cancelar' => $this->_puede_cancelar_solicitud($solicitud),
+                'estado_texto' => $this->_obtener_texto_estado($solicitud->estadoSolicitud)
+            );
             
+            // Cargar las vistas
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
@@ -141,6 +161,28 @@ class Solicitudes extends CI_Controller {
             $this->load->view('inc/footer');
         }
         
+        private function _puede_cancelar_solicitud($solicitud) {
+            $rol = $this->session->userdata('rol');
+            
+            return (
+                $rol == 'lector' && 
+                $solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE &&
+                !$this->Prestamo_model->tiene_prestamo_activo($solicitud->idSolicitud)
+            );
+        }
+        
+        private function _obtener_texto_estado($estado) {
+            $estados = array(
+                ESTADO_SOLICITUD_PENDIENTE => 'Pendiente',
+                ESTADO_SOLICITUD_APROBADA => 'Aprobada',
+                ESTADO_SOLICITUD_RECHAZADA => 'Rechazada',
+                ESTADO_SOLICITUD_FINALIZADA => 'Finalizada',
+                ESTADO_SOLICITUD_EXPIRADA => 'Expirada',
+                ESTADO_SOLICITUD_CANCELADA => 'Cancelada'
+            );
+            
+            return isset($estados[$estado]) ? $estados[$estado] : 'Desconocido';
+        }
 
         public function aprobar($idSolicitud) {
             $this->_verificar_rol(['administrador', 'encargado']);

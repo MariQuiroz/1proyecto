@@ -64,7 +64,7 @@ class Notificaciones extends CI_Controller {
         $this->email->message($message);
         return $this->email->send();
     }
-    public function ver($idNotificacion) {
+    /*public function ver($idNotificacion) {
         $this->_verificar_sesion();
         
         $notificacion = $this->Notificacion_model->obtener_notificacion($idNotificacion);
@@ -97,6 +97,99 @@ class Notificaciones extends CI_Controller {
             default:
                 redirect('notificaciones');
         }
+    }*/
+    public function ver($idNotificacion) {
+        $this->_verificar_sesion();
+        
+        $notificacion = $this->Notificacion_model->obtener_notificacion($idNotificacion);
+        
+        if (!$notificacion) {
+            $this->session->set_flashdata('error', 'La notificación no existe.');
+            redirect('notificaciones');
+            return;
+        }
+        
+        // Marcar la notificación como leída
+        $this->Notificacion_model->marcar_como_leida($idNotificacion);
+        
+        // Obtener datos relacionados según el tipo de notificación
+        $datos_relacionados = $this->_obtener_datos_relacionados($notificacion);
+        
+        // Redirigir según el tipo de notificación
+        switch ($notificacion->tipo) {
+            case NOTIFICACION_NUEVA_SOLICITUD:
+                redirect('solicitudes/pendientes');
+                break;
+                
+            case NOTIFICACION_SOLICITUD_PRESTAMO:
+            case NOTIFICACION_APROBACION_PRESTAMO:
+            case NOTIFICACION_RECHAZO_PRESTAMO:
+                if (isset($datos_relacionados['idSolicitud'])) {
+                    redirect('solicitudes/detalle/' . $datos_relacionados['idSolicitud']);
+                } else {
+                    redirect('solicitudes/mis_solicitudes');
+                }
+                break;
+                
+            case NOTIFICACION_DEVOLUCION:
+            case NOTIFICACION_VENCIMIENTO:
+                if (isset($datos_relacionados['idPrestamo'])) {
+                    redirect('prestamos/detalle/' . $datos_relacionados['idPrestamo']);
+                } else {
+                    redirect('prestamos/mis_prestamos');
+                }
+                break;
+                
+            case NOTIFICACION_DISPONIBILIDAD:
+                if (isset($datos_relacionados['idPublicacion'])) {
+                    redirect('publicaciones/ver/' . $datos_relacionados['idPublicacion']);
+                } else {
+                    redirect('publicaciones');
+                }
+                break;
+                
+            default:
+                redirect('notificaciones');
+        }
+    }
+    
+    private function _obtener_datos_relacionados($notificacion) {
+        // Asegurarse de que el modelo está cargado
+        if (!isset($this->Solicitud_model)) {
+            $this->load->model('Solicitud_model');
+        }
+        if (!isset($this->Prestamo_model)) {
+            $this->load->model('Prestamo_model');
+        }
+        
+        $datos = array();
+        
+        switch ($notificacion->tipo) {
+            case NOTIFICACION_SOLICITUD_PRESTAMO:
+            case NOTIFICACION_APROBACION_PRESTAMO:
+            case NOTIFICACION_RECHAZO_PRESTAMO:
+                $solicitud = $this->Solicitud_model->obtener_solicitud_por_publicacion(
+                    $notificacion->idPublicacion,
+                    $notificacion->idUsuario
+                );
+                if ($solicitud) {
+                    $datos['idSolicitud'] = $solicitud->idSolicitud;
+                }
+                break;
+                
+            case NOTIFICACION_DEVOLUCION:
+            case NOTIFICACION_VENCIMIENTO:
+                $prestamo = $this->Prestamo_model->obtener_prestamo_por_publicacion(
+                    $notificacion->idPublicacion,
+                    $notificacion->idUsuario
+                );
+                if ($prestamo) {
+                    $datos['idPrestamo'] = $prestamo->idPrestamo;
+                }
+                break;
+        }
+        
+        return $datos;
     }
     public function preferencias() {
         $this->_verificar_sesion();
@@ -159,6 +252,8 @@ class Notificaciones extends CI_Controller {
         } else if ($rol == 'administrador') {
             $tipos_notificacion = [
                 NOTIFICACION_VENCIMIENTO,
+                NOTIFICACION_ELIMINACION
+                
                 // Otros tipos específicos para administradores
                 // NO incluir NOTIFICACION_NUEVA_SOLICITUD
             ];
@@ -206,7 +301,8 @@ class Notificaciones extends CI_Controller {
                 break;
             case 'administrador':
                 $tipos_notificacion = [
-                    NOTIFICACION_VENCIMIENTO
+                    NOTIFICACION_VENCIMIENTO,
+                    NOTIFICACION_ELIMINACION
                     // NO incluir NOTIFICACION_NUEVA_SOLICITUD
                 ];
                 break;
