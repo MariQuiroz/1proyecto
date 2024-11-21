@@ -10,38 +10,47 @@ class Reporte_model extends CI_Model {
 
     public function obtener_estadisticas_profesion($filtros) {
         $this->db->select('
-            u.profesion,
-            COUNT(DISTINCT u.idUsuario) as total_lectores,
-            COUNT(DISTINCT sp.idSolicitud) as total_solicitudes,
+            COALESCE(u.profesion, "No especificado") as profesion,
             COUNT(DISTINCT p.idPrestamo) as total_prestamos,
-            AVG(DATEDIFF(COALESCE(p.horaDevolucion, NOW()), p.fechaPrestamo)) as promedio_dias_prestamo
+            COUNT(DISTINCT u.idUsuario) as total_lectores,
+            AVG(TIMESTAMPDIFF(DAY, p.fechaPrestamo, COALESCE(p.fechaDevolucion, NOW()))) as promedio_dias_prestamo
         ');
         
         $this->db->from('USUARIO u');
-        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idUsuario = u.idUsuario', 'left');
-        $this->db->join('PRESTAMO p', 'p.idSolicitud = sp.idSolicitud', 'left');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idUsuario = u.idUsuario');
+        $this->db->join('PRESTAMO p', 'p.idSolicitud = sp.idSolicitud');
         
-        // Aplicar filtros de fecha
         if (!empty($filtros['fecha_inicio'])) {
             $this->db->where('DATE(p.fechaPrestamo) >=', $filtros['fecha_inicio']);
         }
         if (!empty($filtros['fecha_fin'])) {
             $this->db->where('DATE(p.fechaPrestamo) <=', $filtros['fecha_fin']);
         }
-        
-        // Filtro por profesión si está especificado
         if (!empty($filtros['profesion'])) {
             $this->db->where('u.profesion', $filtros['profesion']);
         }
         
         $this->db->where('u.rol', 'lector');
         $this->db->group_by('u.profesion');
-        $this->db->having('total_prestamos >', 0);
         
-        return $this->db->get()->result();
+        $resultado = $this->db->get()->result();
+        
+        // Si no hay resultados, devolver un array con valores por defecto
+        if (empty($resultado)) {
+            return [
+                (object)[
+                    'profesion' => 'Sin datos',
+                    'total_prestamos' => 0,
+                    'total_lectores' => 0,
+                    'promedio_dias_prestamo' => 0
+                ]
+            ];
+        }
+        
+        return $resultado;
     }
 
-    public function obtener_detalle_prestamos_profesion($filtros = array(), $profesion = null) {
+    public function obtener_detalle_prestamos_profesion($filtros) {
         $this->db->select('
             u.profesion,
             u.nombres,
@@ -59,8 +68,8 @@ class Reporte_model extends CI_Model {
                 ELSE "No devuelto"
             END as estado_devolucion,
             TIMESTAMPDIFF(DAY, p.fechaPrestamo, COALESCE(p.fechaDevolucion, NOW())) as dias_prestamo
-        ', false); // Añadido false como segundo parámetro para evitar el escape automático
-        
+        ', false);
+    
         $this->db->from('USUARIO u');
         $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idUsuario = u.idUsuario');
         $this->db->join('PRESTAMO p', 'p.idSolicitud = sp.idSolicitud');
@@ -68,21 +77,20 @@ class Reporte_model extends CI_Model {
         $this->db->join('PUBLICACION pub', 'pub.idPublicacion = ds.idPublicacion');
         $this->db->join('TIPO t', 't.idTipo = pub.idTipo');
         $this->db->join('EDITORIAL e', 'e.idEditorial = pub.idEditorial');
-        
+    
         if (!empty($filtros['fecha_inicio'])) {
             $this->db->where('DATE(p.fechaPrestamo) >=', $filtros['fecha_inicio']);
         }
         if (!empty($filtros['fecha_fin'])) {
             $this->db->where('DATE(p.fechaPrestamo) <=', $filtros['fecha_fin']);
         }
-        
-        if ($profesion) {
-            $this->db->where('u.profesion', $profesion);
+        if (!empty($filtros['profesion'])) {
+            $this->db->where('u.profesion', $filtros['profesion']);
         }
-        
+    
         $this->db->where('u.rol', 'lector');
         $this->db->order_by('p.fechaPrestamo', 'DESC');
-        
+    
         return $this->db->get()->result();
     }
 

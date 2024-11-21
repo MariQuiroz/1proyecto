@@ -69,7 +69,7 @@ class Reportes extends CI_Controller {
 
         // Validar profesión si está presente
         if (!empty($filtros['profesion'])) {
-            $profesiones_validas = ['ESTUDIANTE', 'DOCENTE', 'INVESTIGADOR', 'ADMINISTRATIVO', 'OTRO'];
+            $profesiones_validas = ['ESTUDIANTE UMSS', 'DOCENTE', 'INVESTIGADOR', 'PUBLICO GENERAL'];
             if (!in_array(strtoupper($filtros['profesion']), $profesiones_validas)) {
                 $filtros['profesion'] = ''; // Resetear si no es válida
             }
@@ -287,6 +287,7 @@ class Reportes extends CI_Controller {
                             <th>Lector</th>
                             <th>Profesión</th>
                             <th>Publicación</th>
+                            <th>Fecha Publicación</th>
                             <th>Fecha Préstamo</th>
                             <th>Estado</th>
                             <th>Días</th>
@@ -300,6 +301,7 @@ class Reportes extends CI_Controller {
                         <td>' . htmlspecialchars($detalle->nombres . ' ' . $detalle->apellidoPaterno) . '</td>
                         <td>' . htmlspecialchars($detalle->profesion) . '</td>
                         <td>' . htmlspecialchars($detalle->titulo_publicacion) . '</td>
+                        <td>' . date('d/m/Y', strtotime($detalle->fechaPublicacion)) . '</td>
                         <td>' . date('d/m/Y', strtotime($detalle->fechaPrestamo)) . '</td>
                         <td>' . $detalle->estado_devolucion . '</td>
                         <td>' . $detalle->dias_prestamo . '</td>
@@ -353,11 +355,11 @@ class Reportes extends CI_Controller {
     // Función para formatear nombres de profesiones
     private function _formatear_profesion($profesion) {
         $profesiones = array(
-            'ESTUDIANTE' => 'Estudiante',
+            'ESTUDIANTE UMSS' => 'Estudiante Umss',
             'DOCENTE' => 'Docente',
             'INVESTIGADOR' => 'Investigador',
-            'ADMINISTRATIVO' => 'Administrativo',
-            'OTRO' => 'Otro'
+            'PUBLICO GENERAL' => 'Administrativo',
+            
         );
         
         return isset($profesiones[$profesion]) ? $profesiones[$profesion] : $profesion;
@@ -539,48 +541,71 @@ class Reportes extends CI_Controller {
     }
 
     private function _generar_excel_profesiones($data) {
-        require_once APPPATH . 'third_party/PHPExcel/PHPExcel.php';
+        // Preparar datos para la exportación
+        $export_data = array();
         
-        $excel = new PHPExcel();
-        
-        // Configuración básica
-        $excel->getProperties()
-              ->setCreator("Hemeroteca UMSS")
-              ->setTitle("Reporte por Profesiones")
-              ->setDescription("Estadísticas de uso por profesión de lectores");
-        
-        // Encabezados
-        $excel->setActiveSheetIndex(0)
-              ->setCellValue('A1', 'Profesión')
-              ->setCellValue('B1', 'Total Lectores')
-              ->setCellValue('C1', 'Total Solicitudes')
-              ->setCellValue('D1', 'Total Préstamos')
-              ->setCellValue('E1', 'Promedio Días Préstamo');
-        
-        // Datos
-        $row = 2;
+        // Datos estadísticos
         foreach ($data['estadisticas'] as $est) {
-            $excel->setActiveSheetIndex(0)
-                  ->setCellValue('A'.$row, $est->profesion)
-                  ->setCellValue('B'.$row, $est->total_lectores)
-                  ->setCellValue('C'.$row, $est->total_solicitudes)
-                  ->setCellValue('D'.$row, $est->total_prestamos)
-                  ->setCellValue('E'.$row, $est->promedio_dias_prestamo);
-            $row++;
+            $export_data[] = array(
+                'Profesión' => $this->_formatear_profesion($est->profesion),
+                'Total Préstamos' => $est->total_prestamos,
+                'Total Lectores' => $est->total_lectores,
+                'Promedio Días' => number_format($est->promedio_dias_prestamo, 1)
+            );
         }
         
-        // Autoajustar columnas
-        foreach(range('A','E') as $col) {
-            $excel->getActiveSheet()->getColumnDimension($col)->setAutoSize(true);
+        // Agregar línea en blanco como separador
+        $export_data[] = array(
+            'Profesión' => '',
+            'Total Préstamos' => '',
+            'Total Lectores' => '',
+            'Promedio Días' => ''
+        );
+        
+        // Agregar totales
+        $export_data[] = array(
+            'Profesión' => 'TOTALES',
+            'Total Préstamos' => $data['totales']['prestamos'],
+            'Total Lectores' => $data['totales']['lectores'],
+            'Promedio Días' => number_format($data['totales']['promedio_dias'], 1)
+        );
+        
+        // Agregar línea en blanco como separador
+        $export_data[] = array(
+            'Profesión' => '',
+            'Total Préstamos' => '',
+            'Total Lectores' => '',
+            'Promedio Días' => ''
+        );
+        
+        // Agregar detalles de préstamos
+        $export_data[] = array(
+            'Lector' => 'LECTOR',
+            'Profesión' => 'PROFESIÓN',
+            'Publicación' => 'PUBLICACIÓN',
+            'Fecha Publicación' => 'FECHA PUBLICACIÓN',
+            'Fecha Préstamo' => 'FECHA PRÉSTAMO',
+            'Fecha Devolución' => 'FECHA DEVOLUCIÓN',
+            'Estado' => 'ESTADO',
+            'Días' => 'DÍAS'
+        );
+        
+        foreach ($data['detalles'] as $detalle) {
+            $export_data[] = array(
+                'Lector' => $detalle->nombres . ' ' . $detalle->apellidoPaterno,
+                'Profesión' => $this->_formatear_profesion($detalle->profesion),
+                'Publicación' => $detalle->titulo_publicacion,
+                'Fecha Publicación' => date('d/m/Y', strtotime($detalle->fechaPublicacion)),
+                'Fecha Préstamo' => date('d/m/Y', strtotime($detalle->fechaPrestamo)),
+                'Fecha Devolución' => $detalle->fechaDevolucion ? date('d/m/Y', strtotime($detalle->fechaDevolucion)) : 'En préstamo',
+                'Estado' => $detalle->estado_devolucion,
+                'Días' => $detalle->dias_prestamo
+            );
         }
-        
-        // Descargar archivo
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="reporte_profesiones.xlsx"');
-        header('Cache-Control: max-age=0');
-        
-        $writer = PHPExcel_IOFactory::createWriter($excel, 'Excel2007');
-        $writer->save('php://output');
+    
+        // Cargar la librería y exportar
+        $this->load->library('excel');
+        $this->excel->export_to_excel($export_data, 'Reporte_Prestamos_Por_Profesion_' . date('Y-m-d'));
     }
 
     private function _generar_pdf_solicitudes($data) {

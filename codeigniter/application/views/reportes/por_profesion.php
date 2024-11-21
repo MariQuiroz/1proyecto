@@ -30,11 +30,11 @@
                                         <label>Profesión</label>
                                         <select name="profesion" class="form-control" id="selectProfesion">
                                             <option value="">Todas las profesiones</option>
-                                            <option value="ESTUDIANTE" <?php echo $profesion_seleccionada == 'ESTUDIANTE' ? 'selected' : ''; ?>>Estudiante</option>
+                                            <option value="ESTUDIANTE UMSS" <?php echo $profesion_seleccionada == 'ESTUDIANTE UMSS' ? 'selected' : ''; ?>>Estudiante Umss</option>
                                             <option value="DOCENTE" <?php echo $profesion_seleccionada == 'DOCENTE' ? 'selected' : ''; ?>>Docente</option>
                                             <option value="INVESTIGADOR" <?php echo $profesion_seleccionada == 'INVESTIGADOR' ? 'selected' : ''; ?>>Investigador</option>
-                                            <option value="ADMINISTRATIVO" <?php echo $profesion_seleccionada == 'ADMINISTRATIVO' ? 'selected' : ''; ?>>Administrativo</option>
-                                            <option value="OTRO" <?php echo $profesion_seleccionada == 'OTRO' ? 'selected' : ''; ?>>Otro</option>
+                                            <option value="PUBLICO GENERAL" <?php echo $profesion_seleccionada == 'PUBLICO GENERAL' ? 'selected' : ''; ?>>Público General</option>
+                                            
                                         </select>
                                     </div>
                                 </div>
@@ -103,7 +103,31 @@
                                 </div>
                             </div>
                         </div>
-
+ <!-- Análisis de Datos -->
+<div class="row">
+    <div class="col-12">
+        <h5>Análisis de Datos</h5>
+        <?php
+        if (!empty($estadisticas) && $estadisticas[0]->total_prestamos > 0) {
+            $max_prestamos = max(array_column($estadisticas, 'total_prestamos'));
+            $min_prestamos = min(array_column($estadisticas, 'total_prestamos'));
+            $prom_dias = array_sum(array_column($estadisticas, 'promedio_dias_prestamo')) / count($estadisticas);
+            ?>
+            <div class="alert alert-info">
+                <p><strong>Hallazgos principales:</strong></p>
+                <ul>
+                    <li>La profesión con más préstamos registra <?php echo $max_prestamos; ?> solicitudes.</li>
+                    <li>El promedio general de días de préstamo es de <?php echo number_format($prom_dias, 1); ?> días.</li>
+                    <li>Se observa una diferencia de <?php echo $max_prestamos - $min_prestamos; ?> préstamos entre la profesión más y menos activa.</li>
+                </ul>
+            </div>
+        <?php } else { ?>
+            <div class="alert alert-warning">
+                <p><strong>No hay datos disponibles para el período y filtros seleccionados.</strong></p>
+            </div>
+        <?php } ?>
+    </div>
+</div>
                         <!-- Tabla de Detalle -->
                         <div class="table-responsive">
                             <table class="table table-striped" id="tabla-detalle">
@@ -112,6 +136,7 @@
                                         <th>Lector</th>
                                         <th>Profesión</th>
                                         <th>Publicación</th>
+                                        <th>Fecha Publicación</th>
                                         <th>Fecha Préstamo</th>
                                         <th>Fecha Devolución</th>
                                         <th>Estado</th>
@@ -124,6 +149,7 @@
                                         <td><?php echo htmlspecialchars($detalle->nombres . ' ' . $detalle->apellidoPaterno); ?></td>
                                         <td><?php echo htmlspecialchars($detalle->profesion); ?></td>
                                         <td><?php echo htmlspecialchars($detalle->titulo_publicacion); ?></td>
+                                        <td><?php echo date('d/m/Y', strtotime($detalle->fechaPublicacion)); ?></td>
                                         <td><?php echo date('d/m/Y', strtotime($detalle->fechaPrestamo)); ?></td>
                                         <td><?php echo $detalle->fechaDevolucion ? date('d/m/Y', strtotime($detalle->fechaDevolucion)) : 'En préstamo'; ?></td>
                                         <td>
@@ -146,7 +172,43 @@
         </div>
     </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ <script>
+ document.addEventListener('DOMContentLoaded', function() {
+     var ctx = document.getElementById('profesionesChart').getContext('2d');
+     
+     var data = {
+         labels: <?php echo json_encode(array_column($estadisticas, 'profesion')); ?>,
+         datasets: [{
+             label: 'Total Préstamos',
+             data: <?php echo json_encode(array_column($estadisticas, 'total_prestamos')); ?>,
+             backgroundColor: 'rgba(54, 162, 235, 0.5)',
+             borderColor: 'rgba(54, 162, 235, 1)',
+             borderWidth: 1
+         },
+         {
+             label: 'Promedio Días',
+             data: <?php echo json_encode(array_column($estadisticas, 'promedio_dias_prestamo')); ?>,
+             backgroundColor: 'rgba(255, 99, 132, 0.5)',
+             borderColor: 'rgba(255, 99, 132, 1)',
+             borderWidth: 1
+         }]
+     };
+ 
+     new Chart(ctx, {
+         type: 'bar',
+         data: data,
+         options: {
+             responsive: true,
+             scales: {
+                 y: {
+                     beginAtZero: true
+                 }
+             }
+         }
+     });
+ });
+ </script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializar DataTable
