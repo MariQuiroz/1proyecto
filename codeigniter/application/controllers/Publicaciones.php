@@ -138,13 +138,12 @@ class Publicaciones extends CI_Controller {
     
     public function agregarbd()
     {
-        $this->_verificar_permisos_admin_encargado();
-        $this->form_validation->set_rules('titulo', 'Título', 'required');
+        $this->form_validation->set_rules('titulo', 'Título', 'required|min_length[3]|max_length[255]');
         $this->form_validation->set_rules('idEditorial', 'Editorial', 'required|numeric');
         $this->form_validation->set_rules('idTipo', 'Tipo', 'required|numeric');
         $this->form_validation->set_rules('fechaPublicacion', 'Fecha de Publicación', 'required');
-        $this->form_validation->set_rules('numeroPaginas', 'Número de Páginas', 'numeric');
-        $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required');
+        $this->form_validation->set_rules('numeroPaginas', 'Número de Páginas', 'numeric|max_length[4]|greater_than[0]|less_than[1001]');
+        $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required|min_length[5]|max_length[255]');
 
         if ($this->form_validation->run() == FALSE) {
             $this->agregar();
@@ -152,11 +151,11 @@ class Publicaciones extends CI_Controller {
             $data = array(
                 'idTipo' => $this->input->post('idTipo'),
                 'idEditorial' => $this->input->post('idEditorial'),
-                'titulo' => $this->input->post('titulo'),
+                'titulo' => strtoupper($this->input->post('titulo')), 
                 'fechaPublicacion' => $this->input->post('fechaPublicacion'),
                 'numeroPaginas' => $this->input->post('numeroPaginas'),
-                'descripcion' => $this->input->post('descripcion'),
-                'ubicacionFisica' => $this->input->post('ubicacionFisica'),
+                'descripcion' => strtoupper($this->input->post('descripcion')), 
+                'ubicacionFisica' => strtoupper($this->input->post('ubicacionFisica')), 
                 'estado' => ESTADO_PUBLICACION_DISPONIBLE,
                 'fechaCreacion' => date('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
@@ -203,118 +202,7 @@ class Publicaciones extends CI_Controller {
         }
     }
 
-   /* public function modificar($idPublicacion)
-    {
-        $this->_verificar_permisos_admin_encargado();
-        $data['publicacion'] = $this->publicacion_model->obtener_publicacion($idPublicacion);
-        $data['tipos'] = $this->tipo_model->obtener_tipos();
-        $data['editoriales'] = $this->editorial_model->obtener_editoriales();
-        $data['ubicaciones'] = array(
-            'Estante A' => 'Estante A',
-            'Estante B' => 'Estante B',
-            'Archivo' => 'Archivo',
-            'Hemeroteca' => 'Hemeroteca'
-        );
-        $this->load->view('inc/header');
-        $this->load->view('inc/nabvar');
-        $this->load->view('inc/aside');
-        $this->load->view('publicaciones/editar', $data);
-        $this->load->view('inc/footer');
-    }
 
-    public function modificarbd()
-    {
-        $this->_verificar_permisos_admin_encargado();
-        $idPublicacion = $this->input->post('idPublicacion');
-        $this->form_validation->set_rules('titulo', 'Título', 'required');
-        $this->form_validation->set_rules('idEditorial', 'Editorial', 'required|numeric');
-        $this->form_validation->set_rules('idTipo', 'Tipo', 'required|numeric');
-        $this->form_validation->set_rules('fechaPublicacion', 'Fecha de Publicación', 'required');
-        $this->form_validation->set_rules('numeroPaginas', 'Número de Páginas', 'numeric');
-        $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required');
-
-        if ($this->form_validation->run() == FALSE) {
-            $this->modificar($idPublicacion);
-        } else {
-            $data = array(
-                'idTipo' => $this->input->post('idTipo'),
-                'idEditorial' => $this->input->post('idEditorial'),
-                'titulo' => $this->input->post('titulo'),
-                'fechaPublicacion' => $this->input->post('fechaPublicacion'),
-                'numeroPaginas' => $this->input->post('numeroPaginas'),
-                'descripcion' => $this->input->post('descripcion'),
-                'ubicacionFisica' => $this->input->post('ubicacionFisica'),
-                'fechaActualizacion' => date('Y-m-d H:i:s'),
-                'idUsuarioCreador' => $this->session->userdata('idUsuario')
-            );
-
-            $this->_manejar_carga_portada($idPublicacion);
-            if (!empty($_FILES['portada']['name'])) {
-                $config['upload_path'] = './uploads/portadas/';
-                $config['allowed_types'] = 'gif|jpg|png|jpeg';
-                $config['max_size'] = 2048; // 2MB
-                $config['file_name'] = 'portada_' . time();
-        
-                $this->upload->initialize($config);
-        
-                if (!$this->upload->do_upload('portada')) {
-                    $error = $this->upload->display_errors();
-                    log_message('error', 'Error al subir imagen: ' . $error);
-                    $this->session->set_flashdata('error', $error);
-                } else {
-                    $upload_data = $this->upload->data();
-                    $data['portada'] = $upload_data['file_name'];
-                }
-            }
-
-            if ($this->publicacion_model->actualizar_publicacion($idPublicacion, $data)) {
-                $this->session->set_flashdata('mensaje', 'Publicación actualizada correctamente.');
-            } else {
-                $this->session->set_flashdata('error', 'Error al actualizar la publicación.');
-            }
-            redirect('publicaciones/index', 'refresh');
-        }
-    }
-    
-    private function _manejar_carga_portada($idPublicacion) {
-        // Verificar si el directorio existe, si no, crearlo
-        $upload_path = './uploads/portadas/';
-        if (!file_exists($upload_path)) {
-            mkdir($upload_path, 0777, true);
-        }
-    
-        $nombrearchivo = $idPublicacion . ".jpg";
-        
-        $config = array(
-            'upload_path' => $upload_path,
-            'file_name' => $nombrearchivo,
-            'allowed_types' => 'jpg|jpeg|png|gif',
-            'max_size' => 2048, // 2MB max
-            'overwrite' => TRUE
-        );
-    
-        $this->load->library('upload');
-        $this->upload->initialize($config);
-    
-        // Eliminar archivo anterior si existe
-        $direccion = $config['upload_path'] . $nombrearchivo;
-        if (file_exists($direccion)) {
-            unlink($direccion);
-        }
-    
-        if ($this->upload->do_upload('portada')) {
-            $data_update = array('portada' => $nombrearchivo);
-            $this->publicacion_model->actualizar_publicacion($idPublicacion, $data_update);
-            return true;
-        } else {
-            $upload_error = $this->upload->display_errors();
-            if (!empty($_FILES['portada']['name'])) {
-                log_message('error', 'Error al subir portada: ' . $upload_error);
-                $this->session->set_flashdata('error', 'Error al subir la portada: ' . $upload_error);
-            }
-            return false;
-        }
-    }*/
     public function modificar($idPublicacion) {
         $this->_verificar_permisos_admin_encargado();
         
@@ -365,12 +253,12 @@ class Publicaciones extends CI_Controller {
             return;
         }
     
-        $this->form_validation->set_rules('titulo', 'Título', 'required');
+        $this->form_validation->set_rules('titulo', 'Título', 'required|min_length[3]|max_length[255]');
         $this->form_validation->set_rules('idEditorial', 'Editorial', 'required|numeric');
         $this->form_validation->set_rules('idTipo', 'Tipo', 'required|numeric');
         $this->form_validation->set_rules('fechaPublicacion', 'Fecha de Publicación', 'required');
-        $this->form_validation->set_rules('numeroPaginas', 'Número de Páginas', 'numeric');
-        $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required');
+        $this->form_validation->set_rules('numeroPaginas', 'Número de Páginas', 'numeric|max_length[4]|greater_than[0]|less_than[1001]');
+        $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required|min_length[5]|max_length[255]');
     
         if ($this->form_validation->run() == FALSE) {
             $this->modificar($idPublicacion);
