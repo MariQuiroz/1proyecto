@@ -8,36 +8,35 @@ class Reporte_model extends CI_Model {
         $this->load->database();
     }
 
-    public function obtener_estadisticas_profesion($filtros = array()) {
-        // Mantener el método existente sin cambios
+    public function obtener_estadisticas_profesion($filtros) {
         $this->db->select('
-            COALESCE(u.profesion, "OTRO") as profesion,
+            u.profesion,
             COUNT(DISTINCT u.idUsuario) as total_lectores,
             COUNT(DISTINCT sp.idSolicitud) as total_solicitudes,
             COUNT(DISTINCT p.idPrestamo) as total_prestamos,
-            ROUND(AVG(
-                CASE 
-                    WHEN p.fechaDevolucion IS NOT NULL 
-                    THEN TIMESTAMPDIFF(HOUR, p.fechaPrestamo, p.fechaDevolucion)/24.0
-                    ELSE NULL 
-                END
-            ), 1) as promedio_dias_prestamo
+            AVG(DATEDIFF(COALESCE(p.horaDevolucion, NOW()), p.fechaPrestamo)) as promedio_dias_prestamo
         ');
         
         $this->db->from('USUARIO u');
         $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idUsuario = u.idUsuario', 'left');
         $this->db->join('PRESTAMO p', 'p.idSolicitud = sp.idSolicitud', 'left');
         
+        // Aplicar filtros de fecha
         if (!empty($filtros['fecha_inicio'])) {
-            $this->db->where('DATE(sp.fechaSolicitud) >=', $filtros['fecha_inicio']);
+            $this->db->where('DATE(p.fechaPrestamo) >=', $filtros['fecha_inicio']);
         }
         if (!empty($filtros['fecha_fin'])) {
-            $this->db->where('DATE(sp.fechaSolicitud) <=', $filtros['fecha_fin']);
+            $this->db->where('DATE(p.fechaPrestamo) <=', $filtros['fecha_fin']);
+        }
+        
+        // Filtro por profesión si está especificado
+        if (!empty($filtros['profesion'])) {
+            $this->db->where('u.profesion', $filtros['profesion']);
         }
         
         $this->db->where('u.rol', 'lector');
         $this->db->group_by('u.profesion');
-        $this->db->order_by('total_prestamos', 'DESC');
+        $this->db->having('total_prestamos >', 0);
         
         return $this->db->get()->result();
     }
