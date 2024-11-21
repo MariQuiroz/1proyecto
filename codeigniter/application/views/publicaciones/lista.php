@@ -214,24 +214,14 @@
             title="Solicitar préstamo">
             <i class="mdi mdi-book-open-page-variant"></i> Solicitar
         </a>
-    <?php elseif (intval($publicacion->estado) === ESTADO_PUBLICACION_EN_CONSULTA ||
-                   intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
-        <?php 
-        // Obtenemos el ID del usuario actual
-        $idUsuarioActual = $this->session->userdata('idUsuario');
-        
-        // Verificamos si el usuario actual es quien tiene la publicación
-        $es_mi_reserva = ($publicacion->es_mi_reserva == 1);
-        $es_mi_consulta = (isset($publicacion->idUsuario) && 
-                          $publicacion->idUsuario == $idUsuarioActual);
-        ?>
-
-        <?php if ($es_mi_consulta): ?>
+    <?php elseif (intval($publicacion->estado) === ESTADO_PUBLICACION_EN_CONSULTA || 
+                 intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
+        <?php if ($publicacion->es_mi_consulta == 1): ?>
             <!-- Publicación en consulta por el usuario actual -->
             <button class="btn btn-info btn-sm" disabled>
                 <i class="mdi mdi-book-account"></i> En tu poder (Consulta)
             </button>
-        <?php elseif ($es_mi_reserva): ?>
+        <?php elseif ($publicacion->es_mi_reserva == 1): ?>
             <!-- Publicación reservada por el usuario actual -->
             <button class="btn btn-primary btn-sm" disabled>
                 <i class="mdi mdi-bookmark"></i> Reservada por ti
@@ -239,11 +229,11 @@
         <?php else: ?>
             <?php 
             $interes_existente = $this->Notificacion_model->obtener_estado_interes(
-                $idUsuarioActual, 
+                $this->session->userdata('idUsuario'),
                 $publicacion->idPublicacion
             );
             ?>
-
+            
             <?php if (!$interes_existente || $interes_existente->estado == ESTADO_INTERES_NOTIFICADO): ?>
                 <!-- Notificar interés -->
                 <a href="<?php echo site_url('notificaciones/agregar_interes_simple/'.$publicacion->idPublicacion); ?>"
@@ -265,7 +255,7 @@
             <?php endif; ?>
         <?php endif; ?>
     <?php endif; ?>
-<?php endif; ?>           </td>
+<?php endif; ?>     </td>
                                         </tr>
                                     <?php 
                                         endif;

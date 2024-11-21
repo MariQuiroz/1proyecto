@@ -173,6 +173,80 @@ public function listar_publicaciones() {
     
     return $this->db->get()->result();
 }
+public function listar_todas_publicaciones() {
+    $idUsuarioActual = $this->session->userdata('idUsuario');
+    
+    $this->db->select('
+        p.idPublicacion,
+        p.titulo,
+        p.fechaPublicacion,
+        p.numeroPaginas,
+        p.portada,
+        p.descripcion,
+        p.ubicacionFisica,
+        p.estado,
+        p.fechaCreacion,
+        p.fechaActualizacion,
+        t.nombreTipo,
+        e.nombreEditorial,
+        MAX(COALESCE(pr.estadoPrestamo, 0)) as estadoPrestamo,
+        MAX(COALESCE(sp.estadoSolicitud, 0)) as estadoSolicitud,
+        MAX(COALESCE(ds.fechaReserva, NULL)) as fechaReserva,
+        MAX(COALESCE(ds.fechaExpiracionReserva, NULL)) as fechaExpiracionReserva,
+        MAX(COALESCE(ds.estadoReserva, 0)) as estadoReserva,
+        MAX(CASE 
+            WHEN sp.estado = 1 THEN sp.idUsuario 
+            ELSE NULL 
+        END) as idUsuarioSolicitud,
+        MAX(CASE 
+            WHEN (
+                sp.idUsuario = ' . $idUsuarioActual . ' 
+                AND p.estado = ' . ESTADO_PUBLICACION_RESERVADA . '
+                AND sp.estadoSolicitud = ' . ESTADO_SOLICITUD_PENDIENTE . '
+                AND sp.estado = 1
+                AND ds.fechaExpiracionReserva > NOW()
+            ) THEN 1 
+            ELSE 0 
+        END) as es_mi_reserva,
+        MAX(CASE 
+            WHEN (
+                sp.idUsuario = ' . $idUsuarioActual . '
+                AND p.estado = ' . ESTADO_PUBLICACION_EN_CONSULTA . '
+                AND pr.estadoPrestamo = ' . ESTADO_PRESTAMO_ACTIVO . '
+                AND pr.estado = 1
+            ) THEN 1 
+            ELSE 0 
+        END) as es_mi_consulta'
+    );
+    
+    $this->db->from('PUBLICACION p');
+    $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+    $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+    $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud AND sp.estado = 1', 'left');
+    $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud AND pr.estadoPrestamo = 1', 'left');
+    
+    $this->db->where('p.estado !=', ESTADO_PUBLICACION_ELIMINADO);
+    
+    $this->db->group_by([
+        'p.idPublicacion',
+        'p.titulo',
+        'p.fechaPublicacion',
+        'p.numeroPaginas',
+        'p.portada',
+        'p.descripcion',
+        'p.ubicacionFisica',
+        'p.estado',
+        'p.fechaCreacion',
+        'p.fechaActualizacion',
+        't.nombreTipo',
+        'e.nombreEditorial'
+    ]);
+    
+    $this->db->order_by('p.fechaCreacion', 'DESC');
+    
+    return $this->db->get()->result();
+}
 
     public function buscar_publicaciones($termino) {
         $this->db->select('
@@ -404,7 +478,7 @@ public function listar_publicaciones() {
         return $this->db->get()->num_rows() > 0;
     }
     
-    public function listar_todas_publicaciones() {
+   /* public function listar_todas_publicaciones() {
         $idUsuarioActual = $this->session->userdata('idUsuario');
         
         $this->db->select('
@@ -469,7 +543,7 @@ public function listar_publicaciones() {
         
         return $this->db->get()->result();
     }
-    
+    */
     public function mapear_estado($estado, $idUsuario = null, $estadoReserva = 0, $idUsuarioSolicitud = null) {
         $estado = intval($estado);
         
