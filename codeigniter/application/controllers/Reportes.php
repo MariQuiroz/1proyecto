@@ -752,4 +752,172 @@ class Reportes extends CI_Controller {
         $this->load->view('reportes/tipos_publicaciones', $data);
         $this->load->view('inc/footer');
     }
+
+    public function exportar_tipos_pdf() {
+        $filtros = [
+            'fecha_inicio' => $this->input->get('fecha_inicio'),
+            'fecha_fin' => $this->input->get('fecha_fin'),
+            'tipo' => $this->input->get('tipo')
+        ];
+        
+        $data = [
+            'estadisticas' => $this->Reporte_model->obtener_estadisticas_tipos($filtros),
+            'publicaciones' => $this->Reporte_model->obtener_detalles_publicaciones_por_tipo($filtros),
+            'historial_prestamos' => $this->Reporte_model->obtener_historial_prestamos_publicaciones($filtros),
+            'filtros' => $filtros
+        ];
+        
+        $this->_generar_pdf_tipos($data);
+    }
+    
+    public function exportar_tipos_excel() {
+        $filtros = [
+            'fecha_inicio' => $this->input->get('fecha_inicio'),
+            'fecha_fin' => $this->input->get('fecha_fin'),
+            'tipo' => $this->input->get('tipo')
+        ];
+        
+        $data = [
+            'estadisticas' => $this->Reporte_model->obtener_estadisticas_tipos($filtros),
+            'publicaciones' => $this->Reporte_model->obtener_detalles_publicaciones_por_tipo($filtros),
+            'historial_prestamos' => $this->Reporte_model->obtener_historial_prestamos_publicaciones($filtros)
+        ];
+        
+        $this->_generar_excel_tipos($data);
+    }
+    
+    private function _generar_pdf_tipos($data) {
+        require_once APPPATH . '../vendor/autoload.php';
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new \Dompdf\Dompdf($options);
+    
+        $html = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: Arial, sans-serif; }
+                .header { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f5f5f5; }
+                .summary { margin: 20px 0; padding: 10px; background-color: #f8f9fa; }
+                .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <img src="' . base_url('uploads/logo_umss.jpg') . '" alt="Logo UMSS" style="width: 70px;">
+                <h1>HEMEROTECA UMSS</h1>
+                <h2>Reporte por Tipos de Publicaciones</h2>
+                <p>Período: ' . date('d/m/Y', strtotime($data['filtros']['fecha_inicio'])) . 
+                    ' al ' . date('d/m/Y', strtotime($data['filtros']['fecha_fin'])) . '</p>
+            </div>
+    
+            <h3>Estadísticas por Tipo</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Total Publicaciones</th>
+                        <th>Total Solicitudes</th>
+                        <th>Total Préstamos</th>
+                        <th>Promedio Días</th>
+                    </tr>
+                </thead>
+                <tbody>';
+                
+        foreach ($data['estadisticas'] as $est) {
+            $html .= '<tr>
+                <td>' . htmlspecialchars($est->nombreTipo) . '</td>
+                <td>' . $est->total_publicaciones . '</td>
+                <td>' . $est->total_solicitudes . '</td>
+                <td>' . $est->total_prestamos . '</td>
+                <td>' . number_format($est->promedio_dias_prestamo, 1) . '</td>
+            </tr>';
+        }
+    
+        $html .= '</tbody></table>
+            
+            <h3>Detalle de Publicaciones</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Tipo</th>
+                        <th>Editorial</th>
+                        <th>Solicitudes</th>
+                        <th>Préstamos Activos</th>
+                        <th>Préstamos Completados</th>
+                    </tr>
+                </thead>
+                <tbody>';
+    
+        foreach ($data['publicaciones'] as $pub) {
+            $html .= '<tr>
+                <td>' . htmlspecialchars($pub->titulo) . '</td>
+                <td>' . htmlspecialchars($pub->nombreTipo) . '</td>
+                <td>' . htmlspecialchars($pub->nombreEditorial) . '</td>
+                <td>' . $pub->total_solicitudes . '</td>
+                <td>' . $pub->prestamos_activos . '</td>
+                <td>' . $pub->prestamos_completados . '</td>
+            </tr>';
+        }
+    
+        $html .= '</tbody></table>
+            <div class="footer">
+                <p>Reporte generado el ' . date('d/m/Y H:i:s') . '</p>
+            </div>
+        </body>
+        </html>';
+    
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+        $dompdf->stream('reporte_tipos_publicaciones_' . date('Y-m-d') . '.pdf', ['Attachment' => 0]);
+    }
+    
+    private function _generar_excel_tipos($data) {
+        $export_data = [];
+        
+        // Sección 1: Estadísticas por tipo
+        $export_data[] = ['ESTADÍSTICAS POR TIPO DE PUBLICACIÓN'];
+        $export_data[] = ['Tipo', 'Total Publicaciones', 'Total Solicitudes', 'Total Préstamos', 'Promedio Días'];
+        
+        foreach ($data['estadisticas'] as $est) {
+            $export_data[] = [
+                $est->nombreTipo,
+                $est->total_publicaciones,
+                $est->total_solicitudes,
+                $est->total_prestamos,
+                number_format($est->promedio_dias_prestamo, 1)
+            ];
+        }
+        
+        // Separador
+        $export_data[] = [''];
+        $export_data[] = [''];
+        
+        // Sección 2: Detalle de publicaciones
+        $export_data[] = ['DETALLE DE PUBLICACIONES'];
+        $export_data[] = ['Título', 'Tipo', 'Editorial', 'Total Solicitudes', 'Préstamos Activos', 'Préstamos Completados'];
+        
+        foreach ($data['publicaciones'] as $pub) {
+            $export_data[] = [
+                $pub->titulo,
+                $pub->nombreTipo,
+                $pub->nombreEditorial,
+                $pub->total_solicitudes,
+                $pub->prestamos_activos,
+                $pub->prestamos_completados
+            ];
+        }
+         // Cargar librería y exportar
+    $this->load->library('excel');
+    $this->excel->export_to_excel($export_data, 'Reporte_Tipos_Publicaciones_' . date('Y-m-d'));
+}
+
 }

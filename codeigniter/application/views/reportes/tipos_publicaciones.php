@@ -6,12 +6,12 @@
                 <div class="card-header">
                     <h4 class="card-title">Análisis por Tipos de Publicaciones</h4>
                     
-                    <!-- Filtros -->
+                  <!-- Filtros -->
 <div class="row mb-3">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-            <form method="get" action="<?php echo site_url('reportes/tipos_publicaciones'); ?>" class="row align-items-center">
+                <form method="get" action="<?php echo site_url('reportes/tipos_publicaciones'); ?>" class="row align-items-center">
                     <div class="col-md-3">
                         <label>Fecha Inicio</label>
                         <input type="date" name="fecha_inicio" class="form-control" value="<?php echo $filtros['fecha_inicio']; ?>">
@@ -33,15 +33,27 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <button type="submit" class="btn btn-primary mt-3">Filtrar</button>
-                        <a href="<?php echo site_url('reportes/exportar_publicaciones').'?'.http_build_query($filtros); ?>" 
-                           class="btn btn-success mt-3">Exportar Excel</a>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-search"></i> Filtrar
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="exportarPDF()">
+                                    <i class="fa fa-file-pdf"></i> PDF
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="exportarExcel()">
+                                    <i class="fa fa-file-excel"></i> Excel
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
                 <div class="card-body">
                     <!-- Gráficos -->
                     <div class="row mb-4">
@@ -322,4 +334,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+
+function exportarPDF() {
+    var fechaInicio = document.querySelector('input[name="fecha_inicio"]').value;
+    var fechaFin = document.querySelector('input[name="fecha_fin"]').value;
+    var tipo = document.querySelector('select[name="tipo"]').value;
+    
+    var url = '<?php echo site_url("reportes/exportar_tipos_pdf"); ?>';
+    url += '?fecha_inicio=' + fechaInicio;
+    url += '&fecha_fin=' + fechaFin;
+    if (tipo) {
+        url += '&tipo=' + tipo;
+    }
+    
+    window.open(url, '_blank');
+}
+
+function exportarExcel() {
+    var fechaInicio = document.querySelector('input[name="fecha_inicio"]').value;
+    var fechaFin = document.querySelector('input[name="fecha_fin"]').value;
+    var tipo = document.querySelector('select[name="tipo"]').value;
+    
+    var url = '<?php echo site_url("reportes/exportar_tipos_excel"); ?>';
+    url += '?fecha_inicio=' + fechaInicio;
+    url += '&fecha_fin=' + fechaFin;
+    if (tipo) {
+        url += '&tipo=' + tipo;
+    }
+    
+    window.location.href = url;
+}
 </script>
