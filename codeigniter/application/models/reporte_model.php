@@ -123,35 +123,111 @@ class Reporte_model extends CI_Model {
         return $this->db->get()->result();
     }
 
-    public function obtener_estadisticas_devoluciones($filtros = array()) {
+    public function obtener_estadisticas_devoluciones($filtros) {
         $this->db->select('
-            MONTH(pr.fechaDevolucion) as mes,
-            YEAR(pr.fechaDevolucion) as anio,
-            COUNT(pr.idPrestamo) as total_devoluciones,
-            SUM(CASE WHEN pr.estadoDevolucion = ' . ESTADO_DEVOLUCION_BUENO . ' THEN 1 ELSE 0 END) as estado_bueno,
-            SUM(CASE WHEN pr.estadoDevolucion = ' . ESTADO_DEVOLUCION_DAÑADO . ' THEN 1 ELSE 0 END) as estado_dañado,
-            SUM(CASE WHEN pr.estadoDevolucion = ' . ESTADO_DEVOLUCION_PERDIDO . ' THEN 1 ELSE 0 END) as estado_perdido,
-            ROUND(AVG(TIMESTAMPDIFF(HOUR, pr.fechaPrestamo, pr.fechaDevolucion)/24.0), 1) as promedio_dias_prestamo,
-            COUNT(CASE 
-                WHEN TIMESTAMPDIFF(HOUR, pr.fechaPrestamo, pr.fechaDevolucion) > 24 
-                THEN 1 END) as devoluciones_tardias
+            DATE_FORMAT(p.fechaDevolucion, "%m") as mes,
+            DATE_FORMAT(p.fechaDevolucion, "%Y") as anio,
+            COUNT(*) as total_devoluciones,
+            SUM(CASE WHEN p.estadoDevolucion = ' . ESTADO_DEVOLUCION_BUENO . ' THEN 1 ELSE 0 END) as estado_bueno,
+            SUM(CASE WHEN p.estadoDevolucion = ' . ESTADO_DEVOLUCION_DAÑADO . ' THEN 1 ELSE 0 END) as estado_dañado,
+            SUM(CASE WHEN p.estadoDevolucion = ' . ESTADO_DEVOLUCION_PERDIDO . ' THEN 1 ELSE 0 END) as estado_perdido,
+            AVG(DATEDIFF(p.fechaDevolucion, p.fechaPrestamo)) as promedio_dias_prestamo,
+            SUM(CASE WHEN DATEDIFF(p.fechaDevolucion, p.fechaPrestamo) > 1 THEN 1 ELSE 0 END) as devoluciones_tardias
         ');
-        $this->db->from('PRESTAMO pr');
-        $this->db->join('SOLICITUD_PRESTAMO sp', 'pr.idSolicitud = sp.idSolicitud');
+    
+        $this->db->from('PRESTAMO p');
         
+        // Aplicar filtros
         if (!empty($filtros['fecha_inicio'])) {
-            $this->db->where('DATE(pr.fechaDevolucion) >=', $filtros['fecha_inicio']);
-        }
-        if (!empty($filtros['fecha_fin'])) {
-            $this->db->where('DATE(pr.fechaDevolucion) <=', $filtros['fecha_fin']);
+            $this->db->where('DATE(p.fechaDevolucion) >=', $filtros['fecha_inicio']);
         }
         
-        $this->db->where('pr.estadoPrestamo', ESTADO_PRESTAMO_FINALIZADO);
-        $this->db->where('pr.fechaDevolucion IS NOT NULL');
-        $this->db->group_by('YEAR(pr.fechaDevolucion), MONTH(pr.fechaDevolucion)');
+        if (!empty($filtros['fecha_fin'])) {
+            $this->db->where('DATE(p.fechaDevolucion) <=', $filtros['fecha_fin']);
+        }
+        
+        if (isset($filtros['estado_devolucion'])) {
+            $this->db->where('p.estadoDevolucion', $filtros['estado_devolucion']);
+        }
+        
+        // Condiciones base
+        $this->db->where('p.estadoPrestamo', ESTADO_PRESTAMO_FINALIZADO);
+        $this->db->where('p.fechaDevolucion IS NOT NULL');
+        $this->db->where('p.estado', 1);
+        
+        $this->db->group_by('mes, anio');
         $this->db->order_by('anio, mes');
         
+        // Log de la consulta para debugging
+        log_message('debug', 'SQL Query Estadísticas: ' . $this->db->get_compiled_select('', FALSE));
+        
         return $this->db->get()->result();
+    }
+    
+    public function obtener_detalle_devoluciones($filtros) {
+        $this->db->select('
+            p.fechaDevolucion,
+            u.nombres,
+            u.apellidoPaterno,
+            pub.titulo,
+            e.nombreEditorial,
+            p.estadoDevolucion,
+            DATEDIFF(p.fechaDevolucion, p.fechaPrestamo) as dias_prestamo,
+            CASE 
+                WHEN DATEDIFF(p.fechaDevolucion, p.fechaPrestamo) > 1 THEN "Tardía"
+                ELSE "A tiempo"
+            END as estado_entrega,
+            enc.nombres as nombre_encargado,
+            enc.apellidoPaterno as apellido_encargado
+        ');
+    
+        $this->db->from('PRESTAMO p');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
+        $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+        $this->db->join('EDITORIAL e', 'pub.idEditorial = e.idEditorial');
+        $this->db->join('USUARIO enc', 'p.idEncargadoDevolucion = enc.idUsuario');
+        
+        // Aplicar filtros
+        if (!empty($filtros['fecha_inicio'])) {
+            $this->db->where('DATE(p.fechaDevolucion) >=', $filtros['fecha_inicio']);
+        }
+        
+        if (!empty($filtros['fecha_fin'])) {
+            $this->db->where('DATE(p.fechaDevolucion) <=', $filtros['fecha_fin']);
+        }
+        
+        if (isset($filtros['estado_devolucion'])) {
+            $this->db->where('p.estadoDevolucion', $filtros['estado_devolucion']);
+        }
+        
+        // Condiciones base
+        $this->db->where('p.estadoPrestamo', ESTADO_PRESTAMO_FINALIZADO);
+        $this->db->where('p.fechaDevolucion IS NOT NULL');
+        $this->db->where('p.estado', 1);
+        
+        // Ordenar por fecha de devolución descendente
+        $this->db->order_by('p.fechaDevolucion', 'DESC');
+        
+        // Log de la consulta para debugging
+        log_message('debug', 'SQL Query: ' . $this->db->get_compiled_select('', FALSE));
+        
+        return $this->db->get()->result();
+    }
+
+    private function _aplicar_filtros_devoluciones($filtros) {
+        $this->db->where('p.estadoPrestamo', ESTADO_PRESTAMO_FINALIZADO);
+        
+        if (!empty($filtros['fecha_inicio'])) {
+            $this->db->where('DATE(p.fechaPrestamo) >=', $filtros['fecha_inicio']);
+        }
+        if (!empty($filtros['fecha_fin'])) {
+            $this->db->where('DATE(p.fechaPrestamo) <=', $filtros['fecha_fin']);
+        }
+        if (!empty($filtros['estado_devolucion'])) {
+            $this->db->where('p.estadoDevolucion', $filtros['estado_devolucion']);
+        }
     }
 
     public function obtener_metricas_generales($filtros = array()) {

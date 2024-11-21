@@ -135,19 +135,30 @@ class Reportes extends CI_Controller {
     }
 
     public function solicitudes() {
+        // Obtener las fechas del formulario y formatearlas correctamente
+        $fecha_inicio = $this->input->get('fecha_inicio');
+        $fecha_fin = $this->input->get('fecha_fin');
+        
+        // Preparar el array de filtros asegurándonos que las fechas estén en el formato correcto
         $filtros = array(
-            'fecha_inicio' => $this->input->get('fecha_inicio'),
-            'fecha_fin' => $this->input->get('fecha_fin')
+            'fecha_inicio' => $fecha_inicio ? date('Y-m-d', strtotime($fecha_inicio)) : null,
+            'fecha_fin' => $fecha_fin ? date('Y-m-d', strtotime($fecha_fin)) : null
         );
         
+        // Obtener los datos para el reporte
         $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_solicitudes($filtros);
         $data['filtros'] = $filtros;
-        
+    
+        // Determinar el tipo de exportación o mostrar la vista
         if ($this->input->get('export') === 'pdf') {
             $this->_generar_pdf_solicitudes($data);
         } else if ($this->input->get('export') === 'excel') {
             $this->_generar_excel_solicitudes($data);
         } else {
+            // Pasar las fechas a la vista para mostrar en los campos de filtro
+            $data['fecha_inicio_mostrar'] = $fecha_inicio;
+            $data['fecha_fin_mostrar'] = $fecha_fin;
+            
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
@@ -156,27 +167,150 @@ class Reportes extends CI_Controller {
         }
     }
 
-    public function devoluciones() {
-        $filtros = array(
-            'fecha_inicio' => $this->input->get('fecha_inicio'),
-            'fecha_fin' => $this->input->get('fecha_fin')
+    private function _generar_excel_solicitudes($data) {
+        // Preparar datos para la exportación
+        $export_data = array();
+        
+        // Agregar encabezado para estadísticas mensuales
+        $export_data[] = array(
+            'Mes',
+            'Año',
+            'Total Solicitudes',
+            'Publicaciones Solicitadas',
+            'Aprobadas',
+            'Rechazadas',
+            'Pendientes',
+            'Finalizadas',
+            '% Aprobación'
         );
-        
-        $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_devoluciones($filtros);
-        $data['filtros'] = $filtros;
-        
-        if ($this->input->get('export') === 'pdf') {
-            $this->_generar_pdf_devoluciones($data);
-        } else if ($this->input->get('export') === 'excel') {
-            $this->_generar_excel_devoluciones($data);
-        } else {
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('reportes/devoluciones', $data);
-            $this->load->view('inc/footer');
+    
+        // Mapeo de números de mes a nombres
+        $meses = array(
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+        );
+    
+        // Agregar datos estadísticos mensuales
+        foreach ($data['estadisticas'] as $est) {
+            $export_data[] = array(
+                'Mes' => $meses[$est->mes],
+                'Año' => $est->anio,
+                'Total Solicitudes' => $est->total_solicitudes,
+                'Publicaciones Solicitadas' => $est->total_publicaciones_solicitadas,
+                'Aprobadas' => $est->aprobadas,
+                'Rechazadas' => $est->rechazadas,
+                'Pendientes' => $est->pendientes,
+                'Finalizadas' => $est->finalizadas,
+                '% Aprobación' => number_format($est->porcentaje_aprobacion, 2) . '%'
+            );
         }
+    
+        // Agregar línea en blanco como separador
+        $export_data[] = array(
+            'Mes' => '',
+            'Año' => '',
+            'Total Solicitudes' => '',
+            'Publicaciones Solicitadas' => '',
+            'Aprobadas' => '',
+            'Rechazadas' => '',
+            'Pendientes' => '',
+            'Finalizadas' => '',
+            '% Aprobación' => ''
+        );
+    
+        // Calcular totales
+        $totales = array(
+            'total_solicitudes' => 0,
+            'total_publicaciones' => 0,
+            'total_aprobadas' => 0,
+            'total_rechazadas' => 0,
+            'total_pendientes' => 0,
+            'total_finalizadas' => 0
+        );
+    
+        foreach ($data['estadisticas'] as $est) {
+            $totales['total_solicitudes'] += $est->total_solicitudes;
+            $totales['total_publicaciones'] += $est->total_publicaciones_solicitadas;
+            $totales['total_aprobadas'] += $est->aprobadas;
+            $totales['total_rechazadas'] += $est->rechazadas;
+            $totales['total_pendientes'] += $est->pendientes;
+            $totales['total_finalizadas'] += $est->finalizadas;
+        }
+    
+        // Calcular porcentaje total de aprobación
+        $porcentaje_total = $totales['total_solicitudes'] > 0 
+            ? ($totales['total_aprobadas'] / $totales['total_solicitudes']) * 100 
+            : 0;
+    
+        // Agregar fila de totales
+        $export_data[] = array(
+            'Mes' => 'TOTALES',
+            'Año' => '',
+            'Total Solicitudes' => $totales['total_solicitudes'],
+            'Publicaciones Solicitadas' => $totales['total_publicaciones'],
+            'Aprobadas' => $totales['total_aprobadas'],
+            'Rechazadas' => $totales['total_rechazadas'],
+            'Pendientes' => $totales['total_pendientes'],
+            'Finalizadas' => $totales['total_finalizadas'],
+            '% Aprobación' => number_format($porcentaje_total, 2) . '%'
+        );
+    
+        // Modificar la parte donde se agregan los filtros
+    $export_data[] = array(); // Línea en blanco
+    $export_data[] = array(
+        'Filtros Aplicados',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+    );
+    $export_data[] = array(
+        'Fecha Inicio',
+        !empty($data['filtros']['fecha_inicio']) ? date('d/m/Y', strtotime($data['filtros']['fecha_inicio'])) : 'No especificada',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+    );
+    $export_data[] = array(
+        'Fecha Fin',
+        !empty($data['filtros']['fecha_fin']) ? date('d/m/Y', strtotime($data['filtros']['fecha_fin'])) : 'No especificada',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+    );
+
+        // Agregar fecha de generación del reporte
+        $export_data[] = array(); // Línea en blanco
+        $export_data[] = array(
+            'Reporte generado el:',
+            date('d/m/Y H:i:s'),
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        );
+    
+        // Cargar la librería y exportar
+        $this->load->library('excel');
+        $this->excel->export_to_excel($export_data, 'Reporte_Solicitudes_' . date('Y-m-d'));
     }
+
 
     private function _generar_pdf_profesiones($data) {
         try {
@@ -631,9 +765,9 @@ class Reportes extends CI_Controller {
     
                 <div class="filtros">
                     <strong>Periodo:</strong> ' . 
-                    ($data['filtros']['fecha_inicio'] ? date('d/m/Y', strtotime($data['filtros']['fecha_inicio'])) : 'Inicio') . 
-                    ' - ' . 
-                    ($data['filtros']['fecha_fin'] ? date('d/m/Y', strtotime($data['filtros']['fecha_fin'])) : 'Fin') . '
+                        (!empty($data['filtros']['fecha_inicio']) ? date('d/m/Y', strtotime($data['filtros']['fecha_inicio'])) : 'Inicio') . 
+                        ' - ' . 
+                        (!empty($data['filtros']['fecha_fin']) ? date('d/m/Y', strtotime($data['filtros']['fecha_fin'])) : 'Fin') . '
                 </div>
     
                 <div class="resumen">
@@ -918,6 +1052,318 @@ class Reportes extends CI_Controller {
          // Cargar librería y exportar
     $this->load->library('excel');
     $this->excel->export_to_excel($export_data, 'Reporte_Tipos_Publicaciones_' . date('Y-m-d'));
+}
+
+public function devoluciones() {
+    try {
+        $filtros = [];
+        
+        // Validar y procesar los filtros
+        if ($this->input->get('fecha_inicio')) {
+            $filtros['fecha_inicio'] = $this->input->get('fecha_inicio');
+        }
+        
+        if ($this->input->get('fecha_fin')) {
+            $filtros['fecha_fin'] = $this->input->get('fecha_fin');
+        }
+        
+        if ($this->input->get('estado_devolucion') !== null && $this->input->get('estado_devolucion') !== '') {
+            $filtros['estado_devolucion'] = intval($this->input->get('estado_devolucion'));
+        }
+        
+        // Procesar fechas por defecto si no se proporcionan
+        if (empty($filtros['fecha_inicio'])) {
+            $filtros['fecha_inicio'] = date('Y-m-d', strtotime('-1 month'));
+        }
+        
+        if (empty($filtros['fecha_fin'])) {
+            $filtros['fecha_fin'] = date('Y-m-d');
+        }
+        
+        // Obtener datos estadísticos y detalle
+        $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_devoluciones($filtros);
+        $data['detalle_devoluciones'] = $this->Reporte_model->obtener_detalle_devoluciones($filtros);
+        $data['filtros'] = $filtros;
+
+        // Si se solicita exportación
+        if ($this->input->get('export') === 'pdf') {
+            $this->_generar_pdf_devoluciones($data);
+            return;
+        } else if ($this->input->get('export') === 'excel') {
+            $this->_generar_excel_devoluciones($data);
+            return;
+        }
+        
+        // Cargar las vistas
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('reportes/devoluciones', $data);
+        $this->load->view('inc/footer');
+        
+        // Log para debugging
+        log_message('debug', 'Filtros aplicados: ' . json_encode($filtros));
+        
+    } catch (Exception $e) {
+        log_message('error', 'Error en reporte de devoluciones: ' . $e->getMessage());
+        $this->session->set_flashdata('error', 'Error al generar el reporte: ' . $e->getMessage());
+        redirect('reportes');
+    }
+}
+
+
+private function _generar_pdf_devoluciones($data) {
+    try {
+        require_once APPPATH . '../vendor/autoload.php';
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        // Texto del filtro de estado
+        $texto_estado = '';
+        if (!empty($data['filtros']['estado_devolucion'])) {
+            switch($data['filtros']['estado_devolucion']) {
+                case ESTADO_DEVOLUCION_BUENO:
+                    $texto_estado = 'Estado: Bueno';
+                    break;
+                case ESTADO_DEVOLUCION_DAÑADO:
+                    $texto_estado = 'Estado: Dañado';
+                    break;
+                case ESTADO_DEVOLUCION_PERDIDO:
+                    $texto_estado = 'Estado: Perdido';
+                    break;
+            }
+        }
+
+        // Preparar totales para el resumen
+        $total_devoluciones = array_sum(array_column($data['estadisticas'], 'total_devoluciones'));
+        $total_bueno = array_sum(array_column($data['estadisticas'], 'estado_bueno'));
+        $total_dañado = array_sum(array_column($data['estadisticas'], 'estado_dañado'));
+        $total_perdido = array_sum(array_column($data['estadisticas'], 'estado_perdido'));
+
+        $html = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: Arial, sans-serif; }
+                .header { text-align: center; margin-bottom: 20px; }
+                .filtros { 
+                    background-color: #f8f9fa; 
+                    padding: 10px; 
+                    margin-bottom: 20px; 
+                    border-radius: 5px;
+                }
+                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f5f5f5; }
+                .badge { 
+                    padding: 3px 8px;
+                    border-radius: 3px;
+                    font-size: 12px;
+                    color: white;
+                }
+                .badge-success { background-color: #28a745; }
+                .badge-warning { background-color: #ffc107; }
+                .badge-danger { background-color: #dc3545; }
+                .badge-info { background-color: #17a2b8; }
+                .summary { margin: 20px 0; padding: 10px; background-color: #f8f9fa; }
+                .footer { 
+                    position: fixed;
+                    bottom: 0;
+                    width: 100%;
+                    text-align: center;
+                    font-size: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <img src="' . base_url('uploads/logo_umss.jpg') . '" alt="Logo UMSS" style="width: 70px;">
+                <h1>HEMEROTECA UMSS</h1>
+                <h2>Reporte de Devoluciones</h2>
+            </div>
+
+            <div class="filtros">
+                <strong>Filtros Aplicados:</strong><br>
+                Período: ' . 
+                ($data['filtros']['fecha_inicio'] ? date('d/m/Y', strtotime($data['filtros']['fecha_inicio'])) : 'Inicio') . 
+                ' al ' . 
+                ($data['filtros']['fecha_fin'] ? date('d/m/Y', strtotime($data['filtros']['fecha_fin'])) : 'Fin') . '<br>' .
+                ($texto_estado ? $texto_estado : 'Todos los estados') . '
+            </div>
+
+            <div class="summary">
+                <h4>Resumen General</h4>
+                <p>Total Devoluciones: ' . $total_devoluciones . '</p>
+                <p>En Buen Estado: ' . $total_bueno . '</p>
+                <p>Dañados: ' . $total_dañado . '</p>
+                <p>Perdidos: ' . $total_perdido . '</p>
+            </div>
+
+            <h4>Detalle de Devoluciones</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha Dev.</th>
+                        <th>Lector</th>
+                        <th>Publicación</th>
+                        <th>Editorial</th>
+                        <th>Estado</th>
+                        <th>Días</th>
+                        <th>Encargado</th>
+                    </tr>
+                </thead>
+                <tbody>';
+
+        foreach ($data['detalle_devoluciones'] as $dev) {
+            $estado_texto = '';
+            $clase = '';
+            switch($dev->estadoDevolucion) {
+                case ESTADO_DEVOLUCION_BUENO:
+                    $estado_texto = 'Bueno';
+                    $clase = 'badge-success';
+                    break;
+                case ESTADO_DEVOLUCION_DAÑADO:
+                    $estado_texto = 'Dañado';
+                    $clase = 'badge-warning';
+                    break;
+                case ESTADO_DEVOLUCION_PERDIDO:
+                    $estado_texto = 'Perdido';
+                    $clase = 'badge-danger';
+                    break;
+            }
+
+            $html .= '
+                <tr>
+                    <td>' . date('d/m/Y', strtotime($dev->fechaDevolucion)) . '</td>
+                    <td>' . htmlspecialchars($dev->nombres . ' ' . $dev->apellidoPaterno) . '</td>
+                    <td>' . htmlspecialchars($dev->titulo) . '</td>
+                    <td>' . htmlspecialchars($dev->nombreEditorial) . '</td>
+                    <td><span class="' . $clase . '">' . $estado_texto . '</span></td>
+                    <td>' . $dev->dias_prestamo . '</td>
+                    <td>' . htmlspecialchars($dev->nombre_encargado . ' ' . $dev->apellido_encargado) . '</td>
+                </tr>';
+        }
+
+        $html .= '
+                </tbody>
+            </table>
+
+            <div class="footer">
+                <p>Reporte generado el ' . date('d/m/Y H:i:s') . '</p>
+            </div>
+        </body>
+        </html>';
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        $filename = 'reporte_devoluciones_' . date('YmdHis') . '.pdf';
+        $dompdf->stream($filename, array('Attachment' => false));
+
+    } catch (Exception $e) {
+        log_message('error', 'Error generando PDF de devoluciones: ' . $e->getMessage());
+        log_message('debug', 'Detalles del error: ' . $e->getTraceAsString());
+        $this->session->set_flashdata('error', 'Error al generar el PDF. Por favor intente nuevamente.');
+        redirect('reportes/devoluciones');
+    }
+}
+
+private function _generar_excel_devoluciones($data) {
+    // Preparar datos para la exportación
+    $export_data = array();
+
+    // Información del reporte y filtros
+    $export_data[] = array(
+        'REPORTE DE DEVOLUCIONES - HEMEROTECA UMSS',
+        date('d/m/Y H:i:s')
+    );
+    
+    // Agregar filtros aplicados
+    $export_data[] = array(
+        'FILTROS APLICADOS'
+    );
+    $export_data[] = array(
+        'Período:',
+        ($data['filtros']['fecha_inicio'] ? date('d/m/Y', strtotime($data['filtros']['fecha_inicio'])) : 'Inicio') . 
+        ' al ' . 
+        ($data['filtros']['fecha_fin'] ? date('d/m/Y', strtotime($data['filtros']['fecha_fin'])) : 'Fin')
+    );
+    if (!empty($data['filtros']['estado_devolucion'])) {
+        $estado_texto = '';
+        switch($data['filtros']['estado_devolucion']) {
+            case ESTADO_DEVOLUCION_BUENO:
+                $estado_texto = 'Bueno';
+                break;
+            case ESTADO_DEVOLUCION_DAÑADO:
+                $estado_texto = 'Dañado';
+                break;
+            case ESTADO_DEVOLUCION_PERDIDO:
+                $estado_texto = 'Perdido';
+                break;
+        }
+        $export_data[] = array('Estado:', $estado_texto);
+    }
+    
+    $export_data[] = array('', ''); // Línea en blanco
+    
+    // Resumen general
+    $total_devoluciones = array_sum(array_column($data['estadisticas'], 'total_devoluciones'));
+    $total_bueno = array_sum(array_column($data['estadisticas'], 'estado_bueno'));
+    $total_dañado = array_sum(array_column($data['estadisticas'], 'estado_dañado'));
+    $total_perdido = array_sum(array_column($data['estadisticas'], 'estado_perdido'));
+
+    $export_data[] = array(
+        'RESUMEN GENERAL'
+    );
+    $export_data[] = array(
+        'Total Devoluciones', $total_devoluciones,
+        'En Buen Estado', $total_bueno,
+        'Dañados', $total_dañado,
+        'Perdidos', $total_perdido
+    );
+
+    $export_data[] = array('', ''); // Línea en blanco
+    
+    // Detalle de devoluciones
+    $export_data[] = array(
+        'DETALLE DE DEVOLUCIONES'
+    );
+    
+    $export_data[] = array(
+        'Fecha Devolución',
+        'Lector',
+        'Publicación',
+        'Editorial',
+        'Estado',
+        'Días Préstamo',
+        'Estado Entrega',
+        'Encargado'
+    );
+    
+    foreach ($data['detalle_devoluciones'] as $dev) {
+        $estado_texto = $dev->estadoDevolucion == 1 ? 'Bueno' : 
+                      ($dev->estadoDevolucion == 2 ? 'Dañado' : 'Perdido');
+                      
+        $export_data[] = array(
+            date('d/m/Y', strtotime($dev->fechaDevolucion)),
+            $dev->nombres . ' ' . $dev->apellidoPaterno,
+            $dev->titulo,
+            $dev->nombreEditorial,
+            $estado_texto,
+            $dev->dias_prestamo,
+            $dev->estado_entrega,
+            $dev->nombre_encargado . ' ' . $dev->apellido_encargado
+        );
+    }
+
+    // Cargar la librería y exportar
+    $this->load->library('excel');
+    $this->excel->export_to_excel($export_data, 'Reporte_Devoluciones_Filtrado_' . date('Y-m-d'));
 }
 
 }

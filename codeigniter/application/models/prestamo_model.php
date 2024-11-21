@@ -845,4 +845,34 @@ public function obtener_prestamos_devueltos() {
     return $this->db->get()->result();
 }
 
+public function obtener_prestamo_por_publicacion($idPublicacion) {
+    $this->db->select('
+        p.idPrestamo,
+        p.fechaPrestamo,
+        p.horaInicio,
+        p.horaDevolucion,
+        p.estadoPrestamo,
+        sp.idSolicitud,
+        sp.idUsuario,
+        pub.idPublicacion,
+        pub.titulo,
+        u.nombres,
+        u.apellidoPaterno,
+        enc.nombres as nombre_encargado,
+        enc.apellidoPaterno as apellido_encargado
+    ');
+    
+    $this->db->from('PRESTAMO p');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'p.idSolicitud = sp.idSolicitud');
+    $this->db->join('DETALLE_SOLICITUD ds', 'ds.idSolicitud = sp.idSolicitud');
+    $this->db->join('PUBLICACION pub', 'ds.idPublicacion = pub.idPublicacion');
+    $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+    $this->db->join('USUARIO enc', 'p.idEncargadoPrestamo = enc.idUsuario', 'left');
+    $this->db->where('pub.idPublicacion', $idPublicacion);
+    $this->db->where('p.estado', 1);
+    $this->db->order_by('p.fechaPrestamo', 'DESC');
+    $this->db->limit(1);
+
+    return $this->db->get()->row();
+}
 }

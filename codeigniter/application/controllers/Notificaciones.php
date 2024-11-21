@@ -153,7 +153,7 @@ class Notificaciones extends CI_Controller {
         }
     }
     
-    private function _obtener_datos_relacionados($notificacion) {
+   /* private function _obtener_datos_relacionados($notificacion) {
         // Asegurarse de que el modelo está cargado
         if (!isset($this->Solicitud_model)) {
             $this->load->model('Solicitud_model');
@@ -190,7 +190,65 @@ class Notificaciones extends CI_Controller {
         }
         
         return $datos;
+    }*/
+    private function _obtener_datos_relacionados($notificacion) {
+        $datos = [];
+        
+        try {
+            switch ($notificacion->tipo) {
+                case NOTIFICACION_NUEVA_SOLICITUD:
+                case NOTIFICACION_SOLICITUD_PRESTAMO:
+                case NOTIFICACION_APROBACION_PRESTAMO:
+                case NOTIFICACION_RECHAZO_PRESTAMO:
+                    // Para notificaciones relacionadas con solicitudes
+                    if ($notificacion->idPublicacion) {
+                        $solicitud = $this->Solicitud_model->obtener_solicitud_por_publicacion(
+                            $notificacion->idPublicacion,
+                            $notificacion->idUsuario
+                        );
+                        if ($solicitud) {
+                            $datos['idSolicitud'] = $solicitud->idSolicitud;
+                            $datos['idPublicacion'] = $solicitud->idPublicacion;
+                        }
+                    }
+                    break;
+                    
+                case NOTIFICACION_DEVOLUCION:
+                case NOTIFICACION_VENCIMIENTO:
+                    // Para notificaciones relacionadas con préstamos
+                    if ($notificacion->idPublicacion) {
+                        $prestamo = $this->Prestamo_model->obtener_prestamo_por_publicacion(
+                            $notificacion->idPublicacion
+                        );
+                        if ($prestamo) {
+                            $datos['idPrestamo'] = $prestamo->idPrestamo;
+                            $datos['idPublicacion'] = $prestamo->idPublicacion;
+                        }
+                    }
+                    break;
+                    
+                case NOTIFICACION_DISPONIBILIDAD:
+                    // Para notificaciones de disponibilidad de publicaciones
+                    if ($notificacion->idPublicacion) {
+                        $publicacion = $this->Publicacion_model->obtener_publicacion($notificacion->idPublicacion);
+                        if ($publicacion) {
+                            $datos['idPublicacion'] = $publicacion->idPublicacion;
+                        }
+                    }
+                    break;
+            }
+    
+            log_message('debug', 'Datos relacionados obtenidos para notificación ID: ' . $notificacion->idNotificacion . 
+                              ' - Tipo: ' . $notificacion->tipo);
+                              
+            return $datos;
+            
+        } catch (Exception $e) {
+            log_message('error', 'Error al obtener datos relacionados de notificación: ' . $e->getMessage());
+            return $datos;
+        }
     }
+    
     public function preferencias() {
         $this->_verificar_sesion();
         $idUsuario = $this->session->userdata('idUsuario');

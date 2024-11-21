@@ -42,7 +42,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <a href="<?php echo site_url('usuarios/editar_perfil'); ?>" class="btn btn-primary mt-3">Editar Perfil</a>
+                        
                         <a href="<?php echo site_url('usuarios/cambiar_password'); ?>" class="btn btn-secondary mt-3">Cambiar Contraseña</a>
                     </div>
                 </div>
