@@ -243,8 +243,8 @@ class Reporte_model extends CI_Model {
             p.idPublicacion,
             p.titulo,
             t.nombreTipo,
-            e.nombreEditorial,
-            p.fechaPublicacion,
+            e.nombreEditorial, 
+            DATE_FORMAT(p.fechaPublicacion, "%d/%m/%Y") as fecha_publicacion,
             COUNT(DISTINCT ds.idSolicitud) as total_solicitudes,
             COUNT(DISTINCT CASE WHEN pr.estadoPrestamo = 1 THEN pr.idPrestamo END) as prestamos_activos,
             COUNT(DISTINCT CASE WHEN pr.estadoPrestamo = 2 THEN pr.idPrestamo END) as prestamos_completados,
@@ -256,6 +256,7 @@ class Reporte_model extends CI_Model {
                 END
             ), 1) as promedio_dias_prestamo
         ');
+    
         
         $this->db->from('PUBLICACION p');
         $this->db->join('TIPO t', 'p.idTipo = t.idTipo');
@@ -277,6 +278,42 @@ class Reporte_model extends CI_Model {
         $this->db->group_by('p.idPublicacion, p.titulo, t.nombreTipo, e.nombreEditorial, p.fechaPublicacion');
         $this->db->order_by('total_solicitudes', 'DESC');
         
+        return $this->db->get()->result();
+    }
+
+    public function obtener_historial_prestamos_publicaciones($filtros) {
+        $this->db->select('
+            p.titulo,
+            t.nombreTipo,
+            e.nombreEditorial,
+            sp.fechaSolicitud,
+            pr.fechaPrestamo,
+            pr.fechaDevolucion,
+            pr.estadoPrestamo,
+            u.nombres,
+            u.apellidoPaterno,
+            IF(pr.estadoPrestamo = 1, "Activo", "Devuelto") as estado_texto
+        ');
+        
+        $this->db->from('PUBLICACION p');
+        $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+        $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud');
+        $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud');
+        $this->db->join('USUARIO u', 'sp.idUsuario = u.idUsuario');
+    
+        if (!empty($filtros['fecha_inicio'])) {
+            $this->db->where('DATE(sp.fechaSolicitud) >=', $filtros['fecha_inicio']);
+        }
+        if (!empty($filtros['fecha_fin'])) {
+            $this->db->where('DATE(sp.fechaSolicitud) <=', $filtros['fecha_fin']);
+        }
+        if (!empty($filtros['tipo'])) {
+            $this->db->where('t.idTipo', $filtros['tipo']);
+        }
+    
+        $this->db->order_by('sp.fechaSolicitud', 'DESC');
         return $this->db->get()->result();
     }
 }

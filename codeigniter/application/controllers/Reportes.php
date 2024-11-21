@@ -739,20 +739,17 @@ class Reportes extends CI_Controller {
         );
         
         $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_tipos($filtros);
-        $data['detalles_publicaciones'] = $this->Reporte_model->obtener_detalles_publicaciones_por_tipo($filtros);
-        $data['tipos'] = $this->Tipo_model->obtener_tipos(); // Para el filtro
+        $data['historial_prestamos'] = $this->Reporte_model->obtener_historial_prestamos_publicaciones($filtros);
+        // Add this line to get the detailed publications
+        $data['publicaciones'] = $this->Reporte_model->obtener_detalles_publicaciones_por_tipo($filtros);
+
+        $data['tipos'] = $this->Tipo_model->obtener_tipos();
         $data['filtros'] = $filtros;
         
-        if ($this->input->get('export') === 'pdf') {
-            $this->_generar_pdf_devoluciones($data);
-        } else if ($this->input->get('export') === 'excel') {
-            $this->_generar_excel_devoluciones($data);
-        } else {
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('reportes/tipos_publicaciones', $data);
-            $this->load->view('inc/footer');
-        }
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('reportes/tipos_publicaciones', $data);
+        $this->load->view('inc/footer');
     }
 }
