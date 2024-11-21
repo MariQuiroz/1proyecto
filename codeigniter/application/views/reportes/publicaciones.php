@@ -5,7 +5,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box">
-                        <h4 class="page-title">Publicaciones Más Solicitadas</h4>
+                        <h4 class="page-title">Publicacioneeeeeeeeeeeeeeees Más Solicitadas</h4>
                     </div>
                 </div>
             </div>
@@ -90,6 +90,8 @@
                 </div>
             </div>
 
+            
+
             <!-- Tabla de resultados -->
             <div class="row">
                 <div class="col-12">
@@ -156,6 +158,8 @@
         </div>
     </div>
 </div>
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

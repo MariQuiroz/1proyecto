@@ -124,6 +124,77 @@
                             </div>
                         </div>
                     </div>
+<!-- Tabla Detallada de Publicaciones -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="header-title mb-3">Detalle de Publicaciones por Tipo</h4>
+                
+                <!-- Filtro adicional -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <select name="tipo" class="form-control" onchange="this.form.submit()">
+                            <option value="">Todos los tipos</option>
+                            <?php foreach($tipos as $tipo): ?>
+                                <option value="<?php echo $tipo->idTipo; ?>" 
+                                    <?php echo ($filtros['tipo'] == $tipo->idTipo) ? 'selected' : ''; ?>>
+                                    <?php echo $tipo->nombreTipo; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-centered table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Tipo</th>
+                                <th>Editorial</th>
+                                <th>Fecha Publicación</th>
+                                <th>Total Solicitudes</th>
+                                <th>Préstamos Activos</th>
+                                <th>Préstamos Completados</th>
+                                <th>Promedio Días Préstamo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach($detalles_publicaciones as $pub): ?>
+                                <tr>
+                                    <td><?php echo $pub->titulo; ?></td>
+                                    <td><?php echo $pub->nombreTipo; ?></td>
+                                    <td><?php echo $pub->nombreEditorial; ?></td>
+                                    <td><?php echo date('d/m/Y', strtotime($pub->fechaPublicacion)); ?></td>
+                                    <td class="text-center">
+                                        <span class="badge badge-primary">
+                                            <?php echo $pub->total_solicitudes; ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-warning">
+                                            <?php echo $pub->prestamos_activos; ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-success">
+                                            <?php echo $pub->prestamos_completados; ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php echo $pub->promedio_dias_prestamo ?? 'N/A'; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
                 </div>
             </div>
         </div>
