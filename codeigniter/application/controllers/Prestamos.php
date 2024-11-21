@@ -287,11 +287,18 @@ class Prestamos extends CI_Controller {
     }
     
     private function _registrar_historial_devolucion($prestamo, $estadoDevolucion) {
+
+        // Establecer la zona horaria correcta para Bolivia
+        date_default_timezone_set('America/La_Paz');
+        
+        // Crear objeto DateTime para manejar las fechas correctamente
+        $fechaHoraActual = new DateTime();
+
         $datos_historial = [
             'idPrestamo' => $prestamo->idPrestamo,
             'idPublicacion' => $prestamo->idPublicacion,
             'idUsuario' => $prestamo->idUsuario,
-            'fechaDevolucion' => date('Y-m-d H:i:s'),
+            'fechaDevolucion' => $fechaHoraActual->format('Y-m-d H:i:s'),
             'estadoDevolucion' => $estadoDevolucion,
             'idEncargado' => $this->session->userdata('idUsuario'),
             'observaciones' => sprintf(

@@ -1337,26 +1337,26 @@ private function _obtener_tendencias_por_tipo($filtros) {
      */
     public function obtener_estadisticas_devoluciones($filtros = array()) {
         $this->db->select('
-            MONTH(pr.fechaActualizacion) as mes,
-            YEAR(pr.fechaActualizacion) as anio,
+            MONTH(pr.fechaDevolucion) as mes,
+            YEAR(pr.fechaDevolucion) as anio,
             COUNT(pr.idPrestamo) as total_devoluciones,
             SUM(CASE WHEN pr.estadoDevolucion = ' . ESTADO_DEVOLUCION_BUENO . ' THEN 1 ELSE 0 END) as estado_bueno,
             SUM(CASE WHEN pr.estadoDevolucion = ' . ESTADO_DEVOLUCION_DAÑADO . ' THEN 1 ELSE 0 END) as estado_dañado,
             SUM(CASE WHEN pr.estadoDevolucion = ' . ESTADO_DEVOLUCION_PERDIDO . ' THEN 1 ELSE 0 END) as estado_perdido,
-            ROUND(AVG(DATEDIFF(pr.fechaActualizacion, pr.fechaPrestamo)), 1) as promedio_dias_prestamo,
-            COUNT(CASE WHEN DATEDIFF(pr.fechaActualizacion, pr.fechaPrestamo) > 1 THEN 1 END) as devoluciones_tardias
+            ROUND(AVG(DATEDIFF(pr.fechaDevolucion, pr.fechaPrestamo)), 1) as promedio_dias_prestamo,
+            COUNT(CASE WHEN DATEDIFF(pr.fechaDevolucion, pr.fechaPrestamo) > 1 THEN 1 END) as devoluciones_tardias
         ');
         $this->db->from('PRESTAMO pr');
         
         if (!empty($filtros['fecha_inicio'])) {
-            $this->db->where('DATE(pr.fechaActualizacion) >=', $filtros['fecha_inicio']);
+            $this->db->where('DATE(pr.fechaDevolucion) >=', $filtros['fecha_inicio']);
         }
         if (!empty($filtros['fecha_fin'])) {
-            $this->db->where('DATE(pr.fechaActualizacion) <=', $filtros['fecha_fin']);
+            $this->db->where('DATE(pr.fechaDevolucion) <=', $filtros['fecha_fin']);
         }
         
         $this->db->where('pr.estadoPrestamo', ESTADO_PRESTAMO_FINALIZADO);
-        $this->db->group_by('YEAR(pr.fechaActualizacion), MONTH(pr.fechaActualizacion)');
+        $this->db->group_by('YEAR(pr.fechaDevolucion), MONTH(pr.fechaActualizacion)');
         $this->db->order_by('anio, mes');
         
         return $this->db->get()->result();
@@ -1394,7 +1394,7 @@ private function _obtener_tendencias_por_tipo($filtros) {
 
         // Tiempo promedio de préstamo
         $this->db->select('
-            ROUND(AVG(DATEDIFF(fechaActualizacion, fechaPrestamo)), 1) as promedio_dias_prestamo
+            ROUND(AVG(DATEDIFF(fechaDevolucion, fechaPrestamo)), 1) as promedio_dias_prestamo
         ');
         $this->db->from('PRESTAMO');
         $this->db->where('estadoPrestamo', ESTADO_PRESTAMO_FINALIZADO);

@@ -3,21 +3,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Prestamo_model extends CI_Model {
 
-    private $tabla = 'PRESTAMO';
-    private $campos_base = [
-        'p.idPrestamo',
-        'p.idSolicitud',
-        'p.fechaPrestamo',
-        'p.horaInicio',
-        'p.horaDevolucion',
-        'p.fechaDevolucion', // Nuevo campo añadido
-        'p.estadoPrestamo',
-        'p.estadoDevolucion',
-        'p.estado',
-        'p.idEncargadoPrestamo',
-        'p.idEncargadoDevolucion'
-    ];
-
     public function __construct() {
         parent::__construct();
         $this->load->database();
@@ -624,8 +609,8 @@ public function finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion)
             'estadoPrestamo' => ESTADO_PRESTAMO_FINALIZADO,
             'estadoDevolucion' => $estadoDevolucion,
             'idEncargadoDevolucion' => $idEncargado,
-            'horaDevolucion' => $fechaHoraActual->format('H:i:s'),
-            'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
+            'fechaDevolucion' => $fechaHoraActual->format('Y-m-d H:i:s'),
+            'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s')
         ];
         
         $this->db->where('idPrestamo', $idPrestamo);
@@ -645,17 +630,7 @@ public function finalizar_prestamo($idPrestamo, $idEncargado, $estadoDevolucion)
             throw new Exception('Error al actualizar el estado de la publicación');
         }
 
-        // Actualizar la solicitud
-        $data_solicitud = [
-            'estadoSolicitud' => ESTADO_SOLICITUD_FINALIZADA,
-            'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
-            'idUsuarioCreador' => $idEncargado
-        ];
-        
-        $this->db->where('idSolicitud', $prestamo->idSolicitud);
-        if (!$this->db->update('SOLICITUD_PRESTAMO', $data_solicitud)) {
-            throw new Exception('Error al actualizar la solicitud');
-        }
+
 
         // Registrar en el log del sistema
         log_message('info', sprintf(

@@ -206,53 +206,66 @@
                                                     <?php endif; ?>
 
                                                 <?php endif; ?>
-
                                                 <?php if ($this->session->userdata('rol') == 'lector'): ?>
     <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
-        <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>" 
-           class="btn btn-success btn-sm" 
-           title="Solicitar préstamo">
+        <!-- Solicitar préstamo -->
+        <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>"
+            class="btn btn-success btn-sm"
+            title="Solicitar préstamo">
             <i class="mdi mdi-book-open-page-variant"></i> Solicitar
         </a>
-    <?php elseif (intval($publicacion->estado) === ESTADO_PUBLICACION_EN_CONSULTA || 
-                  intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
+    <?php elseif (intval($publicacion->estado) === ESTADO_PUBLICACION_EN_CONSULTA ||
+                   intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
         <?php 
-        $es_mi_prestamo = ($publicacion->es_mi_reserva == 1 || 
-                        (isset($publicacion->idUsuarioSolicitud) && 
-                         $publicacion->idUsuarioSolicitud == $this->session->userdata('idUsuario')));
+        // Obtenemos el ID del usuario actual
+        $idUsuarioActual = $this->session->userdata('idUsuario');
         
-        if ($es_mi_prestamo): ?>
+        // Verificamos si el usuario actual es quien tiene la publicación
+        $es_mi_reserva = ($publicacion->es_mi_reserva == 1);
+        $es_mi_consulta = (isset($publicacion->idUsuario) && 
+                          $publicacion->idUsuario == $idUsuarioActual);
+        ?>
+
+        <?php if ($es_mi_consulta): ?>
+            <!-- Publicación en consulta por el usuario actual -->
             <button class="btn btn-info btn-sm" disabled>
-                <i class="mdi mdi-book-account"></i> En tu poder
+                <i class="mdi mdi-book-account"></i> En tu poder (Consulta)
             </button>
-        <?php else: 
+        <?php elseif ($es_mi_reserva): ?>
+            <!-- Publicación reservada por el usuario actual -->
+            <button class="btn btn-primary btn-sm" disabled>
+                <i class="mdi mdi-bookmark"></i> Reservada por ti
+            </button>
+        <?php else: ?>
+            <?php 
             $interes_existente = $this->Notificacion_model->obtener_estado_interes(
-                $this->session->userdata('idUsuario'), 
+                $idUsuarioActual, 
                 $publicacion->idPublicacion
             );
-            
-            // Solo mostrar el botón si no hay interés o si el interés fue notificado
-            if (!$interes_existente || $interes_existente->estado == ESTADO_INTERES_NOTIFICADO): ?>
-                <a href="<?php echo site_url('notificaciones/agregar_interes_simple/'.$publicacion->idPublicacion); ?>" 
-                   class="btn btn-warning btn-sm">
+            ?>
+
+            <?php if (!$interes_existente || $interes_existente->estado == ESTADO_INTERES_NOTIFICADO): ?>
+                <!-- Notificar interés -->
+                <a href="<?php echo site_url('notificaciones/agregar_interes_simple/'.$publicacion->idPublicacion); ?>"
+                    class="btn btn-warning btn-sm">
                     <i class="mdi mdi-bell"></i> Notificarme cuando esté disponible
                 </a>
             <?php elseif ($interes_existente->estado == ESTADO_INTERES_SOLICITADO): ?>
+                <!-- Cancelar interés -->
                 <div class="btn-group">
                     <button class="btn btn-secondary btn-sm" disabled>
                         <i class="mdi mdi-bell-check"></i> Notificación Activa
                     </button>
-                    <a href="<?php echo site_url('notificaciones/cancelar_interes/'.$publicacion->idPublicacion); ?>" 
-                       class="btn btn-secondary btn-sm" 
-                       title="Cancelar notificación">
+                    <a href="<?php echo site_url('notificaciones/cancelar_interes/'.$publicacion->idPublicacion); ?>"
+                        class="btn btn-secondary btn-sm"
+                        title="Cancelar notificación">
                         <i class="mdi mdi-bell-off"></i>
                     </a>
                 </div>
             <?php endif; ?>
         <?php endif; ?>
     <?php endif; ?>
-<?php endif; ?>
-                                            </td>
+<?php endif; ?>           </td>
                                         </tr>
                                     <?php 
                                         endif;
