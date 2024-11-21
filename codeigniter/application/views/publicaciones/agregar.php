@@ -14,6 +14,11 @@
                             <p class="text-muted font-13 mb-4">
                                 Complete el formulario para agregar una nueva publicación a la hemeroteca.
                             </p>
+                            <?php if ($this->session->flashdata('error')): ?>
+                                <div class="alert alert-danger">
+                                    <?php echo $this->session->flashdata('error'); ?>
+                                </div>
+                            <?php endif; ?>
 
                             <?php echo form_open_multipart('publicaciones/agregarbd'); ?>
                                 <div class="mb-3">

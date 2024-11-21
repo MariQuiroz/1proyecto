@@ -138,31 +138,41 @@ class Publicaciones extends CI_Controller {
     
     public function agregarbd()
     {
+        $this->form_validation->set_message('required', 'El campo {field} es obligatorio.');
+        $this->form_validation->set_message('min_length', 'El campo {field} debe tener al menos {param} caracteres.');
+        $this->form_validation->set_message('max_length', 'El campo {field} no debe superar los {param} caracteres.');
+        $this->form_validation->set_message('numeric', 'El campo {field} debe contener un valor numérico.');
+        $this->form_validation->set_message('greater_than', 'El campo {field} debe ser mayor que {param}.');
+        $this->form_validation->set_message('less_than', 'El campo {field} debe ser menor que {param}.');
+    
+        // Reglas de validación
         $this->form_validation->set_rules('titulo', 'Título', 'required|min_length[3]|max_length[255]');
         $this->form_validation->set_rules('idEditorial', 'Editorial', 'required|numeric');
         $this->form_validation->set_rules('idTipo', 'Tipo', 'required|numeric');
         $this->form_validation->set_rules('fechaPublicacion', 'Fecha de Publicación', 'required');
         $this->form_validation->set_rules('numeroPaginas', 'Número de Páginas', 'numeric|max_length[4]|greater_than[0]|less_than[1001]');
         $this->form_validation->set_rules('ubicacionFisica', 'Ubicación Física', 'required|min_length[5]|max_length[255]');
-
+    
         if ($this->form_validation->run() == FALSE) {
-            $this->agregar();
+            // Mostrar los errores en la vista
+            $this->session->set_flashdata('error', validation_errors());
+            $this->agregar(); // Redirigir a la vista de agregar
         } else {
             $data = array(
                 'idTipo' => $this->input->post('idTipo'),
                 'idEditorial' => $this->input->post('idEditorial'),
-                'titulo' => strtoupper($this->input->post('titulo')), 
+                'titulo' => strtoupper($this->input->post('titulo')),
                 'fechaPublicacion' => $this->input->post('fechaPublicacion'),
                 'numeroPaginas' => $this->input->post('numeroPaginas'),
-                'descripcion' => strtoupper($this->input->post('descripcion')), 
-                'ubicacionFisica' => strtoupper($this->input->post('ubicacionFisica')), 
+                'descripcion' => strtoupper($this->input->post('descripcion')),
+                'ubicacionFisica' => strtoupper($this->input->post('ubicacionFisica')),
                 'estado' => ESTADO_PUBLICACION_DISPONIBLE,
                 'fechaCreacion' => date('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
             );
-
+    
             $idPublicacion = $this->publicacion_model->agregar_publicacion($data);
-
+    
             if ($idPublicacion) {
                 $this->_manejar_carga_portada($idPublicacion);
                 $this->session->set_flashdata('mensaje', 'Publicación agregada correctamente.');
@@ -171,14 +181,15 @@ class Publicaciones extends CI_Controller {
                 $this->session->set_flashdata('error', 'Error al agregar la publicación.');
                 redirect('publicaciones/agregar', 'refresh');
             }
+    
             if (!empty($_FILES['portada']['name'])) {
                 $config['upload_path'] = './uploads/portadas/';
                 $config['allowed_types'] = 'gif|jpg|png|jpeg';
                 $config['max_size'] = 2048; // 2MB
                 $config['file_name'] = 'portada_' . time();
-        
+    
                 $this->upload->initialize($config);
-        
+    
                 if (!$this->upload->do_upload('portada')) {
                     $error = $this->upload->display_errors();
                     log_message('error', 'Error al subir imagen: ' . $error);
@@ -190,8 +201,7 @@ class Publicaciones extends CI_Controller {
                     $data['portada'] = $upload_data['file_name'];
                 }
             }
-        
-        
+    
             if ($this->publicacion_model->agregar_publicacion($data)) {
                 $this->session->set_flashdata('mensaje', 'Publicación agregada correctamente.');
                 redirect('publicaciones/index');
@@ -201,6 +211,7 @@ class Publicaciones extends CI_Controller {
             }
         }
     }
+    
 
 
     public function modificar($idPublicacion) {
