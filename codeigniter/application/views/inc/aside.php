@@ -93,32 +93,16 @@
                 </li>
 
                 <?php if ($this->session->userdata('rol') == 'administrador'): ?>
+
+                    
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="<?php echo site_url('reportes/index'); ?>" id="reportes">
                         <i class="fe-bar-chart-2"></i>
                         <span> Reportes </span>
                     </a>
-                    <ul class="sub-menu" aria-expanded="false">
-                        <li>
-                            <a href="<?php echo site_url('reportes/index'); ?>">
-                                <i class="fe-file-text mr-1"></i>
-                                Préstamos Activos e Históricos
-                            </a>
-                        </li>
-                        <li>
-                            <a href="<?php echo site_url('reportes/index'); ?>">
-                                <i class="fe-book mr-1"></i>
-                                Publicaciones Más Solicitadas
-                            </a>
-                        </li>
-                        <li>
-                            <a href="<?php echo site_url('reportes/usuarios'); ?>">
-                                <i class="fe-users mr-1"></i>
-                                Usuarios Activos
-                            </a>
-                        </li>
-                    </ul>
                 </li>
+               
+            
             <?php endif; ?>
 
                 <li>

@@ -41,31 +41,55 @@ class Tipos extends CI_Controller {
     }
 
     public function agregarbd() {
+        // Verificar permisos
         $this->_verificar_permisos();
-        $this->form_validation->set_rules('nombreTipo', 'Nombre del Tipo', 'required|is_unique[TIPO.nombreTipo]');
-
+    
+        // Definir las reglas de validación
+        $this->form_validation->set_rules(
+            'nombreTipo',
+            'Nombre del Tipo',
+            'required|is_unique[TIPO.nombreTipo]|alpha_numeric_spaces|min_length[3]|max_length[50]',
+            [
+                'required' => 'El campo %s es obligatorio.',
+                'is_unique' => 'El %s ya existe. Por favor, elija otro.',
+                'alpha_numeric_spaces' => 'El %s solo puede contener letras, números y espacios.',
+                'min_length' => 'El %s debe tener al menos 3 caracteres.',
+                'max_length' => 'El %s no puede exceder los 50 caracteres.'
+            ]
+        );
+    
+        // Validar el formulario
         if ($this->form_validation->run() == FALSE) {
+            // Cargar vistas con errores
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
             $this->load->view('tipos/agregar');
             $this->load->view('inc/footer');
         } else {
+            // Convertir el nombre del tipo a mayúsculas
+            $nombreTipo = strtoupper($this->input->post('nombreTipo'));
+    
+            // Preparar datos para guardar
             $data = array(
-                'nombreTipo' => $this->input->post('nombreTipo'),
+                'nombreTipo' => $nombreTipo,
                 'estado' => 1,
                 'fechaCreacion' => date('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
             );
-
+    
+            // Intentar guardar en la base de datos
             if ($this->tipo_model->agregar_tipo($data)) {
                 $this->session->set_flashdata('mensaje', 'Tipo agregado correctamente.');
             } else {
                 $this->session->set_flashdata('error', 'Error al agregar el tipo.');
             }
+    
+            // Redirigir al índice de tipos
             redirect('tipos/index');
         }
     }
+    
 
     public function editar($idTipo) {
         $this->_verificar_permisos();
@@ -81,30 +105,57 @@ class Tipos extends CI_Controller {
     public function editarbd() {
         $this->_verificar_permisos();
         $idTipo = $this->input->post('idTipo');
-        $this->form_validation->set_rules('nombreTipo', 'Nombre del Tipo', 'required|is_unique[TIPO.nombreTipo.idTipo.' . $idTipo . ']');
-
+    
+        // Obtener el nombre actual para validación de unicidad
+        $tipo_actual = $this->tipo_model->obtener_tipo($idTipo);
+    
+        // Definir las reglas de validación
+        $this->form_validation->set_rules(
+            'nombreTipo',
+            'Nombre del Tipo',
+            [
+                'required',
+                [
+                    'nombre_unico',
+                    function ($nombreTipo) use ($tipo_actual, $idTipo) {
+                        // Verificar si el nuevo nombre ya existe en otro registro
+                        $existe = $this->tipo_model->es_nombre_tipo_unico($nombreTipo, $idTipo);
+                        return !$existe; // Retorna false si existe
+                    }
+                ]
+            ],
+            [
+                'required' => 'El campo %s es obligatorio.',
+                'nombre_unico' => 'El %s ya existe. Por favor, elija otro.'
+            ]
+        );
+    
         if ($this->form_validation->run() == FALSE) {
-            $data['tipo'] = $this->tipo_model->obtener_tipo($idTipo);
+            $data['tipo'] = $tipo_actual; // Mantener datos actuales para mostrar en la vista
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
             $this->load->view('tipos/editar', $data);
             $this->load->view('inc/footer');
         } else {
+            // Preparar datos para actualizar
             $data = array(
-                'nombreTipo' => $this->input->post('nombreTipo'),
+                'nombreTipo' => strtoupper($this->input->post('nombreTipo')), // Convertir a mayúsculas
                 'fechaActualizacion' => date('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
             );
-
+    
+            // Intentar actualizar en la base de datos
             if ($this->tipo_model->actualizar_tipo($idTipo, $data)) {
                 $this->session->set_flashdata('mensaje', 'Tipo actualizado correctamente.');
             } else {
                 $this->session->set_flashdata('error', 'Error al actualizar el tipo.');
             }
+    
             redirect('tipos/index');
         }
     }
+    
 
     public function eliminar($idTipo) {
         $this->_verificar_permisos();

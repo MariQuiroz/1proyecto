@@ -112,31 +112,60 @@ class Editoriales extends CI_Controller {
     public function editarbd() {
         $this->_verificar_permisos();
         $idEditorial = $this->input->post('idEditorial');
-        $this->form_validation->set_rules('nombreEditorial', 'Nombre de la Editorial', 'required|is_unique[EDITORIAL.nombreEditorial.idEditorial.' . $idEditorial . ']');
-
+    
+        // Obtener la editorial actual para validación de unicidad
+        $editorial_actual = $this->editorial_model->obtener_editorial($idEditorial);
+    
+        // Reglas de validación
+        $this->form_validation->set_rules(
+            'nombreEditorial',
+            'Nombre de la Editorial',
+            [
+                'required',
+                [
+                    'nombre_unico',
+                    function ($nombreEditorial) use ($editorial_actual, $idEditorial) {
+                        // Verificar si el nuevo nombre ya existe en otro registro
+                        $existe = $this->editorial_model->es_nombre_editorial_unico($nombreEditorial, $idEditorial);
+                        return !$existe; // Retorna false si ya existe
+                    }
+                ]
+            ],
+            [
+                'required' => 'El campo %s es obligatorio.',
+                'nombre_unico' => 'El %s ya existe. Por favor, elija otro.'
+            ]
+        );
+    
+        // Validar el formulario
         if ($this->form_validation->run() == FALSE) {
-            $data['editorial'] = $this->editorial_model->obtener_editorial($idEditorial);
+            // Recargar la vista con errores
+            $data['editorial'] = $editorial_actual;
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
             $this->load->view('editoriales/editar', $data);
             $this->load->view('inc/footer');
         } else {
+            // Preparar los datos actualizados
             $data = array(
-                'nombreEditorial' => $this->input->post('nombreEditorial'),
+                'nombreEditorial' => strtoupper($this->input->post('nombreEditorial')), // Convertir a mayúsculas
                 'fechaActualizacion' => date('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
             );
-
+    
+            // Actualizar la editorial
             if ($this->editorial_model->actualizar_editorial($idEditorial, $data)) {
                 $this->session->set_flashdata('mensaje', 'Editorial actualizada correctamente.');
             } else {
                 $this->session->set_flashdata('error', 'Error al actualizar la editorial.');
             }
+    
+            // Redirigir al listado de editoriales
             redirect('editoriales');
         }
     }
-
+    
     public function eliminar($idEditorial) {
         $this->_verificar_permisos();
         
