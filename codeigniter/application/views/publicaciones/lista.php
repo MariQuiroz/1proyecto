@@ -187,14 +187,7 @@
                                                                 <i class="mdi mdi-settings"></i>
                                                             </button>
                                                             <div class="dropdown-menu">
-                                                                <a class="dropdown-item" 
-                                                                   href="<?php echo site_url('publicaciones/cambiar_estado/'.$publicacion->idPublicacion.'/'.ESTADO_PUBLICACION_EN_MANTENIMIENTO); ?>">
-                                                                    <i class="mdi mdi-wrench"></i> En Mantenimiento
-                                                                </a>
-                                                                <a class="dropdown-item" 
-                                                                   href="<?php echo site_url('publicaciones/cambiar_estado/'.$publicacion->idPublicacion.'/'.ESTADO_PUBLICACION_RESERVADA); ?>">
-                                                                    <i class="mdi mdi-calendar-clock"></i> Reservar
-                                                                </a>
+
                                                                 <div class="dropdown-divider"></div>
                                                                 <a class="dropdown-item text-danger" 
                                                                    href="<?php echo site_url('publicaciones/eliminar/'.$publicacion->idPublicacion); ?>"

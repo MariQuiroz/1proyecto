@@ -212,6 +212,45 @@ class Publicaciones extends CI_Controller {
         }
     }
     
+    private function _manejar_carga_portada($idPublicacion) {
+        // Verificar si el directorio existe, si no, crearlo
+        $upload_path = './uploads/portadas/';
+        if (!file_exists($upload_path)) {
+            mkdir($upload_path, 0777, true);
+        }
+    
+        $nombrearchivo = $idPublicacion . ".jpg";
+        
+        $config = array(
+            'upload_path' => $upload_path,
+            'file_name' => $nombrearchivo,
+            'allowed_types' => 'jpg|jpeg|png|gif',
+            'max_size' => 2048, // 2MB max
+            'overwrite' => TRUE
+        );
+    
+        $this->load->library('upload');
+        $this->upload->initialize($config);
+    
+        // Eliminar archivo anterior si existe
+        $direccion = $config['upload_path'] . $nombrearchivo;
+        if (file_exists($direccion)) {
+            unlink($direccion);
+        }
+    
+        if ($this->upload->do_upload('portada')) {
+            $data_update = array('portada' => $nombrearchivo);
+            $this->publicacion_model->actualizar_publicacion($idPublicacion, $data_update);
+            return true;
+        } else {
+            $upload_error = $this->upload->display_errors();
+            if (!empty($_FILES['portada']['name'])) {
+                log_message('error', 'Error al subir portada: ' . $upload_error);
+                $this->session->set_flashdata('error', 'Error al subir la portada: ' . $upload_error);
+            }
+            return false;
+        }
+    }
 
 
     public function modificar($idPublicacion) {
