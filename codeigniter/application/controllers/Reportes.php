@@ -155,26 +155,6 @@ class Reportes extends CI_Controller {
             $this->load->view('inc/footer');
         }
     }
-    public function tipos_publicaciones() {
-        $filtros = array(
-            'fecha_inicio' => $this->input->get('fecha_inicio'),
-            'fecha_fin' => $this->input->get('fecha_fin')
-        );
-        
-        $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_tipos($filtros);
-        $data['filtros'] = $filtros;
-        if ($this->input->get('export') === 'pdf') {
-            $this->_generar_pdf_devoluciones($data);
-        } else if ($this->input->get('export') === 'excel') {
-            $this->_generar_excel_devoluciones($data);
-        } else {
-            $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
-            $this->load->view('reportes/tipos_publicaciones', $data);
-            $this->load->view('inc/footer');
-        }
-    } 
 
     public function devoluciones() {
         $filtros = array(
@@ -750,4 +730,90 @@ class Reportes extends CI_Controller {
             redirect('reportes/solicitudes');
         }
     }
+
+    // En Reportes.php
+public function tipos_publicaciones() {
+    try {
+        $filtros = $this->_obtener_filtros_tipos();
+        $data = $this->_obtener_datos_reporte_tipos($filtros);
+        
+        switch($this->input->get('export')) {
+            case 'pdf':
+                $this->_generar_pdf_tipos($data);
+                break;
+            case 'excel':
+                $this->_generar_excel_tipos($data);
+                break;
+            default:
+                $this->_cargar_vista_tipos($data);
+        }
+    } catch (Exception $e) {
+        log_message('error', 'Error en reporte tipos: ' . $e->getMessage());
+        $this->session->set_flashdata('error', $e->getMessage());
+        redirect('usuarios/panel');
+    }
+}
+
+private function _obtener_filtros_tipos() {
+    return [
+        'fecha_inicio' => $this->input->get('fecha_inicio') ?: date('Y-m-d', strtotime('-1 month')),
+        'fecha_fin' => $this->input->get('fecha_fin') ?: date('Y-m-d'),
+        'tipo' => $this->input->get('tipo')
+    ];
+}
+
+private function _obtener_datos_reporte_tipos($filtros) {
+    return [
+        'tipos' => $this->Tipo_model->obtener_tipos(),
+        'estadisticas' => $this->Reporte_model->obtener_estadisticas_tipos($filtros),
+        'detalles' => $this->Reporte_model->obtener_detalle_tipos($filtros),
+        'filtros' => $filtros,
+        'totales' => $this->_calcular_totales_tipos($filtros)
+    ];
+}
+
+private function _generar_pdf_tipos($data) {
+    require_once APPPATH . '../vendor/autoload.php';
+    $options = new \Dompdf\Options();
+    $options->set('isHtml5ParserEnabled', true);
+    $options->set('isRemoteEnabled', true);
+    $dompdf = new \Dompdf\Dompdf($options);
+
+    $html = $this->load->view('reportes/tipos_pdf_template', $data, true);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'landscape');
+    $dompdf->render();
+
+    $filename = 'reporte_tipos_' . date('YmdHis') . '.pdf';
+    $dompdf->stream($filename, ['Attachment' => false]);
+}
+
+private function _generar_excel_tipos($data) {
+    $export_data = [];
+    
+    // Datos estadísticos
+    foreach ($data['estadisticas'] as $est) {
+        $export_data[] = [
+            'Tipo' => $est->nombreTipo,
+            'Total Publicaciones' => $est->total_publicaciones,
+            'Prestamos Activos' => $est->prestamos_activos,
+            'Total Préstamos' => $est->total_prestamos
+        ];
+    }
+    
+    // Agregar detalles
+    $export_data[] = [''];  // Separador
+    foreach ($data['detalles'] as $det) {
+        $export_data[] = [
+            'Título' => $det->titulo,
+            'Tipo' => $det->nombreTipo,
+            'Editorial' => $det->nombreEditorial,
+            'Fecha Publicación' => date('d/m/Y', strtotime($det->fechaPublicacion)),
+            'Total Solicitudes' => $det->total_solicitudes
+        ];
+    }
+
+    $this->load->library('excel');
+    $this->excel->export_to_excel($export_data, 'Reporte_Tipos_' . date('Y-m-d'));
+}
 }

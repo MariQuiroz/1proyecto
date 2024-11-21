@@ -37,13 +37,13 @@
                                             <span class="mr-3"><i class="mdi mdi-circle text-warning"></i> En consulta</span>
                                             <span class="mr-3"><i class="mdi mdi-circle text-danger"></i> En mantenimiento</span>
                                             <span class="mr-3"><i class="mdi mdi-circle text-info"></i> Reservada</span>
-                                            <span><i class="mdi mdi-circle text-muted"></i> Eliminada</span>
+                                            
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+                            <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                                 <a href="<?php echo site_url('publicaciones/agregar'); ?>" class="btn btn-primary mb-3">
                                     <i class="mdi mdi-plus"></i> Agregar Nueva Publicación
                                 </a>

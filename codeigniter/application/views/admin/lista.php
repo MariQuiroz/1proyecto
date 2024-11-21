@@ -46,7 +46,7 @@
                             <?php endif; ?>
 
                             <div class="mb-3">
-                                <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+                                <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                                     <a href="<?php echo site_url('usuarios/agregar'); ?>" class="btn btn-success mr-2">
                                         <i class="mdi mdi-plus-circle mr-1"></i>Agregar Nuevo Usuario
                                     </a>

@@ -34,14 +34,14 @@
                         <span class="menu-arrow"></span>
                     </a>
                     <ul class="nav-second-level" aria-expanded="false">
-                        <li><a href="<?php echo site_url('publicaciones/index'); ?>" id="lista-publicaciones">Lista de Publicaciones</a></li>
-                        <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+                        <li><a href="<?php echo site_url('publicaciones/index'); ?>" id="lista-publicaciones">Catálogo de Publicaciones</a></li>
+                        <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                             <li><a href="<?php echo site_url('publicaciones/agregar'); ?>" id="agregar-publicacion">Agregar Publicación</a></li>
                         <?php endif; ?>
                     </ul>
                 </li>
 
-                <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+                <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                     <li>
                         <a href="javascript:void(0);" aria-haspopup="true" aria-expanded="false" id="tipos-editoriales-menu">
                             <i class="la la-list"></i>
@@ -92,7 +92,7 @@
                     </ul>
                 </li>
 
-                <?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
+                <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                 <li>
                     <a href="javascript: void(0);" class="has-arrow waves-effect">
                         <i class="fe-bar-chart-2"></i>

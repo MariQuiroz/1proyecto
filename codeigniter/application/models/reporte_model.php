@@ -123,38 +123,61 @@ class Reporte_model extends CI_Model {
         return $this->db->get()->result();
     }
 
-    public function obtener_estadisticas_tipos($filtros = array()) {
-        $this->db->select('
-            t.nombreTipo,
-            COUNT(DISTINCT p.idPublicacion) as total_publicaciones,
-            COUNT(DISTINCT ds.idSolicitud) as total_solicitudes,
-            COUNT(DISTINCT pr.idPrestamo) as total_prestamos,
-            ROUND(AVG(
-                CASE 
-                    WHEN pr.fechaDevolucion IS NOT NULL 
-                    THEN TIMESTAMPDIFF(HOUR, pr.fechaPrestamo, pr.fechaDevolucion)/24.0
-                    ELSE NULL 
-                END
-            ), 1) as promedio_dias_prestamo
-        ');
-        $this->db->from('TIPO t');
-        $this->db->join('PUBLICACION p', 'p.idTipo = t.idTipo');
-        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
-        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud', 'left');
-        $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud', 'left');
-        
-        if (!empty($filtros['fecha_inicio'])) {
-            $this->db->where('DATE(sp.fechaSolicitud) >=', $filtros['fecha_inicio']);
-        }
-        if (!empty($filtros['fecha_fin'])) {
-            $this->db->where('DATE(sp.fechaSolicitud) <=', $filtros['fecha_fin']);
-        }
-        
-        $this->db->group_by('t.idTipo, t.nombreTipo');
-        $this->db->order_by('total_solicitudes', 'DESC');
-        
-        return $this->db->get()->result();
+// En Reporte_model.php
+public function obtener_estadisticas_tipos($filtros) {
+    $this->db->select('
+        t.nombreTipo,
+        COUNT(DISTINCT p.idPublicacion) as total_publicaciones,
+        COUNT(DISTINCT CASE WHEN pr.estadoPrestamo = 1 THEN pr.idPrestamo END) as prestamos_activos,
+        COUNT(DISTINCT pr.idPrestamo) as total_prestamos
+    ');
+    
+    $this->db->from('TIPO t');
+    $this->db->join('PUBLICACION p', 'p.idTipo = t.idTipo');
+    $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud', 'left');
+    $this->db->join('PRESTAMO pr', 'pr.idSolicitud = sp.idSolicitud', 'left');
+    
+    $this->_aplicar_filtros_tipos($filtros);
+    
+    $this->db->group_by('t.idTipo, t.nombreTipo');
+    return $this->db->get()->result();
+}
+
+public function obtener_detalle_tipos($filtros) {
+    $this->db->select('
+        p.titulo,
+        t.nombreTipo,
+        e.nombreEditorial,
+        p.fechaPublicacion,
+        COUNT(DISTINCT sp.idSolicitud) as total_solicitudes
+    ');
+    
+    $this->db->from('PUBLICACION p');
+    $this->db->join('TIPO t', 't.idTipo = p.idTipo');
+    $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial');
+    $this->db->join('DETALLE_SOLICITUD ds', 'ds.idPublicacion = p.idPublicacion', 'left');
+    $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idSolicitud = ds.idSolicitud', 'left');
+    
+    $this->_aplicar_filtros_tipos($filtros);
+    
+    $this->db->group_by('p.idPublicacion, p.titulo, t.nombreTipo, e.nombreEditorial, p.fechaPublicacion');
+    $this->db->order_by('total_solicitudes', 'DESC');
+    
+    return $this->db->get()->result();
+}
+
+private function _aplicar_filtros_tipos($filtros) {
+    if (!empty($filtros['fecha_inicio'])) {
+        $this->db->where('DATE(sp.fechaSolicitud) >=', $filtros['fecha_inicio']);
     }
+    if (!empty($filtros['fecha_fin'])) {
+        $this->db->where('DATE(sp.fechaSolicitud) <=', $filtros['fecha_fin']);
+    }
+    if (!empty($filtros['tipo'])) {
+        $this->db->where('t.idTipo', $filtros['tipo']);
+    }
+}
 
     public function obtener_estadisticas_devoluciones($filtros = array()) {
         $this->db->select('
