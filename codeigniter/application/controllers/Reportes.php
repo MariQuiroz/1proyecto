@@ -242,7 +242,10 @@ class Reportes extends CI_Controller {
             </head>
             <body>
                 <div class="header">
-                    <h1>Reporte de Préstamos por Profesión</h1>
+        
+                 <img src="' . base_url('uploads/logo_umss.jpg') . '" alt="Logo UMSS" style="width: 70px;">
+                    <h1>HEMEROTECA UMSS</h1>
+                    <h2>Reporte de Préstamos por Profesión</h2>
                     <h3>Período: ' . date('d/m/Y', strtotime($data['filtros']['fecha_inicio'])) . 
                         ' al ' . date('d/m/Y', strtotime($data['filtros']['fecha_fin'])) . '</h3>
                 </div>
