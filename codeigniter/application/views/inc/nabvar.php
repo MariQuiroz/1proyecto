@@ -171,10 +171,10 @@
     <div class="logo-box">
         <a href="<?php echo base_url(); ?>" class="logo text-center">
             <span class="logo-lg">
-                <img src="<?php echo base_url('adminXeria/light/dist/assets/images/logo-light.png'); ?>" alt="logo" height="16">
+            <img src="<?php echo base_url(); ?>uploads/logo1_umss.jpg" alt="logo" height="50">   
             </span>
             <span class="logo-sm">
-                <img src="<?php echo base_url('adminXeria/light/dist/assets/images/logo-sm.png'); ?>" alt="logo" height="18">
+            <img src="<?php echo base_url(); ?>uploads/logo_umss.jpg" alt="logo" height="20">   
             </span>
         </a>
     </div>
@@ -187,27 +187,6 @@
                 <span></span>
             </button>
         </li>
-
-       <!-- Condicional para mostrar Reports solo a administradores y encargados -->
-<?php if ($this->session->userdata('rol') == 'administrador' || $this->session->userdata('rol') == 'encargado'): ?>
-    <li class="dropdown d-none d-lg-block">
-        <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
-            Reports
-            <i class="mdi mdi-chevron-down"></i> 
-        </a>
-        <div class="dropdown-menu">
-            <a href="<?php echo site_url('reportes/prestamos'); ?>" class="dropdown-item">
-                <i class="fe-file-text mr-1"></i> Informe de Préstamos
-            </a>
-            <a href="<?php echo site_url('reportes/publicaciones'); ?>" class="dropdown-item">
-                <i class="fe-book-open mr-1"></i> Informe de Publicaciones
-            </a>
-            <a href="<?php echo site_url('reportes/usuarios'); ?>" class="dropdown-item">
-                <i class="fe-users mr-1"></i> Informe de Usuarios
-            </a>
-        </div>
-    </li>
-<?php endif; ?>
 
         <li class="dropdown dropdown-mega d-none d-lg-block">
             <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
