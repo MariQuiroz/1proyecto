@@ -9,19 +9,21 @@ class Reporte_model extends CI_Model {
     }
 
     public function obtener_estadisticas_profesion($filtros = array()) {
+        // Mantener el método existente sin cambios
         $this->db->select('
-            u.profesion,
+            COALESCE(u.profesion, "OTRO") as profesion,
             COUNT(DISTINCT u.idUsuario) as total_lectores,
             COUNT(DISTINCT sp.idSolicitud) as total_solicitudes,
             COUNT(DISTINCT p.idPrestamo) as total_prestamos,
             ROUND(AVG(
                 CASE 
                     WHEN p.fechaDevolucion IS NOT NULL 
-                    THEN TIMESTAMPDIFF(HOUR, p.fechaPrestamo, p.fechaDevolucion)/24.0 
+                    THEN TIMESTAMPDIFF(HOUR, p.fechaPrestamo, p.fechaDevolucion)/24.0
                     ELSE NULL 
                 END
             ), 1) as promedio_dias_prestamo
         ');
+        
         $this->db->from('USUARIO u');
         $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idUsuario = u.idUsuario', 'left');
         $this->db->join('PRESTAMO p', 'p.idSolicitud = sp.idSolicitud', 'left');
@@ -34,9 +36,53 @@ class Reporte_model extends CI_Model {
         }
         
         $this->db->where('u.rol', 'lector');
-        $this->db->where('u.profesion IS NOT NULL');
         $this->db->group_by('u.profesion');
         $this->db->order_by('total_prestamos', 'DESC');
+        
+        return $this->db->get()->result();
+    }
+
+    public function obtener_detalle_prestamos_profesion($filtros = array(), $profesion = null) {
+        $this->db->select('
+            u.profesion,
+            u.nombres,
+            u.apellidoPaterno,
+            pub.titulo as titulo_publicacion,
+            t.nombreTipo as tipo_publicacion,
+            e.nombreEditorial,
+            pub.fechaPublicacion,
+            p.fechaPrestamo,
+            p.fechaDevolucion,
+            CASE 
+                WHEN p.estadoDevolucion = 1 THEN "Bueno"
+                WHEN p.estadoDevolucion = 2 THEN "Dañado"
+                WHEN p.estadoDevolucion = 3 THEN "Perdido"
+                ELSE "No devuelto"
+            END as estado_devolucion,
+            TIMESTAMPDIFF(DAY, p.fechaPrestamo, COALESCE(p.fechaDevolucion, NOW())) as dias_prestamo
+        ', false); // Añadido false como segundo parámetro para evitar el escape automático
+        
+        $this->db->from('USUARIO u');
+        $this->db->join('SOLICITUD_PRESTAMO sp', 'sp.idUsuario = u.idUsuario');
+        $this->db->join('PRESTAMO p', 'p.idSolicitud = sp.idSolicitud');
+        $this->db->join('DETALLE_SOLICITUD ds', 'ds.idSolicitud = sp.idSolicitud');
+        $this->db->join('PUBLICACION pub', 'pub.idPublicacion = ds.idPublicacion');
+        $this->db->join('TIPO t', 't.idTipo = pub.idTipo');
+        $this->db->join('EDITORIAL e', 'e.idEditorial = pub.idEditorial');
+        
+        if (!empty($filtros['fecha_inicio'])) {
+            $this->db->where('DATE(p.fechaPrestamo) >=', $filtros['fecha_inicio']);
+        }
+        if (!empty($filtros['fecha_fin'])) {
+            $this->db->where('DATE(p.fechaPrestamo) <=', $filtros['fecha_fin']);
+        }
+        
+        if ($profesion) {
+            $this->db->where('u.profesion', $profesion);
+        }
+        
+        $this->db->where('u.rol', 'lector');
+        $this->db->order_by('p.fechaPrestamo', 'DESC');
         
         return $this->db->get()->result();
     }

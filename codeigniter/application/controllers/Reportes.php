@@ -32,14 +32,39 @@ class Reportes extends CI_Controller {
     }
 
     public function por_profesion() {
+        // Obtener filtros de fecha del formulario
         $filtros = array(
             'fecha_inicio' => $this->input->get('fecha_inicio'),
-            'fecha_fin' => $this->input->get('fecha_fin')
+            'fecha_fin' => $this->input->get('fecha_fin'),
+            'profesion' => $this->input->get('profesion')
         );
-        
+    
+        // Validar y formatear fechas
+        if (empty($filtros['fecha_inicio'])) {
+            $filtros['fecha_inicio'] = date('Y-m-d', strtotime('-1 month')); // Por defecto último mes
+        }
+        if (empty($filtros['fecha_fin'])) {
+            $filtros['fecha_fin'] = date('Y-m-d'); // Por defecto fecha actual
+        }
+    
+        // Obtener datos con los filtros aplicados
         $data['estadisticas'] = $this->Reporte_model->obtener_estadisticas_profesion($filtros);
+        $data['detalles'] = $this->Reporte_model->obtener_detalle_prestamos_profesion($filtros);
         $data['filtros'] = $filtros;
-        
+        $data['profesion_seleccionada'] = $filtros['profesion'];
+    
+        // Calcular totales para el resumen
+        $data['totales'] = array(
+            'prestamos' => array_sum(array_column($data['estadisticas'], 'total_prestamos')),
+            'lectores' => array_sum(array_column($data['estadisticas'], 'total_lectores')),
+            'promedio_dias' => number_format(
+                array_sum(array_map(function($item) {
+                    return $item->promedio_dias_prestamo * $item->total_prestamos;
+                }, $data['estadisticas'])) / max(1, array_sum(array_column($data['estadisticas'], 'total_prestamos'))),
+                1
+            )
+        );
+    
         if ($this->input->get('export') === 'pdf') {
             $this->_generar_pdf_profesiones($data);
         } else if ($this->input->get('export') === 'excel') {
@@ -134,7 +159,13 @@ class Reportes extends CI_Controller {
                 $total_solicitudes += $est->total_solicitudes;
                 $total_prestamos += $est->total_prestamos;
             }
-    
+
+     // Crear un array asociativo para fácil acceso a las estadísticas por profesión
+        $estadisticas_por_profesion = [];
+        foreach ($data['estadisticas'] as $est) {
+            $estadisticas_por_profesion[$est->profesion] = $est;
+        }
+
             $html = '
             <!DOCTYPE html>
             <html>
@@ -213,22 +244,20 @@ class Reportes extends CI_Controller {
                 'OTRO' => 'Otro'
             ];
     
-            foreach ($profesiones_nombres as $key => $nombre) {
-                $est = array_find($data['estadisticas'], function($e) use ($key) {
-                    return $e->profesion === $key;
-                });
-    
-                if ($est) {
-                    $porcentaje = ($est->total_lectores / $total_lectores) * 100;
-                    $html .= '
-                        <tr>
-                            <td>' . $nombre . '</td>
-                            <td style="text-align: right;">' . $est->total_lectores . '</td>
-                            <td style="text-align: right;">' . $est->total_solicitudes . '</td>
-                            <td style="text-align: right;">' . $est->total_prestamos . '</td>
-                            <td style="text-align: right;">' . number_format($est->promedio_dias_prestamo, 1) . '</td>
-                            <td style="text-align: right;">' . number_format($porcentaje, 1) . '%</td>
-                        </tr>';
+           foreach ($profesiones_nombres as $key => $nombre) {
+            if (isset($estadisticas_por_profesion[$key])) {
+                $est = $estadisticas_por_profesion[$key];
+                $porcentaje = ($est->total_lectores / $total_lectores) * 100;
+                $html .= '
+                    <tr>
+                        <td>' . $nombre . '</td>
+                        <td style="text-align: right;">' . $est->total_lectores . '</td>
+                        <td style="text-align: right;">' . $est->total_solicitudes . '</td>
+                        <td style="text-align: right;">' . $est->total_prestamos . '</td>
+                        <td style="text-align: right;">' . number_format($est->promedio_dias_prestamo, 1) . '</td>
+                        <td style="text-align: right;">' . number_format($porcentaje, 1) . '%</td>
+                    </tr>';
+
                 }
             }
     
@@ -264,7 +293,7 @@ class Reportes extends CI_Controller {
     }
     
     // Función auxiliar para encontrar elementos en array
-    function array_find($array, $callback) {
+    private function array_find($array, $callback) {
         foreach ($array as $item) {
             if ($callback($item)) {
                 return $item;
