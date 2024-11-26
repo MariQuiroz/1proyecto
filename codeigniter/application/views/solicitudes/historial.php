@@ -26,7 +26,7 @@
                                         <th>Publicación</th>
                                         <th>Fecha Solicitud</th>
                                         <th>Estado</th>
-                                        <th>Fecha Actualización</th>
+                                        
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -57,7 +57,7 @@
                                             }
                                             ?>
                                         </td>
-                                        <td><?php echo date('d/m/Y H:i', strtotime($solicitud->fechaActualizacion)); ?></td>
+                                        
                                         <td>
                                             <a href="<?php echo site_url('solicitudes/detalle/' . $solicitud->idSolicitud); ?>" class="btn btn-info btn-sm">Detalles</a>
                                         </td>
