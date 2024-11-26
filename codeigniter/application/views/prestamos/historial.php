@@ -18,16 +18,16 @@
                                 Aquí se muestra el historial completo de todos los préstamos.
                             </p>
 
-                            <table id="historial-prestamos-table" class="table dt-responsive nowrap">
+                            <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
                                 <thead>
                                     <tr>
                                        
-                                        <th>Usuario</th>
+                                        <th>Lector</th>
                                         <th>Publicación</th>
                                         <th>Fecha Inicio</th>
                                         <th>Fecha Fin</th>
                                         <th>Estado</th>
-                                        <th>Acciones</th>
+                                        
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -52,9 +52,7 @@
                                             }
                                             ?>
                                         </td>
-                                        <td>
-                                            <a href="<?php echo site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" class="btn btn-info btn-sm">Detalles</a>
-                                        </td>
+                                        
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>

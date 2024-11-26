@@ -188,51 +188,7 @@
             </button>
         </li>
 
-        <li class="dropdown dropdown-mega d-none d-lg-block">
-            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
-                Mega Menu
-                <i class="mdi mdi-chevron-down"></i> 
-            </a>
-            <div class="dropdown-menu dropdown-megamenu">
-                <div class="row">
-                    <div class="col-sm-8">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <h5 class="text-dark mt-0">Gestión de Publicaciones</h5>
-                                <ul class="list-unstyled megamenu-list mt-2">
-                                    <li><a href="javascript:void(0);">Agregar Publicación</a></li>
-                                    <li><a href="javascript:void(0);">Listar Publicaciones</a></li>
-                                    <li><a href="javascript:void(0);">Gestionar Préstamos</a></li>
-                                </ul>
-                            </div>
-                            <div class="col-md-4">
-                                <h5 class="text-dark mt-0">Gestión de Usuarios</h5>
-                                <ul class="list-unstyled megamenu-list mt-2">
-                                    <li><a href="javascript:void(0);">Agregar Usuario</a></li>
-                                    <li><a href="javascript:void(0);">Listar Usuarios</a></li>
-                                    <li><a href="javascript:void(0);">Permisos y Roles</a></li>
-                                </ul>
-                            </div>
-                            <div class="col-md-4">
-                                <h5 class="text-dark mt-0">Configuración</h5>
-                                <ul class="list-unstyled megamenu-list mt-2">
-                                    <li><a href="javascript:void(0);">Ajustes del Sistema</a></li>
-                                    <li><a href="javascript:void(0);">Respaldo de Datos</a></li>
-                                    <li><a href="javascript:void(0);">Logs del Sistema</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-4">
-                        <div class="text-center mt-3">
-                            <h3 class="text-dark">Bienvenido a la Hemeroteca</h3>
-                            <p class="font-16">Sistema de gestión de publicaciones y préstamos</p>
-                            <button class="btn btn-primary mt-1">Explorar Catálogo <i class="mdi mdi-arrow-right-bold-outline ml-1"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </li>
+        
     </ul>
 </div>
 <!-- end Topbar -->

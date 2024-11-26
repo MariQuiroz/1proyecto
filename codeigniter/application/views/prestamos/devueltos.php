@@ -105,12 +105,7 @@
                                                         $prestamo->apellido_encargado_devolucion); ?>
                                                 </td>
                                                 <td>
-                                                    <div class="btn-group">
-                                                        <a href="<?php echo site_url('prestamos/ver_detalle/'.$prestamo->idPrestamo); ?>" 
-                                                           class="btn btn-info btn-sm" 
-                                                           title="Ver detalles">
-                                                            <i class="mdi mdi-eye"></i>
-                                                        </a>
+                                                    
                                                         
                                                         <button type="button" 
                                                                 class="btn btn-primary btn-sm dropdown-toggle" 

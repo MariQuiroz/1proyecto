@@ -50,8 +50,8 @@
                             <table id="prestamos-activos-table" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
-
-                                        <th>Usuario</th>
+                                       
+                                        <th>Lector</th>
                                         <th>Publicación</th>
                                         <th>Fecha Inicio</th>
                                         <th>Acciones</th>
@@ -60,7 +60,7 @@
                                 <tbody>
                                     <?php foreach ($prestamos as $prestamo): ?>
                                     <tr>
-                                 
+                                        
                                         <td><?php echo htmlspecialchars($prestamo->nombres . ' ' . $prestamo->apellidoPaterno); ?></td>
                                         <td><?php echo htmlspecialchars($prestamo->titulo); ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
@@ -69,10 +69,7 @@
                                                     class="btn btn-success btn-sm">
                                                 Finalizar
                                             </button>
-                                            <a href="<?php echo site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" 
-                                            class="btn btn-info btn-sm">
-                                                Detalles
-                                            </a>
+                                            
                                             <a href="<?php echo site_url('solicitudes/generar_ficha/' . $prestamo->idSolicitud); ?>" 
                                             class="btn btn-primary btn-sm">
                                                 Generar Ficha
