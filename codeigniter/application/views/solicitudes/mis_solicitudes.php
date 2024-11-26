@@ -77,10 +77,7 @@
                                                 <?php endif; ?>
                                             </td>
                                             <td>
-                                                <a href="<?php echo site_url('solicitudes/detalle/'.$solicitud->idSolicitud); ?>" 
-                                                   class="btn btn-info btn-sm">
-                                                    <i class="mdi mdi-eye"></i> Ver Detalles
-                                                </a>
+                                                
                                                 <?php if ($solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE): ?>
                                                     <a href="<?php echo site_url('solicitudes/cancelar_solicitud/'.$solicitud->idSolicitud); ?>" 
                                                        class="btn btn-danger btn-sm ml-1"

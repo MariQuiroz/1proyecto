@@ -59,7 +59,7 @@
                             <?php endif; ?>
                             <div class="row mt-3">
                                 <div class="col-12">
-                                    <a href="<?php echo site_url('publicaciones/index'); ?>" class="btn btn-secondary">Volver a la lista</a>
+                                    <a href="<?php echo site_url('publicaciones/index'); ?>" class="btn btn-secondary">Volver al catálogo</a>
                                 </div>
                             </div>
                         </div>

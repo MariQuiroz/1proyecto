@@ -32,7 +32,7 @@
                                             <th>Fecha Inicio</th>
                                             <th>Fecha Devolución</th>
                                             <th>Estado</th>
-                                            <th>Acciones</th>
+                                          
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -75,20 +75,7 @@
                                                     <?= $estado_texto ?>
                                                 </span>
                                             </td>
-                                            <td>
-                                                <a href="<?= site_url('prestamos/detalle/' . $prestamo->idPrestamo); ?>" 
-                                                   class="btn btn-info btn-sm" 
-                                                   title="Ver detalles">
-                                                    <i class="mdi mdi-eye"></i>
-                                                </a>
-                                                <?php if ($prestamo->estadoPrestamo == ESTADO_PRESTAMO_ACTIVO): ?>
-                                                    <a href="<?= site_url('publicaciones/ver/' . $prestamo->idPublicacion); ?>" 
-                                                       class="btn btn-primary btn-sm"
-                                                       title="Ver publicación">
-                                                        <i class="mdi mdi-book-open-variant"></i>
-                                                    </a>
-                                                <?php endif; ?>
-                                            </td>
+                                            
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
