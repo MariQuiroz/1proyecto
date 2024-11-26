@@ -163,7 +163,7 @@ class Solicitud_model extends CI_Model {
         foreach ($resultado as $solicitud) {
             if (!isset($solicitud->fechaExpiracionReserva)) {
                 $solicitud->fechaExpiracionReserva = date('Y-m-d H:i:s', 
-                    strtotime($solicitud->fechaSolicitud . ' +2 minutes'));
+                    strtotime($solicitud->fechaSolicitud . ' +2 hours'));
             }
         }
     
@@ -346,12 +346,13 @@ class Solicitud_model extends CI_Model {
             ];
         }
     
-        $minutos = floor($tiempo_restante / 60);
+        $horas = floor($tiempo_restante / 3600);
+        $minutos = floor(($tiempo_restante % 3600) / 60);
         $segundos = $tiempo_restante % 60;
     
         return [
             'segundos' => $tiempo_restante,
-            'formato' => sprintf('%02d:%02d', $minutos, $segundos),
+            'formato' => sprintf('%02d:%02d:%02d', $horas, $minutos, $segundos),
             'expirado' => false
         ];
     }
@@ -876,7 +877,7 @@ class Solicitud_model extends CI_Model {
   
     public function verificar_disponibilidad_reserva($idPublicacion) {
         // Verificar si hay alguna reserva activa para la publicación
-        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 minutes'));
+        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 hours'));
         
         $this->db->select('
             sp.idSolicitud,
@@ -934,7 +935,7 @@ class Solicitud_model extends CI_Model {
     }
     public function contar_solicitudes_activas($idUsuario) {
         // Obtener el tiempo límite (2 horas atrás)
-        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 minutes'));
+        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 hours'));
         
         $this->db->select('COUNT(DISTINCT sp.idSolicitud) as total');
         $this->db->from('SOLICITUD_PRESTAMO sp');
@@ -951,7 +952,7 @@ class Solicitud_model extends CI_Model {
     
     // Método adicional para contar solicitudes activas por publicación
     public function contar_solicitudes_activas_publicacion($idPublicacion) {
-        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 minutes'));
+        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 hours'));
         
         $this->db->select('COUNT(DISTINCT sp.idSolicitud) as total');
         $this->db->from('SOLICITUD_PRESTAMO sp');
@@ -969,7 +970,7 @@ class Solicitud_model extends CI_Model {
     
     // Método útil para obtener el resumen de solicitudes activas
     public function obtener_resumen_solicitudes_activas($idUsuario) {
-        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 minutes'));
+        $tiempoLimite = date('Y-m-d H:i:s', strtotime('-2 hours'));
         
         $this->db->select('
             sp.idSolicitud,
@@ -1050,7 +1051,7 @@ class Solicitud_model extends CI_Model {
 
         if ($reserva) {
             $fechaExpiracion = new DateTime($reserva->fechaSolicitud);
-            $fechaExpiracion->add(new DateInterval('PT2M')); // Añadir 2 horas
+            $fechaExpiracion->add(new DateInterval('PT2H')); // Añadir 2 horas
             $ahora = new DateTime();
             $intervalo = $ahora->diff($fechaExpiracion);
             return $intervalo->format('%H:%I:%S');
@@ -1175,7 +1176,7 @@ class Solicitud_model extends CI_Model {
     }
 
     public function verificar_solicitudes_expiradas() {
-        $limite_tiempo = date('Y-m-d H:i:s', strtotime('-2 minutes'));
+        $limite_tiempo = date('Y-m-d H:i:s', strtotime('-2 hours'));
         
         $this->db->select('
             sp.idSolicitud, 
@@ -1240,7 +1241,7 @@ class Solicitud_model extends CI_Model {
 
     public function convertir_reserva_en_solicitud($idPublicacion, $idUsuario) {
         $fecha_actual = date('Y-m-d H:i:s');
-        $fecha_expiracion = date('Y-m-d H:i:s', strtotime('+2 minutes'));
+        $fecha_expiracion = date('Y-m-d H:i:s', strtotime('+2 hours'));
 
         // Verificar estado de la publicación
         $publicacion = $this->db->get_where('PUBLICACION', [
@@ -1453,13 +1454,13 @@ class Solicitud_model extends CI_Model {
         $ahora = new DateTime();
         $diferencia = $fechaCreacion->diff($ahora);
         
-        // La solicitud es válida si no han pasado más de 2 minutos
-        return $diferencia->i < 2;
+        // La solicitud es válida si no han pasado más de 2 horas
+        return $diferencia->h < 2;
     }
 
     public function verificar_expiraciones_pendientes() {
     log_message('debug', "=== INICIO verificar_expiraciones_pendientes() ===");
-    $fecha_actual = date('Y-m-d H:i:s');
+    $fecha_actual = date('Y-m-d H:i:s', strtotime('+2 hours'));
     
     log_message('debug', "Fecha actual: " . $fecha_actual);
 

@@ -776,7 +776,7 @@ private function _verificar_expiracion_solicitud($idSolicitud) {
         return false;
     }
 
-    $tiempo_limite = strtotime('-2 minutes');
+    $tiempo_limite = strtotime('-2 hours');
     $fecha_creacion = strtotime($solicitud->fechaCreacion);
 
     if ($fecha_creacion <= $tiempo_limite) {
@@ -812,7 +812,7 @@ public function confirmar() {
 
         $usuario = $this->Usuario_model->obtener_usuario($idUsuario);
         $hora_actual = date('Y-m-d H:i:s');
-        $hora_expiracion = date('Y-m-d H:i:s', strtotime('+2 minutes'));
+        $hora_expiracion = date('Y-m-d H:i:s', strtotime('+2 hours'));
 
         // Validación inicial de disponibilidad
         foreach ($publicaciones_seleccionadas as $idPublicacion) {

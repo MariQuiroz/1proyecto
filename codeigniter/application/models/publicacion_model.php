@@ -740,7 +740,7 @@ public function verificar_disponibilidad($idPublicacion, $idUsuario) {
 }
 
 private function calcular_tiempo_restante_reserva($fechaReserva) {
-    $tiempoLimite = strtotime($fechaReserva) + (2 * 60); // 2 minutos en segundos
+    $tiempoLimite = strtotime($fechaReserva) + (2 * 3600); // 2 horas  en segundos
     return max(0, $tiempoLimite - time());
 }
 
