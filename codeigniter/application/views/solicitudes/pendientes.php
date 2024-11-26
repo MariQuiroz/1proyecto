@@ -68,9 +68,9 @@
                                                     <?php if ($tiempo_restante > 0): ?>
                                                         <span class="badge badge-warning">
                                                             <?php 
-                                                            $minutos = floor($tiempo_restante / 60);
-                                                            $segundos = $tiempo_restante % 60;
-                                                            echo sprintf('%02d:%02d', $minutos, $segundos);
+                                                            $horas = floor($tiempo_restante / 3600);
+                                                            $minutos = floor(($tiempo_restante % 3600) / 60);
+                                                            echo sprintf('%02dh %02dm', $horas, $minutos);
                                                             ?>
                                                         </span>
                                                     <?php else: ?>

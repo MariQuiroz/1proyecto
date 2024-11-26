@@ -63,11 +63,11 @@
                                                     $tiempo_restante = $tiempo_expiracion - $tiempo_actual;
                                                     
                                                     if ($tiempo_restante > 0) {
-                                                        $minutos = floor($tiempo_restante / 60);
-                                                        $segundos = $tiempo_restante % 60;
-                                                        echo '<span class="text-warning">'.
-                                                             sprintf('%02d:%02d', $minutos, $segundos).
-                                                             '</span>';
+                                                        $horas = floor($tiempo_restante / 3600);
+                                                        $minutos = floor(($tiempo_restante % 3600) / 60);
+                                                        echo '<span class="text-warning" data-expiracion="'.$tiempo_expiracion.'">'.
+                                                            sprintf('%02dh %02dm', $horas, $minutos).
+                                                            '</span>';
                                                     } else {
                                                         echo '<span class="text-danger">Expirado</span>';
                                                     }
