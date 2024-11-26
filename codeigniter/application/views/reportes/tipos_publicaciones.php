@@ -76,7 +76,7 @@
                                     <th>Total Publicaciones</th>
                                     <th>Total Solicitudes</th>
                                     <th>Total Préstamos</th>
-                                    <th>Promedio Días</th>
+                                  
                                     <th>Tasa de Uso (%)</th>
                                 </tr>
                             </thead>
@@ -87,7 +87,7 @@
                                         <td class="text-right"><?php echo $est->total_publicaciones; ?></td>
                                         <td class="text-right"><?php echo $est->total_solicitudes; ?></td>
                                         <td class="text-right"><?php echo $est->total_prestamos; ?></td>
-                                        <td class="text-right"><?php echo number_format($est->promedio_dias_prestamo, 1); ?></td>
+                                        
                                         <td class="text-right">
                                             <?php 
                                             $tasa_uso = ($est->total_publicaciones > 0) 
@@ -116,7 +116,7 @@
                                <th>Tasa de Uso</th>
                                <th>Publicaciones</th>
                                <th>Préstamos</th>
-                               <th>Días Promedio</th>
+                              
                                <th>Estado</th>
                            </tr>
                        </thead>
@@ -146,7 +146,7 @@
                                    <td><?php echo number_format($tasa_uso, 1); ?>%</td>
                                    <td><?php echo $est->total_publicaciones; ?></td>
                                    <td><?php echo $est->total_prestamos; ?></td>
-                                   <td><?php echo number_format($est->promedio_dias_prestamo, 1); ?></td>
+                                  
                                    <td>
                                        <?php if ($tasa_uso > 75): ?>
                                            <span class="badge badge-danger">Alta demanda</span>
@@ -186,18 +186,20 @@
                         <thead>
                             <tr>
                                 <th>Título</th>
+                                <th>Fecha Publicación</th>
                                 <th>Tipo</th>
                                 <th>Editorial</th>
                                 <th>Total Solicitudes</th>
                                 <th>Préstamos Activos</th>
                                 <th>Préstamos Completados</th>
-                                <th>Fecha Publicación</th>
+                                
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach($publicaciones as $pub): ?>
                                 <tr>
                                     <td><?php echo $pub->titulo; ?></td>
+                                    <td><?php echo $pub->fecha_publicacion; ?></td>
                                     <td><?php echo $pub->nombreTipo; ?></td>
                                     <td><?php echo $pub->nombreEditorial; ?></td>
                                     <td>
@@ -215,7 +217,7 @@
                                             <?php echo $pub->prestamos_completados; ?>
                                         </span>
                                     </td>
-                                    <td><?php echo $pub->fecha_publicacion; ?></td>
+                                    
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

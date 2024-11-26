@@ -35,10 +35,9 @@
       <?= htmlspecialchars($infoUsuario->profesion); ?>
     </option>
     <?php if ($infoUsuario->rol == 'lector'): ?>
-      <option value="ESTUDIANTE">Estudiante</option>
-      <option value="DOCENTE">Docente</option>
+      <option value="ESTUDIANTE">Estudiante Umss</option>
+      <option value="DOCENTE">Docente Umss</option>
       <option value="INVESTIGADOR">Investigador</option>
-      <option value="ADMINISTRATIVO">Administrativo</option>
       <option value="OTRO">Otro</option>
     <?php endif; ?>
   </select>

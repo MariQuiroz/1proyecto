@@ -27,13 +27,13 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label>Profesión</label>
+                                        <label>Ocupación</label>
                                         <select name="profesion" class="form-control" id="selectProfesion">
-                                            <option value="">Todas las profesiones</option>
+                                            <option value="">Todas las ocupaciones</option>
                                             <option value="ESTUDIANTE UMSS" <?php echo $profesion_seleccionada == 'ESTUDIANTE UMSS' ? 'selected' : ''; ?>>Estudiante Umss</option>
-                                            <option value="DOCENTE" <?php echo $profesion_seleccionada == 'DOCENTE' ? 'selected' : ''; ?>>Docente</option>
+                                            <option value="DOCENTE UMSS" <?php echo $profesion_seleccionada == 'DOCENTE' ? 'selected' : ''; ?>>Docente Umss</option>
                                             <option value="INVESTIGADOR" <?php echo $profesion_seleccionada == 'INVESTIGADOR' ? 'selected' : ''; ?>>Investigador</option>
-                                            <option value="PUBLICO GENERAL" <?php echo $profesion_seleccionada == 'PUBLICO GENERAL' ? 'selected' : ''; ?>>Público General</option>
+                                            <option value="OTRO" <?php echo $profesion_seleccionada == 'OTRO' ? 'selected' : ''; ?>>Otro</option>
                                             
                                         </select>
                                     </div>
@@ -85,7 +85,7 @@
                                     <table class="table table-bordered">
                                         <thead>
                                             <tr>
-                                                <th>Profesión</th>
+                                                <th>Ocupación</th>
                                                 <th>Préstamos</th>
                                                 <th>Prom. Días</th>
                                             </tr>
@@ -134,7 +134,7 @@
                                 <thead>
                                     <tr>
                                         <th>Lector</th>
-                                        <th>Profesión</th>
+                                        <th>Ocupación</th>
                                         <th>Publicación</th>
                                         <th>Fecha Publicación</th>
                                         <th>Fecha Préstamo</th>

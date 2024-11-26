@@ -69,7 +69,7 @@ class Reportes extends CI_Controller {
 
         // Validar profesión si está presente
         if (!empty($filtros['profesion'])) {
-            $profesiones_validas = ['ESTUDIANTE UMSS', 'DOCENTE', 'INVESTIGADOR', 'PUBLICO GENERAL'];
+            $profesiones_validas = ['ESTUDIANTE UMSS', 'DOCENTE UMSS', 'INVESTIGADOR', 'OTRO'];
             if (!in_array(strtoupper($filtros['profesion']), $profesiones_validas)) {
                 $filtros['profesion'] = ''; // Resetear si no es válida
             }
@@ -359,7 +359,7 @@ class Reportes extends CI_Controller {
         
                  <img src="' . base_url('uploads/logo_umss.jpg') . '" alt="Logo UMSS" style="width: 70px;">
                     <h1>HEMEROTECA UMSS</h1>
-                    <h2>Reporte de Préstamos por Profesión</h2>
+                    <h2>Reporte de Préstamos por Ocupación</h2>
                     <h3>Período: ' . date('d/m/Y', strtotime($data['filtros']['fecha_inicio'])) . 
                         ' al ' . date('d/m/Y', strtotime($data['filtros']['fecha_fin'])) . '</h3>
                 </div>
@@ -375,7 +375,7 @@ class Reportes extends CI_Controller {
                 <table>
                     <thead>
                         <tr>
-                            <th>Profesión</th>
+                            <th>Ocupación</th>
                             <th>Total Préstamos</th>
                             <th>Lectores</th>
                             <th>Prom. Días</th>
@@ -402,8 +402,8 @@ class Reportes extends CI_Controller {
                     <thead>
                         <tr>
                             <th>Lector</th>
-                            <th>Profesión</th>
-                            <th>Publicación</th>
+                            <th>Ocupación</th>
+                            <th>Título</th>
                             <th>Fecha Publicación</th>
                             <th>Fecha Préstamo</th>
                             <th>Estado</th>
@@ -473,9 +473,9 @@ class Reportes extends CI_Controller {
     private function _formatear_profesion($profesion) {
         $profesiones = array(
             'ESTUDIANTE UMSS' => 'Estudiante Umss',
-            'DOCENTE' => 'Docente',
+            'DOCENTE UMSS' => 'Docente Umss',
             'INVESTIGADOR' => 'Investigador',
-            'PUBLICO GENERAL' => 'Administrativo',
+            'OTRO' => 'Otro',
             
         );
         
@@ -630,10 +630,10 @@ class Reportes extends CI_Controller {
             <div class="header">
                 <img src="' . base_url('assets/img/logo-umss.png') . '" alt="Logo UMSS" style="width: 150px;">
                 <h1>HEMEROTECA UMSS</h1>
-                <h3>Reporte de Préstamos por Profesión</h3>
+                <h3>Reporte de Préstamos por ocupación</h3>
                 <p>Período: ' . date('d/m/Y', strtotime($filtros['fecha_inicio'])) . 
                    ' al ' . date('d/m/Y', strtotime($filtros['fecha_fin'])) . '</p>
-                ' . ($filtros['profesion'] ? '<p>Filtrado por profesión: ' . $this->_formatear_profesion($filtros['profesion']) . '</p>' : '') . '
+                ' . ($filtros['profesion'] ? '<p>Filtrado por ocupación: ' . $this->_formatear_profesion($filtros['profesion']) . '</p>' : '') . '
             </div>
         ';
     }
@@ -664,7 +664,7 @@ class Reportes extends CI_Controller {
         // Datos estadísticos
         foreach ($data['estadisticas'] as $est) {
             $export_data[] = array(
-                'Profesión' => $this->_formatear_profesion($est->profesion),
+                'Ocupación' => $this->_formatear_profesion($est->profesion),
                 'Total Préstamos' => $est->total_prestamos,
                 'Total Lectores' => $est->total_lectores,
                 'Promedio Días' => number_format($est->promedio_dias_prestamo, 1)
@@ -698,7 +698,7 @@ class Reportes extends CI_Controller {
         // Agregar detalles de préstamos
         $export_data[] = array(
             'Lector' => 'LECTOR',
-            'Profesión' => 'PROFESIÓN',
+            'Profesión' => 'OCUPACIÓN',
             'Publicación' => 'PUBLICACIÓN',
             'Fecha Publicación' => 'FECHA PUBLICACIÓN',
             'Fecha Préstamo' => 'FECHA PRÉSTAMO',

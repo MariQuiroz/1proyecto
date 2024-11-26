@@ -89,7 +89,7 @@
     <?php echo form_error('rol', '<div class="text-danger">', '</div>'); ?>
 </div>
 <div class="form-group">
-    <label for="profesion">Profesión</label>
+    <label for="profesion">Ocupación</label>
     <?php if ($this->input->post('rol') == 'lector' || (!$es_admin)): ?>
         <!-- Para lectores: mostrar select con opciones predefinidas -->
         <?php echo form_dropdown('profesion', $profesiones_lector, set_value('profesion'), 'class="form-control" required'); ?>

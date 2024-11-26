@@ -170,8 +170,7 @@
                                                     <i class="mdi mdi-eye"></i>
                                                 </a>
 
-                                                <?php if ($this->session->userdata('rol') == 'administrador' || 
-                                                         $this->session->userdata('rol') == 'encargado'): ?>
+                                                <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                                                     
                                                     <a href="<?php echo site_url('publicaciones/modificar/'.$publicacion->idPublicacion); ?>" 
                                                        class="btn btn-primary btn-sm" 
@@ -181,20 +180,11 @@
 
                                                     <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
                                                         <div class="btn-group">
-                                                            <button type="button" 
-                                                                    class="btn btn-secondary btn-sm dropdown-toggle" 
-                                                                    data-toggle="dropdown">
-                                                                <i class="mdi mdi-settings"></i>
-                                                            </button>
-                                                            <div class="dropdown-menu">
-
-                                                                <div class="dropdown-divider"></div>
-                                                                <a class="dropdown-item text-danger" 
-                                                                   href="<?php echo site_url('publicaciones/eliminar/'.$publicacion->idPublicacion); ?>"
-                                                                   onclick="return confirm('¿Está seguro de eliminar esta publicación?');">
+                                                                <a href="<?php echo site_url('publicaciones/eliminar/'.$publicacion->idPublicacion); ?>"
+                                                                class="dropdown-item text-danger" 
+                                                                onclick="return confirm('¿Está seguro de eliminar esta publicación?');">
                                                                     <i class="mdi mdi-delete"></i> Eliminar
                                                                 </a>
-                                                            </div>
                                                         </div>
                                                     <?php endif; ?>
 
