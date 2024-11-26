@@ -1,353 +1,397 @@
 <div class="content-page">
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Análisis por Tipos de Publicaciones</h4>
-                    
-                  <!-- Filtros -->
-<div class="row mb-3">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <form method="get" action="<?php echo site_url('reportes/tipos_publicaciones'); ?>" class="row align-items-center">
-                    <div class="col-md-3">
-                        <label>Fecha Inicio</label>
-                        <input type="date" name="fecha_inicio" class="form-control" value="<?php echo $filtros['fecha_inicio']; ?>">
-                    </div>
-                    <div class="col-md-3">
-                        <label>Fecha Fin</label>
-                        <input type="date" name="fecha_fin" class="form-control" value="<?php echo $filtros['fecha_fin']; ?>">
-                    </div>
-                    <div class="col-md-3">
-                        <label>Tipo de Publicación</label>
-                        <select name="tipo" class="form-control">
-                            <option value="">Todos</option>
-                            <?php foreach($tipos as $tipo): ?>
-                                <option value="<?php echo $tipo->idTipo; ?>" 
-                                    <?php echo isset($filtros['tipo']) && $filtros['tipo'] == $tipo->idTipo ? 'selected' : ''; ?>>
-                                    <?php echo $tipo->nombreTipo; ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <div>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fa fa-search"></i> Filtrar
-                                </button>
-                                <button type="button" class="btn btn-danger" onclick="exportarPDF()">
-                                    <i class="fa fa-file-pdf"></i> PDF
-                                </button>
-                                <button type="button" class="btn btn-success" onclick="exportarExcel()">
-                                    <i class="fa fa-file-excel"></i> Excel
-                                </button>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Análisis por Tipos de Publicaciones</h4>
+                        
+                        <!-- Filtros -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <form method="get" action="<?php echo site_url('reportes/tipos_publicaciones'); ?>" class="row align-items-center">
+                                            <div class="col-md-3">
+                                                <label>Fecha Inicio</label>
+                                                <input type="date" name="fecha_inicio" class="form-control" value="<?php echo $filtros['fecha_inicio']; ?>">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label>Fecha Fin</label>
+                                                <input type="date" name="fecha_fin" class="form-control" value="<?php echo $filtros['fecha_fin']; ?>">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label>Tipo de Publicación</label>
+                                                <select name="tipo" class="form-control">
+                                                    <option value="">Todos</option>
+                                                    <?php foreach($tipos as $tipo): ?>
+                                                        <option value="<?php echo $tipo->idTipo; ?>" 
+                                                            <?php echo isset($filtros['tipo']) && $filtros['tipo'] == $tipo->idTipo ? 'selected' : ''; ?>>
+                                                            <?php echo $tipo->nombreTipo; ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>&nbsp;</label>
+                                                    <div>
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="fa fa-search"></i> Filtrar
+                                                        </button>
+                                                        <button type="button" class="btn btn-danger" onclick="exportarPDF()">
+                                                            <i class="fa fa-file-pdf"></i> PDF
+                                                        </button>
+                                                        <button type="button" class="btn btn-success" onclick="exportarExcel()">
+                                                            <i class="fa fa-file-excel"></i> Excel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 
-                <div class="card-body">
-                    <!-- Gráficos -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <canvas id="tiposDonutChart"></canvas>
-                            <h5 class="text-center mt-3">Distribución de Solicitudes por Tipo</h5>
-                        </div>
-                        <div class="col-md-6">
-                            <canvas id="tiposBarChart"></canvas>
-                            <h5 class="text-center mt-3">Promedio de Días de Préstamo por Tipo</h5>
-                        </div>
-                    </div>
-                    
-                    <!-- Tabla de datos -->
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Tipo de Publicación</th>
-                                    <th>Total Publicaciones</th>
-                                    <th>Total Solicitudes</th>
-                                    <th>Total Préstamos</th>
-                                  
-                                    <th>Tasa de Uso (%)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($estadisticas as $est): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($est->nombreTipo); ?></td>
-                                        <td class="text-right"><?php echo $est->total_publicaciones; ?></td>
-                                        <td class="text-right"><?php echo $est->total_solicitudes; ?></td>
-                                        <td class="text-right"><?php echo $est->total_prestamos; ?></td>
-                                        
-                                        <td class="text-right">
-                                            <?php 
-                                            $tasa_uso = ($est->total_publicaciones > 0) 
-                                                ? ($est->total_prestamos / $est->total_publicaciones) * 100 
-                                                : 0;
-                                            echo number_format($tasa_uso, 1);
-                                            ?>%
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-<!-- Análisis y Recomendaciones -->
-<div class="row mt-4">
-   <div class="col-12">
-       <div class="card bg-light">
-           <div class="card-body">
-               <h5>Análisis por Tipo de Publicación</h5>
-               <div class="table-responsive">
-                   <table class="table table-sm">
-                       <thead>
-                           <tr>
-                               <th>Tipo</th>
-                               <th>Tasa de Uso</th>
-                               <th>Publicaciones</th>
-                               <th>Préstamos</th>
-                              
-                               <th>Estado</th>
-                           </tr>
-                       </thead>
-                       <tbody>
-                           <?php 
-                           $max_uso = 0;
-                           $tipo_max_uso = '';
-                           $min_uso = 100;
-                           $tipo_min_uso = '';
-                           
-                           foreach ($estadisticas as $est):
-                               $tasa_uso = ($est->total_publicaciones > 0) 
-                                   ? ($est->total_prestamos / $est->total_publicaciones) * 100 
-                                   : 0;
-                                   
-                               if ($tasa_uso > $max_uso) {
-                                   $max_uso = $tasa_uso;
-                                   $tipo_max_uso = $est->nombreTipo;
-                               }
-                               if ($tasa_uso < $min_uso && $est->total_publicaciones > 0) {
-                                   $min_uso = $tasa_uso;
-                                   $tipo_min_uso = $est->nombreTipo;
-                               }
-                           ?>
-                               <tr>
-                                   <td><?php echo htmlspecialchars($est->nombreTipo); ?></td>
-                                   <td><?php echo number_format($tasa_uso, 1); ?>%</td>
-                                   <td><?php echo $est->total_publicaciones; ?></td>
-                                   <td><?php echo $est->total_prestamos; ?></td>
-                                  
-                                   <td>
-                                       <?php if ($tasa_uso > 75): ?>
-                                           <span class="badge badge-danger">Alta demanda</span>
-                                       <?php elseif ($tasa_uso > 25): ?>
-                                           <span class="badge badge-warning">Demanda media</span>
-                                       <?php else: ?>
-                                           <span class="badge badge-info">Baja demanda</span>
-                                       <?php endif; ?>
-                                   </td>
-                               </tr>
-                           <?php endforeach; ?>
-                       </tbody>
-                   </table>
-               </div>
-
-               <h6 class="mt-3">Recomendaciones:</h6>
-               <ul>
-                   <li><strong>Mayor demanda:</strong> El tipo "<?php echo htmlspecialchars($tipo_max_uso); ?>" 
-                       muestra la mayor tasa de uso (<?php echo number_format($max_uso, 1); ?>%).</li>
-                   <li><strong>Menor demanda:</strong> El tipo "<?php echo htmlspecialchars($tipo_min_uso); ?>" 
-                       muestra la menor tasa de uso (<?php echo number_format($min_uso, 1); ?>%).</li>
-                   <li><strong>Recomendación:</strong> Considerar adquirir más material del tipo 
-                       "<?php echo htmlspecialchars($tipo_max_uso); ?>" debido a su alta demanda.</li>
-               </ul>
-           </div>
-       </div>
-   </div>
-</div>
-                    <!-- Tabla Detallada después del resumen -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="header-title">Detalle de Publicaciones</h4>
-                <div class="table-responsive">
-                    <table class="table table-centered table-striped table-hover mb-0" id="datatable-buttons">
-                        <thead>
-                            <tr>
-                                <th>Título</th>
-                                <th>Fecha Publicación</th>
-                                <th>Tipo</th>
-                                <th>Editorial</th>
-                                <th>Total Solicitudes</th>
-                                <th>Préstamos Activos</th>
-                                <th>Préstamos Completados</th>
+                        <div class="card-body">
+                            <?php if (empty($estadisticas)): ?>
+                                <div class="alert alert-info text-center">
+                                    <h4 class="alert-heading">No hay datos disponibles</h4>
+                                    <p>No se encontraron registros para el período y filtros seleccionados.</p>
+                                    <?php if (!empty($filtros['fecha_inicio']) || !empty($filtros['fecha_fin']) || !empty($filtros['tipo'])): ?>
+                                        <hr>
+                                        <p class="mb-0">Intente modificar los filtros para ver más resultados.</p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php else: ?>
+                                <!-- Gráficos -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <canvas id="tiposDonutChart"></canvas>
+                                        <h5 class="text-center mt-3">Distribución de Solicitudes por Tipo</h5>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <canvas id="tiposBarChart"></canvas>
+                                        <h5 class="text-center mt-3">Promedio de Días de Préstamo por Tipo</h5>
+                                    </div>
+                                </div>
                                 
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach($publicaciones as $pub): ?>
-                                <tr>
-                                    <td><?php echo $pub->titulo; ?></td>
-                                    <td><?php echo $pub->fecha_publicacion; ?></td>
-                                    <td><?php echo $pub->nombreTipo; ?></td>
-                                    <td><?php echo $pub->nombreEditorial; ?></td>
-                                    <td>
-                                        <span class="badge badge-pill badge-primary">
-                                            <?php echo $pub->total_solicitudes; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-pill badge-warning">
-                                            <?php echo $pub->prestamos_activos; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-pill badge-success">
-                                            <?php echo $pub->prestamos_completados; ?>
-                                        </span>
-                                    </td>
-                                    
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                                <!-- Tabla de datos -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Tipo de Publicación</th>
+                                                <th>Total Publicaciones</th>
+                                                <th>Total Solicitudes</th>
+                                                <th>Total Préstamos</th>
+                                                <th>Tasa de Uso (%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($estadisticas as $est): ?>
+                                                <tr>
+                                                    <td><?php echo htmlspecialchars($est->nombreTipo); ?></td>
+                                                    <td class="text-right"><?php echo $est->total_publicaciones; ?></td>
+                                                    <td class="text-right"><?php echo $est->total_solicitudes; ?></td>
+                                                    <td class="text-right"><?php echo $est->total_prestamos; ?></td>
+                                                    <td class="text-right">
+                                                        <?php 
+                                                        $tasa_uso = ($est->total_publicaciones > 0) 
+                                                            ? ($est->total_prestamos / $est->total_publicaciones) * 100 
+                                                            : 0;
+                                                        echo number_format($tasa_uso, 1);
+                                                        ?>%
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="header-title">Historial Detallado de Préstamos</h4>
-                <div class="table-responsive">
-                    <table id="datatable-buttons" class="table table-striped dt-responsive nowrap w-100">
-                        <thead>
-                            <tr>
-                                <th>Título</th>
-                                <th>Tipo</th>
-                                <th>Editorial</th>
-                                <th>Fecha Solicitud</th>
-                                <th>Fecha Préstamo</th>
-                                <th>Fecha Devolución</th>
-                                <th>Lector</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach($historial_prestamos as $prestamo): ?>
-                                <tr>
-                                    <td><?php echo $prestamo->titulo; ?></td>
-                                    <td><?php echo $prestamo->nombreTipo; ?></td>
-                                    <td><?php echo $prestamo->nombreEditorial; ?></td>
-                                    <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaSolicitud)); ?></td>
-                                    <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
-                                    <td>
-                                        <?php echo $prestamo->fechaDevolucion ? 
-                                            date('d/m/Y H:i', strtotime($prestamo->fechaDevolucion)) : 
-                                            '-'; ?>
-                                    </td>
-                                    <td><?php echo $prestamo->nombres . ' ' . $prestamo->apellidoPaterno; ?></td>
-                                    <td>
-                                        <span class="badge badge-<?php echo $prestamo->estadoPrestamo == 1 ? 'warning' : 'success'; ?>">
-                                            <?php echo $prestamo->estado_texto; ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                                <!-- Análisis y Recomendaciones -->
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <h5>Análisis por Tipo de Publicación</h5>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Tipo</th>
+                                                                <th>Tasa de Uso</th>
+                                                                <th>Publicaciones</th>
+                                                                <th>Préstamos</th>
+                                                                <th>Estado</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <?php 
+                                                            $max_uso = 0;
+                                                            $tipo_max_uso = '';
+                                                            $min_uso = 100;
+                                                            $tipo_min_uso = '';
+                                                            
+                                                            foreach ($estadisticas as $est):
+                                                                $tasa_uso = ($est->total_publicaciones > 0) 
+                                                                    ? ($est->total_prestamos / $est->total_publicaciones) * 100 
+                                                                    : 0;
+                                                                    
+                                                                if ($tasa_uso > $max_uso) {
+                                                                    $max_uso = $tasa_uso;
+                                                                    $tipo_max_uso = $est->nombreTipo;
+                                                                }
+                                                                if ($tasa_uso < $min_uso && $est->total_publicaciones > 0) {
+                                                                    $min_uso = $tasa_uso;
+                                                                    $tipo_min_uso = $est->nombreTipo;
+                                                                }
+                                                            ?>
+                                                                <tr>
+                                                                    <td><?php echo htmlspecialchars($est->nombreTipo); ?></td>
+                                                                    <td><?php echo number_format($tasa_uso, 1); ?>%</td>
+                                                                    <td><?php echo $est->total_publicaciones; ?></td>
+                                                                    <td><?php echo $est->total_prestamos; ?></td>
+                                                                    <td>
+                                                                        <?php if ($tasa_uso > 75): ?>
+                                                                            <span class="badge badge-danger">Alta demanda</span>
+                                                                        <?php elseif ($tasa_uso > 25): ?>
+                                                                            <span class="badge badge-warning">Demanda media</span>
+                                                                        <?php else: ?>
+                                                                            <span class="badge badge-info">Baja demanda</span>
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <h6 class="mt-3">Recomendaciones:</h6>
+                                                <ul>
+                                                    <li><strong>Mayor demanda:</strong> El tipo "<?php echo htmlspecialchars($tipo_max_uso); ?>" 
+                                                        muestra la mayor tasa de uso (<?php echo number_format($max_uso, 1); ?>%).</li>
+                                                    <li><strong>Menor demanda:</strong> El tipo "<?php echo htmlspecialchars($tipo_min_uso); ?>" 
+                                                        muestra la menor tasa de uso (<?php echo number_format($min_uso, 1); ?>%).</li>
+                                                    <li><strong>Recomendación:</strong> Considerar adquirir más material del tipo 
+                                                        "<?php echo htmlspecialchars($tipo_max_uso); ?>" debido a su alta demanda.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tabla Detallada -->
+                                <?php if (!empty($publicaciones)): ?>
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h4 class="header-title">Detalle de Publicaciones</h4>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-centered table-striped table-hover mb-0" id="datatable-buttons">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Título</th>
+                                                                    <th>Fecha Publicación</th>
+                                                                    <th>Tipo</th>
+                                                                    <th>Editorial</th>
+                                                                    <th>Total Solicitudes</th>
+                                                                    <th>Préstamos Activos</th>
+                                                                    <th>Préstamos Completados</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php foreach($publicaciones as $pub): ?>
+                                                                    <tr>
+                                                                        <td><?php echo $pub->titulo; ?></td>
+                                                                        <td><?php echo $pub->fecha_publicacion; ?></td>
+                                                                        <td><?php echo $pub->nombreTipo; ?></td>
+                                                                        <td><?php echo $pub->nombreEditorial; ?></td>
+                                                                        <td>
+                                                                            <span class="badge badge-pill badge-primary">
+                                                                                <?php echo $pub->total_solicitudes; ?>
+                                                                            </span>
+                                                                        </td>
+                                                                        <td>
+                                                                            <span class="badge badge-pill badge-warning">
+                                                                                <?php echo $pub->prestamos_activos; ?>
+                                                                            </span>
+                                                                        </td>
+                                                                        <td>
+                                                                            <span class="badge badge-pill badge-success">
+                                                                                <?php echo $pub->prestamos_completados; ?>
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <!-- Historial de Préstamos -->
+                                <?php if (!empty($historial_prestamos)): ?>
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h4 class="header-title">Historial Detallado de Préstamos</h4>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-striped dt-responsive nowrap w-100">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Título</th>
+                                                                    <th>Tipo</th>
+                                                                    <th>Editorial</th>
+                                                                    <th>Fecha Solicitud</th>
+                                                                    <th>Fecha Préstamo</th>
+                                                                    <th>Fecha Devolución</th>
+                                                                    <th>Lector</th>
+                                                                    <th>Estado</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php foreach($historial_prestamos as $prestamo): ?>
+                                                                    <tr>
+                                                                        <td><?php echo $prestamo->titulo; ?></td>
+                                                                        <td><?php echo $prestamo->nombreTipo; ?></td>
+                                                                        <td><?php echo $prestamo->nombreEditorial; ?></td>
+                                                                        <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaSolicitud)); ?></td>
+                                                                        <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
+                                                                        <td>
+                                                                            <?php echo $prestamo->fechaDevolucion ? 
+                                                                                date('d/m/Y H:i', strtotime($prestamo->fechaDevolucion)) : 
+                                                                                '-'; ?>
+                                                                        </td>
+                                                                        <td><?php echo $prestamo->nombres . ' ' . $prestamo->apellidoPaterno; ?></td>
+                                                                        <td>
+                                                                            <span class="badge badge-<?php echo $prestamo->estadoPrestamo == 1 ? 'warning' : 'success'; ?>">
+                                                                                <?php echo $prestamo->estado_texto; ?>
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            </tbody>
+                                                        </table>
+                                                        </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Gráfico de dona para distribución de solicitudes
-    var ctxDonut = document.getElementById('tiposDonutChart').getContext('2d');
-    new Chart(ctxDonut, {
-        type: 'doughnut',
-        data: {
-            labels: <?php echo json_encode(array_column($estadisticas, 'nombreTipo')); ?>,
-            datasets: [{
-                data: <?php echo json_encode(array_column($estadisticas, 'total_solicitudes')); ?>,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
+    <?php if (!empty($estadisticas)): ?>
+        // Gráfico de dona para distribución de solicitudes
+        var ctxDonut = document.getElementById('tiposDonutChart').getContext('2d');
+        new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+                labels: <?php echo json_encode(array_column($estadisticas, 'nombreTipo')); ?>,
+                datasets: [{
+                    data: <?php echo json_encode(array_column($estadisticas, 'total_solicitudes')); ?>,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribución de Solicitudes por Tipo'
+                    }
                 }
             }
-        }
-    });
+        });
 
-    // Gráfico de barras para promedio de días
-    var ctxBar = document.getElementById('tiposBarChart').getContext('2d');
-    new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-            labels: <?php echo json_encode(array_column($estadisticas, 'nombreTipo')); ?>,
-            datasets: [{
-                label: 'Promedio de Días',
-                data: <?php echo json_encode(array_column($estadisticas, 'promedio_dias_prestamo')); ?>,
-                backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
+        // Gráfico de barras para promedio de días
+        var ctxBar = document.getElementById('tiposBarChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: <?php echo json_encode(array_column($estadisticas, 'nombreTipo')); ?>,
+                datasets: [{
+                    label: 'Promedio de Días',
+                    data: <?php echo json_encode(array_column($estadisticas, 'promedio_dias_prestamo')); ?>,
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    title: {
+                        display: true,
+                        text: 'Promedio de Días de Préstamo por Tipo'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Días'
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+    <?php else: ?>
+        // Mostrar mensaje cuando no hay datos disponibles
+        ['tiposDonutChart', 'tiposBarChart'].forEach(function(canvasId) {
+            var canvas = document.getElementById(canvasId);
+            if (canvas) {
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#6c757d';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = '14px Arial';
+                ctx.fillText('No hay datos disponibles para mostrar', canvas.width / 2, canvas.height / 2);
+            }
+        });
+    <?php endif; ?>
 });
 
-
+// Funciones de exportación
 function exportarPDF() {
     var fechaInicio = document.querySelector('input[name="fecha_inicio"]').value;
     var fechaFin = document.querySelector('input[name="fecha_fin"]').value;
     var tipo = document.querySelector('select[name="tipo"]').value;
     
     var url = '<?php echo site_url("reportes/exportar_tipos_pdf"); ?>';
-    url += '?fecha_inicio=' + fechaInicio;
-    url += '&fecha_fin=' + fechaFin;
+    url += '?fecha_inicio=' + encodeURIComponent(fechaInicio);
+    url += '&fecha_fin=' + encodeURIComponent(fechaFin);
     if (tipo) {
-        url += '&tipo=' + tipo;
+        url += '&tipo=' + encodeURIComponent(tipo);
     }
     
     window.open(url, '_blank');
@@ -359,12 +403,29 @@ function exportarExcel() {
     var tipo = document.querySelector('select[name="tipo"]').value;
     
     var url = '<?php echo site_url("reportes/exportar_tipos_excel"); ?>';
-    url += '?fecha_inicio=' + fechaInicio;
-    url += '&fecha_fin=' + fechaFin;
+    url += '?fecha_inicio=' + encodeURIComponent(fechaInicio);
+    url += '&fecha_fin=' + encodeURIComponent(fechaFin);
     if (tipo) {
-        url += '&tipo=' + tipo;
+        url += '&tipo=' + encodeURIComponent(tipo);
     }
     
     window.location.href = url;
 }
+
+// Inicialización de DataTables si hay datos
+<?php if (!empty($publicaciones) || !empty($historial_prestamos)): ?>
+$(document).ready(function() {
+    if ($.fn.DataTable) {
+        $('.table').DataTable({
+            responsive: true,
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
+            },
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+            order: [[0, 'asc']]
+        });
+    }
+});
+<?php endif; ?>
 </script>
