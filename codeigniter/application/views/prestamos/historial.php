@@ -21,7 +21,7 @@
                             <table id="historial-prestamos-table" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
-                                        <th>ID Préstamo</th>
+                                       
                                         <th>Usuario</th>
                                         <th>Publicación</th>
                                         <th>Fecha Inicio</th>
@@ -33,7 +33,7 @@
                                 <tbody>
                                     <?php foreach ($prestamos as $prestamo): ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($prestamo->idPrestamo); ?></td>
+                                     
                                         <td><?php echo htmlspecialchars($prestamo->nombres . ' ' . $prestamo->apellidoPaterno); ?></td>
                                         <td><?php echo htmlspecialchars($prestamo->titulo); ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>

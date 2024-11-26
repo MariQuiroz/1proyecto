@@ -22,7 +22,7 @@
                                 <table id="basic-datatable" class="table dt-responsive nowrap">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+
                                             <th>Nombre Usuario</th>
                                             <th>Carnet</th>
                                             <th>Título Publicación</th>
@@ -41,7 +41,7 @@
                                             $solicitud_activa = ($tiempo_restante > 0 && $solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE);
                                         ?>
                                         <tr>
-                                            <td><?php echo $solicitud->idSolicitud; ?></td>
+ 
                                             
                                             <td>
                                                 <strong><?php echo htmlspecialchars($solicitud->nombres . ' ' . $solicitud->apellidoPaterno); ?></strong>

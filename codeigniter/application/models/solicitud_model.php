@@ -409,12 +409,25 @@ class Solicitud_model extends CI_Model {
     }
 
     public function obtener_solicitudes_por_estado($estado) {
-        $this->db->select('SP.*, U.nombres, U.apellidoPaterno, P.titulo');
+        $this->db->select('
+            SP.idSolicitud,
+            SP.fechaSolicitud,
+            SP.fechaAprobacionRechazo,
+            SP.estadoSolicitud,
+            U.nombres,
+            U.apellidoPaterno,
+            GROUP_CONCAT(P.titulo SEPARATOR ", ") as titulo
+        ');
         $this->db->from('SOLICITUD_PRESTAMO SP');
         $this->db->join('USUARIO U', 'SP.idUsuario = U.idUsuario');
-        $this->db->join('PUBLICACION P', 'SP.idPublicacion = P.idPublicacion');
-        $this->db->where('SP.estadoSolicitud', $estado);
-        $this->db->where('SP.estado', 1);
+        $this->db->join('DETALLE_SOLICITUD DS', 'SP.idSolicitud = DS.idSolicitud');
+        $this->db->join('PUBLICACION P', 'DS.idPublicacion = P.idPublicacion');
+        $this->db->where([
+            'SP.estadoSolicitud' => $estado,
+            'SP.estado' => 1
+        ]);
+        $this->db->group_by('SP.idSolicitud, SP.fechaSolicitud, SP.fechaAprobacionRechazo, SP.estadoSolicitud, U.nombres, U.apellidoPaterno');
+        
         return $this->db->get()->result();
     }
     

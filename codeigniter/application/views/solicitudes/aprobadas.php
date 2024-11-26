@@ -21,8 +21,8 @@
                             <table id="basic-datatable" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
-                                        <th>ID Solicitud</th>
-                                        <th>Usuario</th>
+                                      
+                                        <th>Lector</th>
                                         <th>Publicación</th>
                                         <th>Fecha Solicitud</th>
                                         <th>Fecha Aprobación</th>
@@ -32,24 +32,26 @@
                                 <tbody>
                                     <?php foreach ($solicitudes as $solicitud): ?>
                                     <tr>
-                                        <td><?php echo $solicitud->idSolicitud; ?></td>
+                                        
                                         <td><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno; ?></td>
                                         <td><?php echo $solicitud->titulo; ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($solicitud->fechaSolicitud)); ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($solicitud->fechaAprobacionRechazo)); ?></td>
                                         <td>
-                                            <a href="<?php echo site_url('solicitudes/detalle/' . $solicitud->idSolicitud); ?>" class="btn btn-info btn-sm">Detalles</a>
+                                            <a href="<?php echo site_url('solicitudes/detalle/' . $solicitud->idSolicitud); ?>" 
+                                               class="btn btn-info btn-sm">
+                                                <i class="fe-eye"></i> Detalles
+                                            </a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
 
-                        </div> <!-- end card body-->
-                    </div> <!-- end card -->
-                </div><!-- end col-->
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!-- end row-->
         </div>
     </div>
 </div>

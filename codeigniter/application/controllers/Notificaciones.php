@@ -40,6 +40,7 @@ class Notificaciones extends CI_Controller {
         $data['NOTIFICACION_DISPONIBILIDAD'] = NOTIFICACION_DISPONIBILIDAD;
         $data['NOTIFICACION_NUEVA_SOLICITUD'] = NOTIFICACION_NUEVA_SOLICITUD;
         $data['NOTIFICACION_VENCIMIENTO'] = NOTIFICACION_VENCIMIENTO;
+        $data['NOTIFICACION_ELIMINACION'] = NOTIFICACION_ELIMINACION;
     
         log_message('info', 'Cargando notificaciones para usuario ID=' . $idUsuario . ', Rol=' . $rol . ', Cantidad=' . count($notificaciones));
     

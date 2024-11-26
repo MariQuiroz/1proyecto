@@ -29,7 +29,7 @@
         
     
 <div class="form-group">
-  <label for="profesion">Profesión</label>
+  <label for="profesion">Ocupación</label>
   <select id="profesion" name="profesion" class="form-control" <?= ($infoUsuario->rol != 'lector') ? 'readonly' : ''; ?>>
     <option value="<?= htmlspecialchars($infoUsuario->profesion); ?>">
       <?= htmlspecialchars($infoUsuario->profesion); ?>

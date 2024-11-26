@@ -274,7 +274,8 @@ public function validar_notificacion($idNotificacion, $idUsuario, $rol) {
                 NOTIFICACION_APROBACION_PRESTAMO,
                 NOTIFICACION_RECHAZO_PRESTAMO,
                 NOTIFICACION_CANCELACION_SOLICITUD,
-                NOTIFICACION_SOLICITUD_EXPIRADA
+                NOTIFICACION_SOLICITUD_EXPIRADA,
+                NOTIFICACION_ELIMINACION
             ]);
         case 'lector':
             return in_array($notificacion->tipo, [
@@ -285,7 +286,8 @@ public function validar_notificacion($idNotificacion, $idUsuario, $rol) {
             ]);
         case 'administrador':
             return in_array($notificacion->tipo, [
-                NOTIFICACION_VENCIMIENTO
+                NOTIFICACION_VENCIMIENTO,
+                NOTIFICACION_ELIMINACION
                 // NO incluir NOTIFICACION_NUEVA_SOLICITUD
             ]);
         default:
