@@ -432,12 +432,30 @@ class Solicitud_model extends CI_Model {
     }
     
     public function obtener_historial_solicitudes() {
-        $this->db->select('SP.*, U.nombres, U.apellidoPaterno, P.titulo');
+        $this->db->select('
+            SP.idSolicitud,
+            SP.fechaSolicitud,
+            SP.estadoSolicitud,
+            SP.fechaActualizacion,
+            U.nombres,
+            U.apellidoPaterno,
+            GROUP_CONCAT(P.titulo SEPARATOR ", ") as titulo
+        ');
         $this->db->from('SOLICITUD_PRESTAMO SP');
         $this->db->join('USUARIO U', 'SP.idUsuario = U.idUsuario');
-        $this->db->join('PUBLICACION P', 'SP.idPublicacion = P.idPublicacion');
+        $this->db->join('DETALLE_SOLICITUD DS', 'SP.idSolicitud = DS.idSolicitud');
+        $this->db->join('PUBLICACION P', 'DS.idPublicacion = P.idPublicacion');
         $this->db->where('SP.estado', 1);
+        $this->db->group_by('
+            SP.idSolicitud, 
+            SP.fechaSolicitud, 
+            SP.estadoSolicitud, 
+            SP.fechaActualizacion, 
+            U.nombres, 
+            U.apellidoPaterno
+        ');
         $this->db->order_by('SP.fechaSolicitud', 'DESC');
+        
         return $this->db->get()->result();
     }
    
