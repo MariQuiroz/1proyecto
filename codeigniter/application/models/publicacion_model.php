@@ -606,6 +606,7 @@ public function obtener_publicacion_detallada($idPublicacion) {
     $this->db->select('
         p.idPublicacion,
         p.titulo,
+        p.numeroPaginas,
         p.ubicacionFisica,
         p.estado,
         p.portada,

@@ -167,6 +167,84 @@ class Reportes extends CI_Controller {
         }
     }
 
+    public function obtener_estadisticas_solicitudes($filtros) {
+        // Primero obtenemos las estadísticas generales
+        $stats = $this->_obtener_estadisticas_base_solicitudes($filtros);
+        
+        // Obtenemos las estadísticas mensuales
+        $stats_mensuales = $this->_obtener_estadisticas_mensuales_solicitudes($filtros);
+        
+        return [
+            'generales' => $stats,
+            'mensuales' => $stats_mensuales
+        ];
+    }
+    
+    private function _obtener_estadisticas_base_solicitudes($filtros) {
+        $this->db->select('
+            COUNT(DISTINCT sp.idSolicitud) as total_solicitudes,
+            SUM(CASE WHEN sp.estadoSolicitud = ' . ESTADO_SOLICITUD_APROBADA . ' THEN 1 ELSE 0 END) as aprobadas,
+            SUM(CASE WHEN sp.estadoSolicitud = ' . ESTADO_SOLICITUD_RECHAZADA . ' THEN 1 ELSE 0 END) as rechazadas,
+            SUM(CASE WHEN sp.estadoSolicitud = ' . ESTADO_SOLICITUD_PENDIENTE . ' THEN 1 ELSE 0 END) as pendientes,
+            SUM(CASE WHEN sp.estadoSolicitud = ' . ESTADO_SOLICITUD_FINALIZADA . ' THEN 1 ELSE 0 END) as finalizadas
+        ');
+        
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        
+        // Aplicar filtros de fecha
+        if (!empty($filtros['fecha_inicio'])) {
+            $this->db->where('DATE(sp.fechaSolicitud) >=', $filtros['fecha_inicio']);
+        }
+        if (!empty($filtros['fecha_fin'])) {
+            $this->db->where('DATE(sp.fechaSolicitud) <=', $filtros['fecha_fin']);
+        }
+        
+        $resultado = $this->db->get()->row_array();
+        
+        // Calcular porcentaje de aprobación de forma segura
+        $total = intval($resultado['total_solicitudes']);
+        $aprobadas = intval($resultado['aprobadas']);
+        
+        $resultado['porcentaje_aprobacion'] = $total > 0 ? round(($aprobadas / $total) * 100, 2) : 0;
+        
+        return $resultado;
+    }
+    
+    private function _obtener_estadisticas_mensuales_solicitudes($filtros) {
+        $this->db->select('
+            DATE_FORMAT(sp.fechaSolicitud, "%Y-%m") as mes_ano,
+            COUNT(DISTINCT sp.idSolicitud) as total,
+            SUM(CASE WHEN sp.estadoSolicitud = ' . ESTADO_SOLICITUD_APROBADA . ' THEN 1 ELSE 0 END) as aprobadas,
+            SUM(CASE WHEN sp.estadoSolicitud = ' . ESTADO_SOLICITUD_RECHAZADA . ' THEN 1 ELSE 0 END) as rechazadas,
+            SUM(CASE WHEN sp.estadoSolicitud = ' . ESTADO_SOLICITUD_PENDIENTE . ' THEN 1 ELSE 0 END) as pendientes,
+            SUM(CASE WHEN sp.estadoSolicitud = ' . ESTADO_SOLICITUD_FINALIZADA . ' THEN 1 ELSE 0 END) as finalizadas
+        ');
+        
+        $this->db->from('SOLICITUD_PRESTAMO sp');
+        
+        // Aplicar filtros de fecha
+        if (!empty($filtros['fecha_inicio'])) {
+            $this->db->where('DATE(sp.fechaSolicitud) >=', $filtros['fecha_inicio']);
+        }
+        if (!empty($filtros['fecha_fin'])) {
+            $this->db->where('DATE(sp.fechaSolicitud) <=', $filtros['fecha_fin']);
+        }
+        
+        $this->db->group_by('mes_ano');
+        $this->db->order_by('mes_ano', 'ASC');
+        
+        $resultados = $this->db->get()->result_array();
+        
+        // Calcular porcentajes de aprobación
+        foreach ($resultados as &$mes) {
+            $total = intval($mes['total']);
+            $aprobadas = intval($mes['aprobadas']);
+            $mes['porcentaje_aprobacion'] = $total > 0 ? round(($aprobadas / $total) * 100, 2) : 0;
+        }
+        
+        return $resultados;
+    }
+
     private function _generar_excel_solicitudes($data) {
         // Preparar datos para la exportación
         $export_data = array();
