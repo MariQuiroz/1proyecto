@@ -119,8 +119,14 @@
                                                     if ($publicacion->fechaExpiracionReserva) {
                                                         $tiempo_restante = strtotime($publicacion->fechaExpiracionReserva) - time();
                                                         if ($tiempo_restante > 0) {
-                                                            $minutos_restantes = ceil($tiempo_restante / 60);
-                                                            $estado_texto .= ' (' . $minutos_restantes . ' min)';
+                                                            $horas = floor($tiempo_restante / 3600);
+                                                            $minutos = floor(($tiempo_restante % 3600) / 60);
+                                                            
+                                                            if ($horas > 0) {
+                                                                $estado_texto .= ' (' . $horas . 'h ' . $minutos . 'm)';
+                                                            } else {
+                                                                $estado_texto .= ' (' . $minutos . 'm)';
+                                                            }
                                                         }
                                                     }
                                                     $icon_class = 'mdi mdi-account-clock';
