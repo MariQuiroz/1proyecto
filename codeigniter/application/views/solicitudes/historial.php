@@ -21,7 +21,7 @@
                             <table id="basic-datatable" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
-                                        
+                                        <th>CI</th>
                                         <th>Lector</th>
                                         <th>Publicación</th>
                                         <th>Fecha Solicitud</th>
@@ -33,7 +33,7 @@
                                 <tbody>
                                     <?php foreach ($solicitudes as $solicitud): ?>
                                     <tr>
-                                        
+                                        <td><?php echo $solicitud->carnet; ?></td>
                                         <td><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno; ?></td>
                                         <td><?php echo $solicitud->titulo; ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($solicitud->fechaSolicitud)); ?></td>

@@ -56,7 +56,9 @@
                                 <?php endif; ?>
                             <?php endif; ?>
                             
-                            <a href="<?php echo site_url('solicitudes/mis_solicitudes'); ?>" class="btn btn-secondary">Volver</a>
+                            <a onclick="window.history.back()" class="btn btn-secondary" style="cursor:pointer">
+                                <i class="fe-arrow-left"></i> Volver
+                            </a>
                         </div>
                     </div>
                 </div>

@@ -439,6 +439,7 @@ class Solicitud_model extends CI_Model {
             SP.fechaActualizacion,
             U.nombres,
             U.apellidoPaterno,
+            U.carnet, 
             GROUP_CONCAT(P.titulo SEPARATOR ", ") as titulo
         ');
         $this->db->from('SOLICITUD_PRESTAMO SP');
@@ -452,7 +453,8 @@ class Solicitud_model extends CI_Model {
             SP.estadoSolicitud, 
             SP.fechaActualizacion, 
             U.nombres, 
-            U.apellidoPaterno
+            U.apellidoPaterno,
+             U.carnet
         ');
         $this->db->order_by('SP.fechaSolicitud', 'DESC');
         

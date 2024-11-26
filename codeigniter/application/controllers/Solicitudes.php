@@ -115,6 +115,8 @@ class Solicitudes extends CI_Controller {
         }
         public function detalle($idSolicitud = null) {
             $this->_verificar_sesion();
+
+            
             
             // Validar que se proporcionó un ID de solicitud
             if ($idSolicitud === null) {
