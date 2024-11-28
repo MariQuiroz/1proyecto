@@ -184,7 +184,7 @@
             </div>
 
             <div class="form-group row mb-3" id="profesionContainer">
-    <label for="profesion" class="col-3 col-form-label">Ocupación <?= ($infoUsuario->rol == 'lector') ? '*' : ''; ?></label>
+    <label for="profesion" class="col-3 col-form-label">Ocupación * <?= ($infoUsuario->rol == 'lector') ? '*' : ''; ?></label>
     <div class="col-9">
         <?php if ($infoUsuario->rol == 'lector'): ?>
             <?php 
@@ -201,6 +201,31 @@
                 required>
                 <option value="">Seleccione una profesión</option>
                 <?php foreach ($profesiones as $key => $value): ?>
+                    <option value="<?= $key ?>" <?= strtoupper($infoUsuario->profesion) === $key ? 'selected' : ''; ?>>
+                        <?= $value ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        <?php else: ?>
+            <input type="text" 
+                class="form-control" 
+                id="profesion" 
+                name="profesion" 
+                value="<?= isset($infoUsuario->profesion) ? htmlspecialchars($infoUsuario->profesion) : ''; ?>"
+                <?= ($infoUsuario->rol != 'lector') ? '' : 'readonly' ?>>
+        <?php endif; ?>
+        <?php echo form_error('profesion', '<div class="invalid-feedback">', '</div>'); ?>
+    </div>
+</div><div class="form-group row mb-3" id="profesionContainer">
+    <label for="profesion" class="col-3 col-form-label">Ocupación <?= ($infoUsuario->rol == 'lector') ? '*' : ''; ?></label>
+    <div class="col-9">
+        <?php if ($infoUsuario->rol == 'lector'): ?>
+            <select name="profesion" 
+                id="profesion" 
+                class="form-control <?php echo form_error('profesion') ? 'is-invalid' : ''; ?>"
+                required>
+                <option value="">Seleccione una profesión</option>
+                <?php foreach ($profesiones_lector as $key => $value): ?>
                     <option value="<?= $key ?>" <?= strtoupper($infoUsuario->profesion) === $key ? 'selected' : ''; ?>>
                         <?= $value ?>
                     </option>
