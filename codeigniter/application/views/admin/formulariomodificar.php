@@ -186,28 +186,37 @@
             <div class="form-group row mb-3" id="profesionContainer">
               <label for="profesion" class="col-3 col-form-label">Ocupación <?= ($infoUsuario->rol == 'lector') ? '*' : ''; ?></label>
               <div class="col-9">
-                <?php if ($infoUsuario->rol == 'lector'): ?>
-                    <select name="profesion" 
-                        id="profesion" 
-                        class="form-control <?php echo form_error('profesion') ? 'is-invalid' : ''; ?>"
-                        required>
-                        <option value="">Seleccione una profesión</option>
-                        <option value="ESTUDIANTE" <?= ($infoUsuario->profesion == 'ESTUDIANTE') ? 'selected' : ''; ?>>Estudiante Umss</option>
-                        <option value="DOCENTE" <?= ($infoUsuario->profesion == 'DOCENTE') ? 'selected' : ''; ?>>Docente Umss</option>
-                        <option value="INVESTIGADOR" <?= ($infoUsuario->profesion == 'INVESTIGADOR') ? 'selected' : ''; ?>>Investigador</option>
-                        <option value="OTRO" <?= ($infoUsuario->profesion == 'OTRO') ? 'selected' : ''; ?>>Otro</option>
-                    </select>
-                    <?php else: ?>
-                        <input type="text" 
-                            class="form-control" 
-                            id="profesion" 
-                            name="profesion" 
-                            value="<?= isset($infoUsuario->profesion) ? htmlspecialchars($infoUsuario->profesion) : ''; ?>"
-                            <?= ($infoUsuario->rol != 'lector') ? '' : 'readonly' ?>>
-                    <?php endif; ?>
-                <?php echo form_error('profesion', '<div class="invalid-feedback">', '</div>'); ?>
+                  <?php if ($infoUsuario->rol == 'lector'): ?>
+                      <select name="profesion" 
+                          id="profesion" 
+                          class="form-control <?php echo form_error('profesion') ? 'is-invalid' : ''; ?>"
+                          required>
+                          <option value="">Seleccione una profesión</option>
+                          <?php 
+                          $profesiones = array(
+                              'ESTUDIANTE' => 'Estudiante Umss',
+                              'DOCENTE' => 'Docente Umss',
+                              'INVESTIGADOR' => 'Investigador',
+                              'OTRO' => 'Otro'
+                          );
+                          
+                          foreach ($profesiones as $valor => $texto): ?>
+                              <option value="<?= $valor ?>" <?= ($infoUsuario->profesion === $valor) ? 'selected' : ''; ?>>
+                                  <?= $texto ?>
+                              </option>
+                          <?php endforeach; ?>
+                      </select>
+                  <?php else: ?>
+                      <input type="text" 
+                          class="form-control" 
+                          id="profesion" 
+                          name="profesion" 
+                          value="<?= isset($infoUsuario->profesion) ? htmlspecialchars($infoUsuario->profesion) : ''; ?>"
+                          <?= ($infoUsuario->rol != 'lector') ? '' : 'readonly' ?>>
+                  <?php endif; ?>
+                  <?php echo form_error('profesion', '<div class="invalid-feedback">', '</div>'); ?>
               </div>
-            </div>
+          </div>
 
             <div class="form-group row mb-3">
               <div class="col-9 offset-3">
@@ -238,6 +247,7 @@ function toggleProfesionField() {
     var rolSelect = document.getElementById('rol');
     var profesionContainer = document.getElementById('profesionContainer');
     var currentProfesion = document.getElementById('profesion');
+    var currentValue = currentProfesion ? currentProfesion.value : '';
     
     if (rolSelect.value === 'lector') {
         var profesionSelect = document.createElement('select');
@@ -256,6 +266,10 @@ function toggleProfesionField() {
             var option = document.createElement('option');
             option.value = valor;
             option.text = opciones[valor];
+            // Mantener la selección actual
+            if (currentValue === valor) {
+                option.selected = true;
+            }
             profesionSelect.appendChild(option);
         }
         
@@ -266,6 +280,7 @@ function toggleProfesionField() {
         inputText.className = 'form-control';
         inputText.id = 'profesion';
         inputText.name = 'profesion';
+        inputText.value = currentValue;  // Mantener el valor actual
         inputText.required = true;
         inputText.maxLength = 100;
         inputText.placeholder = 'Ingrese la ocupación';
@@ -276,9 +291,12 @@ function toggleProfesionField() {
     }
 }
 
+// Modificar el evento DOMContentLoaded para evitar el trigger innecesario
 document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('rol')) {
-        toggleProfesionField();
+    var rolSelect = document.getElementById('rol');
+    if (rolSelect) {
+        // Solo ejecutar toggleProfesionField si el rol cambia
+        rolSelect.addEventListener('change', toggleProfesionField);
     }
 });
 
