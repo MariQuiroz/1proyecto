@@ -598,28 +598,85 @@ private function _generar_contrasena_temporal() {
 }
 
     public function auto_registro() {
-        $this->form_validation->set_rules('nombres', 'Nombres', 'required');
-        $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required');
-        $this->form_validation->set_rules('carnet', 'Carnet', 'required|is_unique[USUARIO.carnet]');
-        $this->form_validation->set_rules('email', 'Correo electrónico', 'required|valid_email|is_unique[USUARIO.email]');
-        $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|is_unique[USUARIO.username]');
-        $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[6]');
-        $this->form_validation->set_rules('confirm_password', 'Confirmar Contraseña', 'required|matches[password]');
+        
+        $data['profesiones_lector'] = $this->_obtener_profesiones_lector();
+            // Reglas de validación para nombres y apellidos
+    $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim|min_length[2]|max_length[20]|callback_validar_nombre', [
+        'required' => 'El nombre es obligatorio.',
+        'min_length' => 'El nombre debe tener al menos 2 caracteres.',
+        'max_length' => 'El nombre no puede exceder los 20 caracteres.'
+    ]);
 
-        if ($this->form_validation->run() == FALSE) {
-            $this->load->view('lector/registro');
-        } else {
-            $this->db->trans_start();
+    $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required|trim|min_length[2]|max_length[25]|callback_validar_nombre', [
+        'required' => 'El apellido paterno es obligatorio.',
+        'min_length' => 'El apellido paterno debe tener al menos 2 caracteres.',
+        'max_length' => 'El apellido paterno no puede exceder los 25 caracteres.'
+    ]);
+
+    $this->form_validation->set_rules('apellidoMaterno', 'Apellido Materno', 'trim|permit_empty|callback_validar_nombre_opcional', [
+        'validar_nombre_opcional' => 'El apellido materno solo puede contener letras y espacios'
+    ]);
+
+    // Validación de carnet
+    $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|callback_validar_carnet|is_unique[USUARIO.carnet]', [
+        'required' => 'El carnet es obligatorio.',
+        'is_unique' => 'Este carnet ya está registrado.',
+        '_validar_carnet' => 'Formato de carnet inválido. Debe tener entre 4 y 9 números y opcionalmente 1-2 letras al final.'
+    ]);
+
+    // Validación de email
+    $this->form_validation->set_rules('email', 'Email', 'required|trim|valid_email|is_unique[USUARIO.email]|max_length[100]|strtolower', [
+        'required' => 'El email es obligatorio.',
+        'valid_email' => 'Por favor ingrese un email válido.',
+        'is_unique' => 'Este email ya está registrado.',
+        'max_length' => 'El email no puede exceder los 100 caracteres.'
+    ]);
+
+    // Validación de fecha de nacimiento
+    $this->form_validation->set_rules('fechaNacimiento', 'Fecha de Nacimiento', 'required|callback_validar_edad', [
+        'required' => 'La fecha de nacimiento es obligatoria.'
+    ]);
+
+     // Validación de profesión
+     $this->form_validation->set_rules('profesion', 'Profesión', 'required|in_list['.implode(',', array_keys($this->_obtener_profesiones_lector())).']', [
+        'required' => 'La profesión es obligatoria.',
+        'in_list' => 'Por favor seleccione una profesión válida.'
+    ]);
+
+    // Validación de usuario y contraseña
+    $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|trim|is_unique[USUARIO.username]|min_length[4]|max_length[20]', [
+        'required' => 'El nombre de usuario es obligatorio.',
+        'is_unique' => 'Este nombre de usuario ya está en uso.',
+        'min_length' => 'El nombre de usuario debe tener al menos 4 caracteres.',
+        'max_length' => 'El nombre de usuario no puede exceder los 20 caracteres.'
+    ]);
+
+    $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[6]', [
+        'required' => 'La contraseña es obligatoria.',
+        'min_length' => 'La contraseña debe tener al menos 6 caracteres.'
+    ]);
+
+    $this->form_validation->set_rules('confirm_password', 'Confirmar Contraseña', 'required|matches[password]', [
+        'required' => 'Debe confirmar la contraseña.',
+        'matches' => 'Las contraseñas no coinciden.'
+    ]);
+    
+        
+    if ($this->form_validation->run() == FALSE) {
+        $data['profesiones_lector'] = $this->_obtener_profesiones_lector();
+        $this->load->view('lector/registro', $data);
+    } else {
+        $this->db->trans_start();
 
             $data = array(
-                'nombres' => $this->input->post('nombres'),
-                'apellidoPaterno' => $this->input->post('apellidoPaterno'),
-                'apellidoMaterno' => $this->input->post('apellidoMaterno'),
-                'carnet' => $this->input->post('carnet'),
+                'nombres' => strtoupper($this->input->post('nombres')),
+                'apellidoPaterno' => strtoupper($this->input->post('apellidoPaterno')),
+                'apellidoMaterno' => strtoupper($this->input->post('apellidoMaterno')),
+                'carnet' => strtoupper($this->input->post('carnet')),
                 'profesion' => $this->input->post('profesion'),
                 'fechaNacimiento' => $this->input->post('fechaNacimiento'),
                 'sexo' => $this->input->post('sexo'),
-                'email' => $this->input->post('email'),
+                'email' => strtolower($this->input->post('email')),
                 'username' => $this->input->post('username'),
                 'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
                 'rol' => 'lector',
@@ -700,7 +757,9 @@ private function _generar_contrasena_temporal() {
     
             return $this->email->send();
         }
-    
+
+       
+
         public function modificar($idUsuario) {
             $this->_verificar_sesion();
             if ($this->session->userdata('rol') != 'administrador') {
