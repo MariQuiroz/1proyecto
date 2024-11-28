@@ -822,10 +822,50 @@ private function _generar_contrasena_temporal() {
                 );
         
                 $nuevo_rol = strtoupper($this->input->post('rol'));
-                if ($nuevo_rol != $usuario->rol) {
+                $nueva_profesion = strtoupper($this->input->post('profesion'));
+                
+                // Si el rol cambia o se mantiene igual, manejar la profesión adecuadamente
+                if ($nuevo_rol == $usuario->rol) {
+                    // El rol no cambia, pero podría cambiar la profesión
+                    if ($nuevo_rol == 'LECTOR') {
+                        // Para lectores, validar que la nueva profesión sea válida
+                        $profesiones_validas = array_keys($this->_obtener_profesiones_lector());
+                        if (in_array($nueva_profesion, $profesiones_validas)) {
+                            $datos_actualizados['profesion'] = $nueva_profesion;
+                        }
+                    } else {
+                        // Para admin/encargado, permitir actualizar la profesión si se proporciona
+                        if (!empty($nueva_profesion)) {
+                            $datos_actualizados['profesion'] = $nueva_profesion;
+                        }
+                    }
+                } else {
+                    // El rol está cambiando
                     $datos_actualizados['rol'] = $nuevo_rol;
+                    
+                    if ($nuevo_rol == 'LECTOR') {
+                        // Cambiando a lector, asegurar que tenga una profesión válida
+                        $profesiones_validas = array_keys($this->_obtener_profesiones_lector());
+                        if (in_array($nueva_profesion, $profesiones_validas)) {
+                            $datos_actualizados['profesion'] = $nueva_profesion;
+                        }
+                    } else if ($usuario->rol == 'LECTOR' && $nuevo_rol != 'LECTOR') {
+                        // Si cambia de lector a otro rol, mantener la profesión si se proporciona
+                        if (!empty($nueva_profesion)) {
+                            $datos_actualizados['profesion'] = $nueva_profesion;
+                        } else {
+                            $datos_actualizados['profesion'] = NULL;
+                        }
+                    } else {
+                        // Entre roles admin/encargado, mantener o actualizar la profesión
+                        if (!empty($nueva_profesion)) {
+                            $datos_actualizados['profesion'] = $nueva_profesion;
+                        } else {
+                            $datos_actualizados['profesion'] = $usuario->profesion;
+                        }
+                    }
                 }
-        
+                
                 $nueva_profesion = strtoupper($this->input->post('profesion'));
                 if ($nuevo_rol == 'LECTOR') {
                     if ($nueva_profesion != $usuario->profesion) {

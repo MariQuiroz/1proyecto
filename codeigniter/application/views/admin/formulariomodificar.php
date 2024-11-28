@@ -197,14 +197,14 @@
                         <option value="INVESTIGADOR" <?= ($infoUsuario->profesion == 'INVESTIGADOR') ? 'selected' : ''; ?>>Investigador</option>
                         <option value="OTRO" <?= ($infoUsuario->profesion == 'OTRO') ? 'selected' : ''; ?>>Otro</option>
                     </select>
-                <?php else: ?>
-                    <input type="text" 
-                        class="form-control" 
-                        id="profesion" 
-                        name="profesion" 
-                        value="<?= htmlspecialchars($infoUsuario->profesion); ?>"
-                        readonly>
-                <?php endif; ?>
+                    <?php else: ?>
+                        <input type="text" 
+                            class="form-control" 
+                            id="profesion" 
+                            name="profesion" 
+                            value="<?= isset($infoUsuario->profesion) ? htmlspecialchars($infoUsuario->profesion) : ''; ?>"
+                            <?= ($infoUsuario->rol != 'lector') ? '' : 'readonly' ?>>
+                    <?php endif; ?>
                 <?php echo form_error('profesion', '<div class="invalid-feedback">', '</div>'); ?>
               </div>
             </div>
