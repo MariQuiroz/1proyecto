@@ -186,6 +186,14 @@ class Usuarios extends CI_Controller {
         ];
     }
     
+    private function cargar_vistas($vista, $data = array()) {
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view($vista, $data);
+        $this->load->view('inc/footer');
+    }
+
     public function agregar() {
         $this->_verificar_permisos_creacion();
         $data['tipos'] = $this->tipo_model->obtener_tipos();
@@ -205,26 +213,81 @@ class Usuarios extends CI_Controller {
     
         $rol_usuario_actual = $this->session->userdata('rol');
         $rol_nuevo_usuario = $this->input->post('rol');
+
+         // Reglas de validación para nombres y apellidos
+         $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim|min_length[2]|max_length[20]|callback_validar_nombre', [
+            'required' => 'El nombre es obligatorio.',
+            'min_length' => 'El nombre debe tener al menos 2 caracteres.',
+            'max_length' => 'El nombre no puede exceder los 20 caracteres.'
+        ]);
+    
+        $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required|trim|min_length[2]|max_length[25]|callback_validar_nombre', [
+            'required' => 'El apellido paterno es obligatorio.',
+            'min_length' => 'El apellido paterno debe tener al menos 2 caracteres.',
+            'max_length' => 'El apellido paterno no puede exceder los 25 caracteres.'
+        ]);
+    
+        $this->form_validation->set_rules('apellidoMaterno', 'Apellido Materno', 'trim|permit_empty|callback_validar_nombre_opcional', [
+            'validar_nombre_opcional' => 'El apellido materno solo puede contener letras y espacios'
+        ]);
+
+    // Validación de carnet
+    $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|callback__validar_carnet|is_unique[USUARIO.carnet]', [
+        'required' => 'El carnet es obligatorio.',
+        'is_unique' => 'Este carnet ya está registrado.',
+        '_validar_carnet' => 'Formato de carnet inválido. Debe tener entre 4 y 9 números y opcionalmente 1-2 letras al final.'
+    ]);
+
+    // Validación de email
+    $this->form_validation->set_rules('email', 'Email', 'required|trim|valid_email|is_unique[USUARIO.email]|max_length[100]|strtolower', [
+        'required' => 'El email es obligatorio.',
+        'valid_email' => 'Por favor ingrese un email válido.',
+        'is_unique' => 'Este email ya está registrado.',
+        'max_length' => 'El email no puede exceder los 100 caracteres.'
+    ]);
+
+    // Validación de fecha de nacimiento
+    $this->form_validation->set_rules('fechaNacimiento', 'Fecha de Nacimiento', 'required|callback_validar_edad', [
+        'required' => 'La fecha de nacimiento es obligatoria.'
+    ]);;
+
+    // Validación específica para profesión según rol
+    if ($rol_nuevo_usuario === 'lector') {
+        $this->form_validation->set_rules('profesion', 'Profesión', 'required|max_length[100]|in_list[' . 
+            implode(',', array_keys($this->_obtener_profesiones_lector())) . ']', [
+            'required' => 'La profesión es obligatoria.',
+            'max_length' => 'La profesión no puede exceder los 100 caracteres.',
+            'in_list' => 'Por favor seleccione una profesión válida.'
+        ]);
+    }
     
         // Reglas de validación base
-        $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim');
+
+       $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim');
         $this->form_validation->set_rules('apellidoPaterno', 'Apellido Paterno', 'required|trim');
         $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|is_unique[USUARIO.carnet]');
         $this->form_validation->set_rules('email', 'Email', 'required|trim|valid_email|is_unique[USUARIO.email]');
         
         // Validación específica para profesión según rol
         if ($rol_nuevo_usuario === 'lector') {
-            $this->form_validation->set_rules('profesion', 'Profesión', 'required|in_list[' . 
-                implode(',', array_keys($this->_obtener_profesiones_lector())) . ']');
-        } else {
-            $this->form_validation->set_rules('profesion', 'Profesión', 'required|trim');
+            $this->form_validation->set_rules('profesion', 'Profesión', 'required|max_length[100]|in_list[' . 
+                implode(',', array_keys($this->_obtener_profesiones_lector())) . ']', [
+                'required' => 'La profesión es obligatoria.',
+                'max_length' => 'La profesión no puede exceder los 100 caracteres.',
+                'in_list' => 'Por favor seleccione una profesión válida.'
+            ]);
         }
-
-    if ($this->form_validation->run() == FALSE) {
-        $data['es_admin'] = ($this->session->userdata('rol') === 'administrador');
-        $this->cargar_vistas('admin/formulario', $data);
-        return;
-    }
+    
+        if ($this->form_validation->run() == FALSE) {
+            $data = array(
+                'es_admin' => ($this->session->userdata('rol') === 'administrador'),
+                'profesiones_lector' => $this->_obtener_profesiones_lector(),
+                'tipos' => $this->tipo_model->obtener_tipos(),
+                'editoriales' => $this->editorial_model->obtener_editoriales()
+            );
+            $this->cargar_vistas('admin/formulario', $data);
+            return;
+        }
 
     $this->db->trans_start();
 
@@ -279,6 +342,53 @@ class Usuarios extends CI_Controller {
         $this->session->set_flashdata('error', $e->getMessage());
         redirect('usuarios/agregar');
     }
+}
+
+// Funciones de validación personalizadas
+public function validar_nombre($str) {
+    if (!preg_match('/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/', $str)) {
+        $this->form_validation->set_message('validar_nombre', 'El campo {field} solo puede contener letras y espacios');
+        return FALSE;
+    }
+    return TRUE;
+}
+
+public function validar_edad($fecha) {
+    try {
+        $fechaNacimiento = new DateTime($fecha);
+        $hoy = new DateTime();
+        $edad = $hoy->diff($fechaNacimiento)->y;
+        
+        // Validar que tenga al menos 15 años
+        if ($edad < 15) {
+            $this->form_validation->set_message('validar_edad', 
+                'La persona debe tener al menos 15 años de edad');
+            return FALSE;
+        }
+        
+        // Validar que la fecha no sea futura
+        if ($fechaNacimiento > $hoy) {
+            $this->form_validation->set_message('validar_edad', 
+                'La fecha de nacimiento no puede ser en el futuro');
+            return FALSE;
+        }
+        
+        return TRUE;
+    } catch (Exception $e) {
+        $this->form_validation->set_message('validar_edad', 
+            'Por favor ingrese una fecha válida');
+        return FALSE;
+    }
+}
+
+public function validar_carnet($carnet) {
+    $patron = '/^\d{4,9}(-\d{1,4})?[A-Za-z]{0,2}$/';
+    if (!preg_match($patron, $carnet)) {
+        $this->form_validation->set_message('validar_carnet', 
+            'Formato de carnet inválido. Debe tener entre 4 y 9 números, opcionalmente un guión seguido de 1 a 4 números, y opcionalmente 1-2 letras al final.');
+        return FALSE;
+    }
+    return TRUE;
 }
 
 private function _verificar_email($email) {
