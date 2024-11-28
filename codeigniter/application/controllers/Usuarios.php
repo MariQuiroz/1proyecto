@@ -177,7 +177,7 @@ class Usuarios extends CI_Controller {
 
     private function _obtener_profesiones_lector() {
         return [
-            '' => 'Seleccione una profesión',
+            
             'ESTUDIANTE UMSS' => 'Estudiante Umss',
             'DOCENTE UMSS' => 'Docente Umss',
             'INVESTIGADOR' => 'Investigador',
