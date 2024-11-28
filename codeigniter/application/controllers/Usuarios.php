@@ -181,7 +181,6 @@ class Usuarios extends CI_Controller {
             'Estudiante' => 'Estudiante Umss',
             'Docente' => 'Docente Umss',
             'Investigador' => 'Investigador',
-            
             'Otro' => 'Otro'
         ];
     }
@@ -799,6 +798,8 @@ private function _generar_contrasena_temporal() {
                 $data['infoUsuario'] = $usuario;
                 $data['profesiones_lector'] = $this->_obtener_profesiones_lector();
                 $this->load->view('inc/header');
+                $this->load->view('inc/nabvar');
+                $this->load->view('inc/aside');
                 $this->load->view('admin/formulariomodificar', $data);
                 $this->load->view('inc/footer');
                 return;
