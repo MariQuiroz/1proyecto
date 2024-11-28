@@ -668,6 +668,8 @@ private function _generar_contrasena_temporal() {
     } else {
         $this->db->trans_start();
 
+        try {
+
             $data = array(
                 'nombres' => strtoupper($this->input->post('nombres')),
                 'apellidoPaterno' => strtoupper($this->input->post('apellidoPaterno')),
@@ -697,17 +699,22 @@ private function _generar_contrasena_temporal() {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
-                    redirect('usuarios/auto_registro');
+                    throw new Exception('Error en la transacción al registrar usuario');
+                }
+
+                // Enviar email de verificación
+                if ($this->_enviar_email_verificacion($data['email'], $data['tokenVerificacion'])) {
+                    // Mostrar la vista de confirmación
+                    $data_confirmacion['email'] = $data['email'];
+                    $this->load->view('lector/confirmacion_registro', $data_confirmacion);
                 } else {
-                    if ($this->_enviar_email_verificacion($data['email'], $data['tokenVerificacion'])) {
-                        $this->session->set_flashdata('mensaje', 'Registro exitoso. Por favor, verifica tu correo electrónico para activar tu cuenta.');
-                    } else {
-                        $this->session->set_flashdata('error', 'Registro exitoso, pero hubo un problema al enviar el correo de verificación. Por favor, contacta al administrador.');
-                    }
-                    redirect('usuarios/index');
+                    throw new Exception('Error al enviar el correo de verificación');
                 }
             } else {
+                throw new Exception('Error al registrar el usuario');
+            }
+
+        } catch (Exception $e) {
                 $this->db->trans_rollback();
                 $this->session->set_flashdata('error', 'Hubo un problema al registrar el usuario. Inténtalo de nuevo.');
                 redirect('usuarios/auto_registro');
