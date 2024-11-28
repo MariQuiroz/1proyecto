@@ -342,6 +342,7 @@ class Usuarios extends CI_Controller {
         $this->session->set_flashdata('error', $e->getMessage());
         redirect('usuarios/agregar');
     }
+    
 }
 
 // Funciones de validación personalizadas
@@ -351,6 +352,12 @@ public function validar_nombre($str) {
         return FALSE;
     }
     return TRUE;
+}
+public function validar_nombre_opcional($str) {
+    if (empty($str)) {
+        return TRUE; // Campo vacío es válido para campos opcionales
+    }
+    return $this->validar_nombre($str);
 }
 
 public function validar_edad($fecha) {
