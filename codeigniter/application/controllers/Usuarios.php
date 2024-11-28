@@ -716,10 +716,7 @@ private function _generar_contrasena_temporal() {
         
             $data['infoUsuario'] = $usuario;
             $data['profesiones_lector'] = $this->_obtener_profesiones_lector();
-
             $this->load->view('inc/header');
-            $this->load->view('inc/nabvar');
-            $this->load->view('inc/aside');
             $this->load->view('admin/formulariomodificar', $data);
             $this->load->view('inc/footer');
         }
@@ -739,14 +736,15 @@ private function _generar_contrasena_temporal() {
         
             $rol_nuevo_usuario = $this->input->post('rol');
 
-             // Validación de username
-                $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|trim|min_length[3]|max_length[20]|alpha_numeric|callback__validar_username_unico['.$idUsuario.']', [
-                    'required' => 'El nombre de usuario es obligatorio.',
-                    'min_length' => 'El nombre de usuario debe tener al menos 3 caracteres.',
-                    'max_length' => 'El nombre de usuario no puede exceder los 20 caracteres.',
-                    'alpha_numeric' => 'El nombre de usuario solo puede contener letras y números.',
-                    '_validar_username_unico' => 'Este nombre de usuario ya está registrado.'
-                ]);
+            // Validación de username
+            $this->form_validation->set_rules('username', 'Nombre de usuario', 'required|trim|min_length[3]|max_length[20]|alpha_numeric|callback__validar_username_unico['.$idUsuario.']', [
+                'required' => 'El nombre de usuario es obligatorio.',
+                'min_length' => 'El nombre de usuario debe tener al menos 3 caracteres.',
+                'max_length' => 'El nombre de usuario no puede exceder los 20 caracteres.',
+                'alpha_numeric' => 'El nombre de usuario solo puede contener letras y números.',
+                '_validar_username_unico' => 'Este nombre de usuario ya está registrado.'
+            ]);
+
         
             // Reglas de validación para nombres y apellidos
             $this->form_validation->set_rules('nombres', 'Nombres', 'required|trim|min_length[2]|max_length[20]|callback_validar_nombre', [
@@ -761,11 +759,11 @@ private function _generar_contrasena_temporal() {
                 'max_length' => 'El apellido paterno no puede exceder los 25 caracteres.'
             ]);
         
-           $this->form_validation->set_rules('apellidoMaterno', 'Apellido Materno', 'trim|callback_validar_nombre_opcional', [
+            $this->form_validation->set_rules('apellidoMaterno', 'Apellido Materno', 'trim|callback_validar_nombre_opcional', [
                 'validar_nombre_opcional' => 'El apellido materno solo puede contener letras y espacios'
             ]);
         
-
+            // Validación de carnet modificada para aceptar ambos formatos
             $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|callback_validar_carnet|callback__validar_carnet_unico['.$idUsuario.']', [
                 'required' => 'El carnet es obligatorio.',
                 'validar_carnet' => 'Formato de carnet inválido. Debe tener entre 4 y 9 números, o para extranjeros: 1-2 letras + guión + números.',
@@ -784,8 +782,6 @@ private function _generar_contrasena_temporal() {
             $this->form_validation->set_rules('fechaNacimiento', 'Fecha de Nacimiento', 'required|callback_validar_edad', [
                 'required' => 'La fecha de nacimiento es obligatoria.'
             ]);
-
-            
         
             // Validación específica para profesión según rol
             if ($rol_nuevo_usuario === 'lector') {
@@ -805,17 +801,6 @@ private function _generar_contrasena_temporal() {
                 $this->load->view('inc/footer');
                 return;
             }
-
-                    // Validación adicional para profesión si el rol es lector
-            if ($this->input->post('rol') == 'lector') {
-                $this->form_validation->set_rules('profesion', 'Profesión', 'required');
-            }
-
-            if ($this->form_validation->run() == FALSE) {
-                $this->session->set_flashdata('error', validation_errors());
-                redirect('usuarios/modificar/' . $idUsuario);
-                return;
-            } 
         
             $this->db->trans_start();
         
@@ -835,15 +820,8 @@ private function _generar_contrasena_temporal() {
                 );
         
                 $nuevo_rol = strtoupper($this->input->post('rol'));
-                if ($nuevo_rol == 'LECTOR') {
-                    $datos_actualizados['profesion'] = strtoupper($this->input->post('profesion'));
-                } else {
-                    // Mantener la profesión existente si no es lector
-                    if ($usuario->rol != 'LECTOR') {
-                        $datos_actualizados['profesion'] = $usuario->profesion;
-                    } else {
-                        $datos_actualizados['profesion'] = NULL;
-                    }
+                if ($nuevo_rol != $usuario->rol) {
+                    $datos_actualizados['rol'] = $nuevo_rol;
                 }
         
                 $nueva_profesion = strtoupper($this->input->post('profesion'));
@@ -859,13 +837,6 @@ private function _generar_contrasena_temporal() {
                 if (!$this->_verificar_email($datos_actualizados['email'])) {
                     throw new Exception('El email ingresado no es válido o ya está registrado.');
                 }
-                
-                if ($this->input->post('rol') == 'lector') {
-                    $datos_actualizados['profesion'] = strtoupper($this->input->post('profesion'));
-                } else {
-                    $datos_actualizados['profesion'] = NULL;
-                }
-        
         
                 if ($this->usuario_model->modificarUsuario($idUsuario, $datos_actualizados)) {
                     $this->db->trans_complete();
@@ -883,7 +854,7 @@ private function _generar_contrasena_temporal() {
             }
         }
         
-        //  esta  función de validación para el username
+        // Nuevas funciones de validación para modificación
         public function _validar_username_unico($username, $idUsuario) {
             $this->db->where('username', $username);
             $this->db->where('idUsuario !=', $idUsuario);
@@ -894,7 +865,8 @@ private function _generar_contrasena_temporal() {
             }
             return TRUE;
         }
-        // Nuevas funciones de validación para modificación
+
+
         public function _validar_carnet_unico($carnet, $idUsuario) {
             $this->db->where('carnet', $carnet);
             $this->db->where('idUsuario !=', $idUsuario);
