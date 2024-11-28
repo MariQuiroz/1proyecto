@@ -187,14 +187,22 @@
     <label for="profesion" class="col-3 col-form-label">Ocupación <?= ($infoUsuario->rol == 'lector') ? '*' : ''; ?></label>
     <div class="col-9">
         <?php if ($infoUsuario->rol == 'lector'): ?>
+            <?php 
+            $profesiones = [
+                'ESTUDIANTE' => 'Estudiante Umss',
+                'DOCENTE' => 'Docente Umss',
+                'INVESTIGADOR' => 'Investigador',
+                'OTRO' => 'Otro'
+            ]; 
+            ?>
             <select name="profesion" 
                 id="profesion" 
                 class="form-control <?php echo form_error('profesion') ? 'is-invalid' : ''; ?>"
                 required>
                 <option value="">Seleccione una profesión</option>
-                <?php foreach ($profesiones_lector as $valor => $texto): ?>
-                    <option value="<?= $valor ?>" <?= (trim($infoUsuario->profesion) === $valor) ? 'selected' : ''; ?>>
-                        <?= $texto ?>
+                <?php foreach ($profesiones as $key => $value): ?>
+                    <option value="<?= $key ?>" <?= strtoupper($infoUsuario->profesion) === $key ? 'selected' : ''; ?>>
+                        <?= $value ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -247,7 +255,14 @@ function toggleProfesionField() {
         profesionSelect.name = 'profesion';
         profesionSelect.required = true;
         
-        var opciones = <?php echo json_encode($profesiones_lector); ?>;
+        // Definir las opciones directamente
+        var opciones = {
+            'ESTUDIANTE': 'Estudiante Umss',
+            'DOCENTE': 'Docente Umss',
+            'INVESTIGADOR': 'Investigador',
+            'OTRO': 'Otro'
+        };
+
         var optionDefault = document.createElement('option');
         optionDefault.value = '';
         optionDefault.text = 'Seleccione una profesión';
@@ -258,7 +273,7 @@ function toggleProfesionField() {
             option.value = valor;
             option.text = opciones[valor];
             // Mantener la selección actual
-            if (currentValue === valor) {
+            if (currentValue.toUpperCase() === valor) {
                 option.selected = true;
             }
             profesionSelect.appendChild(option);
