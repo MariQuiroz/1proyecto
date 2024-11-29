@@ -25,6 +25,11 @@
             .is-invalid ~ .error-message {
                 display: block;
             }
+            .input-requirements {
+                font-size: 12px;
+                color: #666;
+                margin-top: 5px;
+            }
         </style>
     </head>
 
@@ -69,14 +74,33 @@
 
                                     <div class="form-group mb-3">
                                         <label for="username">Nombre de usuario</label>
-                                        <?php echo form_input(['name' => 'username', 'class' => 'form-control', 'type' => 'text', 'id' => 'username', 'required' => '', 'placeholder' => 'Ingrese su nombre de usuario']); ?>
-                                        <div class="error-message">Por favor ingrese su nombre de usuario</div>
+                                        <?php echo form_input([
+                                            'name' => 'username', 
+                                            'class' => 'form-control', 
+                                            'type' => 'text', 
+                                            'id' => 'username', 
+                                            'required' => '', 
+                                            'minlength' => '4',
+                                            'maxlength' => '20',
+                                            'placeholder' => 'Ingrese su nombre de usuario'
+                                        ]); ?>
+                                        <div class="error-message" id="username-error"></div>
+                                        <small class="input-requirements text-muted">El usuario debe tener entre 4 y 20 caracteres</small>
                                     </div>
 
                                     <div class="form-group mb-3">
                                         <label for="password">Contraseña</label>
-                                        <?php echo form_password(['name' => 'password', 'class' => 'form-control', 'id' => 'password', 'required' => '', 'placeholder' => 'Ingrese su contraseña']); ?>
-                                        <div class="error-message">Por favor ingrese su contraseña</div>
+                                        <?php echo form_password([
+                                            'name' => 'password', 
+                                            'class' => 'form-control', 
+                                            'id' => 'password', 
+                                            'required' => '', 
+                                            'minlength' => '6',
+                                            'maxlength' => '20',
+                                            'placeholder' => 'Ingrese su contraseña'
+                                        ]); ?>
+                                        <div class="error-message" id="password-error"></div>
+                                        <small class="input-requirements text-muted">La contraseña debe tener entre 6 y 20 caracteres</small>
                                     </div>
 
                                     <div class="form-group mb-3">
@@ -128,21 +152,43 @@
             let isValid = true;
             const username = document.getElementById('username');
             const password = document.getElementById('password');
+            const usernameError = document.getElementById('username-error');
+            const passwordError = document.getElementById('password-error');
 
             // Validar username
             if (!username.value.trim()) {
                 username.classList.add('is-invalid');
+                usernameError.textContent = 'Por favor ingrese su nombre de usuario';
+                isValid = false;
+            } else if (username.value.length < 4) {
+                username.classList.add('is-invalid');
+                usernameError.textContent = 'El usuario debe tener al menos 4 caracteres';
+                isValid = false;
+            } else if (username.value.length > 20) {
+                username.classList.add('is-invalid');
+                usernameError.textContent = 'El usuario no puede tener más de 20 caracteres';
                 isValid = false;
             } else {
                 username.classList.remove('is-invalid');
+                usernameError.textContent = '';
             }
 
             // Validar password
             if (!password.value.trim()) {
                 password.classList.add('is-invalid');
+                passwordError.textContent = 'Por favor ingrese su contraseña';
+                isValid = false;
+            } else if (password.value.length < 6) {
+                password.classList.add('is-invalid');
+                passwordError.textContent = 'La contraseña debe tener al menos 6 caracteres';
+                isValid = false;
+            } else if (password.value.length > 20) {
+                password.classList.add('is-invalid');
+                passwordError.textContent = 'La contraseña no puede tener más de 20 caracteres';
                 isValid = false;
             } else {
                 password.classList.remove('is-invalid');
+                passwordError.textContent = '';
             }
 
             // Si hay errores, prevenir el envío del formulario
@@ -151,12 +197,24 @@
             }
         });
 
-        // Remover clase de error cuando el usuario empiece a escribir
+        // Validación en tiempo real
         const inputs = document.querySelectorAll('#loginForm input[required]');
         inputs.forEach(input => {
             input.addEventListener('input', function() {
-                if (this.value.trim()) {
+                const errorElement = document.getElementById(`${this.id}-error`);
+                
+                if (!this.value.trim()) {
+                    this.classList.add('is-invalid');
+                    errorElement.textContent = `Por favor ingrese su ${this.id === 'username' ? 'nombre de usuario' : 'contraseña'}`;
+                } else if (this.id === 'username' && (this.value.length < 4 || this.value.length > 20)) {
+                    this.classList.add('is-invalid');
+                    errorElement.textContent = `El usuario debe tener entre 4 y 20 caracteres`;
+                } else if (this.id === 'password' && (this.value.length < 6 || this.value.length > 20)) {
+                    this.classList.add('is-invalid');
+                    errorElement.textContent = `La contraseña debe tener entre 6 y 20 caracteres`;
+                } else {
                     this.classList.remove('is-invalid');
+                    errorElement.textContent = '';
                 }
             });
         });
