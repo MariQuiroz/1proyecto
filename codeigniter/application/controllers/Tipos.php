@@ -41,55 +41,78 @@ class Tipos extends CI_Controller {
     }
 
     public function agregarbd() {
-        // Verificar permisos
         $this->_verificar_permisos();
-    
-        // Definir las reglas de validación
+        
+        // Configurar reglas de validación personalizadas
         $this->form_validation->set_rules(
             'nombreTipo',
             'Nombre del Tipo',
-            'required|is_unique[TIPO.nombreTipo]|alpha_numeric_spaces|min_length[3]|max_length[50]',
-            [
-                'required' => 'El campo %s es obligatorio.',
-                'is_unique' => 'El %s ya existe. Por favor, elija otro.',
-                'alpha_numeric_spaces' => 'El %s solo puede contener letras, números y espacios.',
-                'min_length' => 'El %s debe tener al menos 3 caracteres.',
-                'max_length' => 'El %s no puede exceder los 50 caracteres.'
-            ]
+            'trim|required|min_length[2]|max_length[100]|callback_validar_nombre_tipo',
+            array(
+                'required'      => 'El nombre del tipo es obligatorio.',
+                'min_length'    => 'El nombre debe tener al menos 2 caracteres.',
+                'max_length'    => 'El nombre no puede exceder los 100 caracteres.',
+                'validar_nombre_tipo' => 'El nombre contiene caracteres no permitidos.'
+            )
         );
     
-        // Validar el formulario
         if ($this->form_validation->run() == FALSE) {
-            // Cargar vistas con errores
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
             $this->load->view('tipos/agregar');
             $this->load->view('inc/footer');
         } else {
-            // Convertir el nombre del tipo a mayúsculas
-            $nombreTipo = strtoupper($this->input->post('nombreTipo'));
+            try {
+                // Obtener y procesar el nombre del tipo
+                $nombreTipo = $this->input->post('nombreTipo');
+                
+                // Eliminar espacios múltiples y al inicio/final
+                $nombreTipo = preg_replace('/\s+/', ' ', trim($nombreTipo));
+                
+                // Verificar existencia
+                if ($this->tipo_model->verificar_existencia($nombreTipo)) {
+                    $this->session->set_flashdata('error', 'Este tipo ya existe en el sistema.');
+                    redirect('tipos/agregar');
+                    return;
+                }
+                
+                // Convertir a mayúsculas preservando acentos
+                $nombreTipo = mb_strtoupper($nombreTipo, 'UTF-8');
     
-            // Preparar datos para guardar
-            $data = array(
-                'nombreTipo' => $nombreTipo,
-                'estado' => 1,
-                'fechaCreacion' => date('Y-m-d H:i:s'),
-                'idUsuarioCreador' => $this->session->userdata('idUsuario')
-            );
+                $data = array(
+                    'nombreTipo'       => $nombreTipo,
+                    'estado'           => 1,
+                    'fechaCreacion'    => date('Y-m-d H:i:s'),
+                    'idUsuarioCreador' => $this->session->userdata('idUsuario')
+                );
     
-            // Intentar guardar en la base de datos
-            if ($this->tipo_model->agregar_tipo($data)) {
-                $this->session->set_flashdata('mensaje', 'Tipo agregado correctamente.');
-            } else {
-                $this->session->set_flashdata('error', 'Error al agregar el tipo.');
+                if ($this->tipo_model->agregar_tipo($data)) {
+                    $this->session->set_flashdata('mensaje', 
+                        "Tipo '{$nombreTipo}' agregado correctamente.");
+                    redirect('tipos/index');
+                } else {
+                    throw new Exception('Error al guardar en la base de datos.');
+                }
+    
+            } catch (Exception $e) {
+                log_message('error', 'Error al agregar tipo: ' . $e->getMessage());
+                $this->session->set_flashdata('error', 'Error al procesar la solicitud.');
+                redirect('tipos/agregar');
             }
-    
-            // Redirigir al índice de tipos
-            redirect('tipos/index');
         }
     }
     
+    // Método de validación personalizado
+    public function validar_nombre_tipo($nombre) {
+        // Permitir letras (con acentos), números y espacios
+        if (!preg_match('/^[A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\s]+$/', $nombre)) {
+            $this->form_validation->set_message('validar_nombre_tipo', 
+                'El nombre solo puede contener letras, números y espacios.');
+            return FALSE;
+        }
+        return TRUE;
+    }
 
     public function editar($idTipo) {
         $this->_verificar_permisos();

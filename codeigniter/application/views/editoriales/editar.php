@@ -46,10 +46,17 @@
                                             
                                             <div class="form-group">
                                                 <label for="nombreEditorial">Nombre de la Editorial</label>
-                                                <input type="text" class="form-control" id="nombreEditorial" name="nombreEditorial" value="<?php echo set_value('nombreEditorial', $editorial->nombreEditorial); ?>" required>
+                                                <input type="text" 
+                                                    class="form-control" 
+                                                    id="nombreEditorial" 
+                                                    name="nombreEditorial" 
+                                                    value="<?php echo set_value('nombreEditorial', $editorial->nombreEditorial); ?>"
+                                                    pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.&,]+$"
+                                                    title="Ingrese un nombre válido. Se permiten letras, números, espacios y caracteres especiales (- . & ,)"
+                                                    required>
                                                 <?php echo form_error('nombreEditorial', '<small class="text-danger">', '</small>'); ?>
                                             </div>
-                                        </div>
+                                                                                    </div>
                                         <div class="card-footer">
                                             <button type="submit" class="btn btn-primary">Actualizar</button>
                                             <button type="button" class="btn btn-secondary" id="btnCancelar" data-toggle="modal" data-target="#confirmCancelModal">Cancelar</button>

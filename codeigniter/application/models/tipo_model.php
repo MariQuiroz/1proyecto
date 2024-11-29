@@ -62,4 +62,32 @@ class Tipo_model extends CI_Model {
         $query = $this->db->get('TIPO', $limite, $offset);
         return $query->result();
     }
+    public function verificar_existencia($nombreTipo) {
+        // Normalizar el nombre para la comparación
+        $nombreTipo = mb_strtoupper(trim($nombreTipo), 'UTF-8');
+        
+        $this->db->where('UPPER(nombreTipo)', $nombreTipo);
+        $this->db->where('estado', 1); // Solo verificar tipos activos
+        
+        $query = $this->db->get('TIPO');
+        return $query->num_rows() > 0;
+    }
+    public function es_nombre_tipo_unico($nombreTipo, $idTipo = null) {
+        // Normalizar el nombre del tipo
+        $nombreTipo = mb_strtoupper(trim($nombreTipo), 'UTF-8');
+        
+        // Iniciar la consulta base
+        $this->db->where('UPPER(nombreTipo)', $nombreTipo);
+        $this->db->where('estado', 1);
+        
+        // Si estamos editando, excluir el registro actual
+        if ($idTipo !== null) {
+            $this->db->where('idTipo !=', $idTipo);
+        }
+        
+        $query = $this->db->get('TIPO');
+        
+        // Retorna true si existe otro tipo con el mismo nombre
+        return $query->num_rows() > 0;
+    }
 }

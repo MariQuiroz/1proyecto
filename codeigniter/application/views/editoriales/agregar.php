@@ -16,7 +16,7 @@
                                 </div>
                             <?php endif; ?>
 
-                            <?php echo form_open('editoriales/agregarbd', ['id' => 'formEditorial', 'class' => 'needs-validation']); ?>
+                            <?php echo form_open('editoriales/agregarbd', ['id' => 'formEditorial', 'class' => 'needs-validation', 'novalidate' => '']); ?>
                                 <div class="mb-3">
                                     <label for="nombreEditorial" class="form-label">Nombre de la Editorial (*)</label>
                                     <input type="text" 
@@ -28,8 +28,11 @@
                                            minlength="2"
                                            maxlength="100"
                                            placeholder="Ingrese el nombre de la editorial">
-                                    <div class="invalid-feedback">
+                                    <div class="invalid-feedback" id="nombreEditorialError">
                                         Por favor ingrese un nombre válido (2-100 caracteres).
+                                    </div>
+                                    <div class="text-muted small mt-1">
+                                        <span id="charCount">100</span> caracteres restantes
                                     </div>
                                     <small class="form-text text-muted">
                                         El nombre puede contener letras, números, acentos y espacios.
@@ -37,7 +40,7 @@
                                 </div>
 
                                 <div class="mt-3">
-                                    <button type="submit" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-primary" id="btnSubmit">
                                         <i class="fe-save me-1"></i> Guardar
                                     </button>
                                     <a href="<?php echo site_url('editoriales'); ?>" class="btn btn-secondary ms-2">
@@ -55,37 +58,82 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('formEditorial');
     const nombreEditorial = document.getElementById('nombreEditorial');
-    
-    nombreEditorial.addEventListener('input', function() {
-        let valor = this.value;
-        
-        // Permitir letras, números, acentos y espacios
-        valor = valor.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
-        
-        // Eliminar espacios múltiples
-        valor = valor.replace(/\s+/g, ' ');
-        
-        this.value = valor;
+    const errorDiv = document.getElementById('nombreEditorialError');
+    const charCount = document.getElementById('charCount');
+    const submitBtn = document.getElementById('btnSubmit');
+    let isValid = false;
 
-        // Validación de longitud
-        if (valor.length < 2) {
-            this.setCustomValidity('El nombre debe tener al menos 2 caracteres');
-        } else if (valor.length > 100) {
-            this.setCustomValidity('El nombre no puede exceder los 100 caracteres');
+    function actualizarContador() {
+        const restantes = 100 - nombreEditorial.value.length;
+        charCount.textContent = restantes;
+        if (restantes < 0) {
+            charCount.classList.add('text-danger');
         } else {
-            this.setCustomValidity('');
+            charCount.classList.remove('text-danger');
         }
+    }
+
+    function validarNombre(valor) {
+    // Eliminar solo caracteres realmente no permitidos, manteniendo espacios y acentos
+    valor = valor.replace(/[^A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\s]/g, '');
+    
+    // Reemplazar múltiples espacios con uno solo
+    valor = valor.replace(/\s+/g, ' ');
+    
+    return valor;
+}
+
+function validarCampo() {
+    const valor = nombreEditorial.value;
+    isValid = true;
+
+    if (!valor.trim()) {
+        errorDiv.textContent = 'El nombre de la editorial es obligatorio.';
+        isValid = false;
+    } else if (valor.trim().length < 2) {
+        errorDiv.textContent = 'El nombre debe tener al menos 2 caracteres.';
+        isValid = false;
+    } else if (valor.length > 100) {
+        errorDiv.textContent = 'El nombre no puede exceder los 100 caracteres.';
+        isValid = false;
+    } else if (!/^[A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\s]+$/.test(valor)) {
+        errorDiv.textContent = 'El nombre solo puede contener letras, números y espacios.';
+        isValid = false;
+    }
+
+    // Evento input para validación en tiempo real
+    nombreEditorial.addEventListener('input', function() {
+        this.value = validarNombre(this.value);
+        validarCampo();
     });
 
-    // Prevenir envío del formulario si hay errores
-    const form = document.getElementById('formEditorial');
+    // Validación al perder el foco
+    nombreEditorial.addEventListener('blur', function() {
+        this.value = this.value.trim();
+        validarCampo();
+    });
+
+    // Validación al enviar el formulario
     form.addEventListener('submit', function(event) {
-        if (!form.checkValidity()) {
+        if (!validarCampo()) {
             event.preventDefault();
             event.stopPropagation();
+            nombreEditorial.focus();
+        } else {
+            // Asegurar que el valor esté en mayúsculas antes de enviar
+            nombreEditorial.value = nombreEditorial.value.toUpperCase();
         }
         form.classList.add('was-validated');
     });
+
+    // Deshabilitar el botón submit si hay errores
+    nombreEditorial.addEventListener('input', function() {
+        submitBtn.disabled = !isValid;
+    });
+
+    // Inicializar contador
+    actualizarContador();
 });
 </script>

@@ -44,15 +44,16 @@ class Editoriales extends CI_Controller {
     public function agregarbd() {
         $this->_verificar_permisos();
         
-        // Configurar reglas de validación
+        // Configurar reglas de validación personalizadas
         $this->form_validation->set_rules(
             'nombreEditorial',
             'Nombre de la Editorial',
-            'trim|required|min_length[2]|max_length[100]',
+            'trim|required|min_length[2]|max_length[100]|callback_validar_nombre_editorial',
             array(
                 'required'      => 'El nombre de la editorial es obligatorio.',
                 'min_length'    => 'El nombre debe tener al menos 2 caracteres.',
-                'max_length'    => 'El nombre no puede exceder los 100 caracteres.'
+                'max_length'    => 'El nombre no puede exceder los 100 caracteres.',
+                'validar_nombre_editorial' => 'El nombre contiene caracteres no permitidos.'
             )
         );
     
@@ -64,10 +65,13 @@ class Editoriales extends CI_Controller {
             $this->load->view('inc/footer');
         } else {
             try {
-                // Obtener y limpiar el nombre de la editorial
-                $nombreEditorial = trim($this->input->post('nombreEditorial'));
+                // Obtener y procesar el nombre de la editorial
+                $nombreEditorial = $this->input->post('nombreEditorial');
                 
-                // Verificar existencia
+                // Eliminar espacios múltiples y al inicio/final
+                $nombreEditorial = preg_replace('/\s+/', ' ', trim($nombreEditorial));
+                
+                // Verificar existencia (considerando variaciones de espacios)
                 if ($this->editorial_model->verificar_existencia($nombreEditorial)) {
                     $this->session->set_flashdata('error', 'Esta editorial ya existe en el sistema.');
                     redirect('editoriales/agregar');
@@ -93,11 +97,24 @@ class Editoriales extends CI_Controller {
                 }
     
             } catch (Exception $e) {
-                $this->session->set_flashdata('error', 'Error: ' . $e->getMessage());
+                log_message('error', 'Error al agregar editorial: ' . $e->getMessage());
+                $this->session->set_flashdata('error', 'Error al procesar la solicitud.');
                 redirect('editoriales/agregar');
             }
         }
     }
+    
+    // Agregar método de validación personalizado
+    public function validar_nombre_editorial($nombre) {
+        // Permitir letras (con acentos), números y espacios
+        if (!preg_match('/^[A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\s]+$/', $nombre)) {
+            $this->form_validation->set_message('validar_nombre_editorial', 
+                'El nombre solo puede contener letras, números y espacios.');
+            return FALSE;
+        }
+        return TRUE;
+    }
+
     public function editar($idEditorial) {
         $this->_verificar_permisos();
         $data['editorial'] = $this->editorial_model->obtener_editorial($idEditorial);
@@ -112,60 +129,42 @@ class Editoriales extends CI_Controller {
     public function editarbd() {
         $this->_verificar_permisos();
         $idEditorial = $this->input->post('idEditorial');
-    
-        // Obtener la editorial actual para validación de unicidad
-        $editorial_actual = $this->editorial_model->obtener_editorial($idEditorial);
-    
-        // Reglas de validación
+        
+        // Configurar reglas de validación que permitan espacios
         $this->form_validation->set_rules(
-            'nombreEditorial',
+            'nombreEditorial', 
             'Nombre de la Editorial',
-            [
-                'required',
-                [
-                    'nombre_unico',
-                    function ($nombreEditorial) use ($editorial_actual, $idEditorial) {
-                        // Verificar si el nuevo nombre ya existe en otro registro
-                        $existe = $this->editorial_model->es_nombre_editorial_unico($nombreEditorial, $idEditorial);
-                        return !$existe; // Retorna false si ya existe
-                    }
-                ]
-            ],
-            [
-                'required' => 'El campo %s es obligatorio.',
-                'nombre_unico' => 'El %s ya existe. Por favor, elija otro.'
-            ]
+            'required|trim|callback_validar_nombre_editorial|is_unique[EDITORIAL.nombreEditorial.idEditorial.' . $idEditorial . ']',
+            array(
+                'required' => 'El nombre de la editorial es requerido.',
+                'is_unique' => 'Este nombre de editorial ya existe.'
+            )
         );
     
-        // Validar el formulario
         if ($this->form_validation->run() == FALSE) {
-            // Recargar la vista con errores
-            $data['editorial'] = $editorial_actual;
+            $data['editorial'] = $this->editorial_model->obtener_editorial($idEditorial);
             $this->load->view('inc/header');
             $this->load->view('inc/nabvar');
             $this->load->view('inc/aside');
             $this->load->view('editoriales/editar', $data);
             $this->load->view('inc/footer');
         } else {
-            // Preparar los datos actualizados
             $data = array(
-                'nombreEditorial' => strtoupper($this->input->post('nombreEditorial')), // Convertir a mayúsculas
+                'nombreEditorial' => $this->input->post('nombreEditorial'),
                 'fechaActualizacion' => date('Y-m-d H:i:s'),
                 'idUsuarioCreador' => $this->session->userdata('idUsuario')
             );
     
-            // Actualizar la editorial
             if ($this->editorial_model->actualizar_editorial($idEditorial, $data)) {
                 $this->session->set_flashdata('mensaje', 'Editorial actualizada correctamente.');
             } else {
                 $this->session->set_flashdata('error', 'Error al actualizar la editorial.');
             }
-    
-            // Redirigir al listado de editoriales
             redirect('editoriales');
         }
     }
     
+   
     public function eliminar($idEditorial) {
         $this->_verificar_permisos();
         
