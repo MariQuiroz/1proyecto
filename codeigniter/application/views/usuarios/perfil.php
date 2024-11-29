@@ -43,7 +43,7 @@
                             </table>
                         </div>
                         
-                        <a href="<?php echo site_url('usuarios/cambiar_password'); ?>" class="btn btn-secondary mt-3">Cambiar Contraseña</a>
+                       
                     </div>
                 </div>
             </div>

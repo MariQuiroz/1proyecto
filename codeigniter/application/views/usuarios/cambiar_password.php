@@ -1,23 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8" />
-    <title>Cambiar Contraseña - Hemeroteca</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta content="Cambio de contraseña para usuarios de la Hemeroteca" name="description" />
-    <meta content="Hemeroteca" name="author" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    
-    <!-- App favicon -->
-    <link rel="shortcut icon" href="<?php echo base_url('adminXeria/dist/assets/images/favicon.ico'); ?>"/>
 
-    <!-- App css -->
-    <link href="<?php echo base_url('adminXeria/dist/assets/css/bootstrap.min.css'); ?>" rel="stylesheet" type="text/css" />
-    <link href="<?php echo base_url('adminXeria/dist/assets/css/icons.min.css'); ?>" rel="stylesheet" type="text/css" />
-    <link href="<?php echo base_url('adminXeria/dist/assets/css/app.min.css'); ?>" rel="stylesheet" type="text/css" />
-</head>
-
-<body>
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
@@ -84,5 +65,3 @@
         });
     });
     </script>
-</body>
-</html>

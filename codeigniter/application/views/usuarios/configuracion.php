@@ -18,7 +18,7 @@
             <div class="col-md-6">
                 <div class="box box-primary">
                     <div class="box-header with-border">
-                        <h3 class="box-title">Cambiar Nombre de Usuario y Contraseña</h3>
+                        <h3 class="box-title">Contraseña</h3>
                     </div>
                     <?php echo form_open('usuarios/configuracion'); ?>
                         <div class="box-body">

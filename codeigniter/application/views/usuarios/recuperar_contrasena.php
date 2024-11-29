@@ -20,6 +20,25 @@
                     <div class="card">
                         <div class="card-body p-4">
                             <h5 class="auth-title">Recuperar Contraseña</h5>
+
+                            <?php if ($this->session->flashdata('mensaje')): ?>
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <?php echo $this->session->flashdata('mensaje'); ?>
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if ($this->session->flashdata('error')): ?>
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <?php echo $this->session->flashdata('error'); ?>
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                            
                             <?php echo form_open('usuarios/recuperar_contrasena'); ?>
                                 <div class="form-group mb-3">
                                     <label for="email">Correo Electrónico</label>

@@ -152,11 +152,6 @@
                     <span>Mi Perfil</span>
                 </a>
 
-                <a href="<?php echo site_url('usuarios/configuracion'); ?>" class="dropdown-item notify-item">
-                    <i class="fe-settings"></i>
-                    <span>Configuración</span>
-                </a>
-
                 <div class="dropdown-divider"></div>
 
                 <a href="<?php echo site_url('usuarios/logout'); ?>" class="dropdown-item notify-item">

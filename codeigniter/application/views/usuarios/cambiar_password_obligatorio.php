@@ -29,22 +29,39 @@
                                 <p class="text-muted mb-4">Por razones de seguridad, debe cambiar su contraseña temporal.</p>
                             </div>
 
-                            <?php if($this->session->flashdata('error')): ?>
-                                <div class="alert alert-danger" role="alert">
-                                    <?php echo $this->session->flashdata('error'); ?>
+                            <?php if ($this->session->flashdata('mensaje')): ?>
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <?php echo $this->session->flashdata('mensaje'); ?>
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
                                 </div>
                             <?php endif; ?>
 
-                            <?php echo form_open('usuarios/cambiar_password_obligatorio', ['class' => 'form-horizontal']); ?>
+                            <?php if ($this->session->flashdata('error')): ?>
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <?php echo $this->session->flashdata('error'); ?>
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php echo form_open('usuarios/cambiar_password_obligatorio', ['class' => 'form-horizontal', 'id' => 'formCambioPassword']); ?>
 
                             <div class="form-group">
                                 <label for="nueva_password">Nueva Contraseña</label>
-                                <input class="form-control" type="password" id="nueva_password" name="nueva_password" required placeholder="Ingrese su nueva contraseña">
+                                <input class="form-control" type="password" id="nueva_password" name="nueva_password" required 
+                                       placeholder="Ingrese su nueva contraseña">
+                                <small class="text-muted">La contraseña debe tener entre 6 y 20 caracteres</small>
+                                <div id="password-error" class="invalid-feedback"></div>
                             </div>
 
                             <div class="form-group">
                                 <label for="confirmar_password">Confirmar Nueva Contraseña</label>
-                                <input class="form-control" type="password" id="confirmar_password" name="confirmar_password" required placeholder="Confirme su nueva contraseña">
+                                <input class="form-control" type="password" id="confirmar_password" name="confirmar_password" required 
+                                       placeholder="Confirme su nueva contraseña">
+                                <div id="confirm-password-error" class="invalid-feedback"></div>
                             </div>
 
                             <div class="form-group mb-0 text-center">
@@ -52,34 +69,72 @@
                             </div>
 
                             <?php echo form_close(); ?>
-                        </div> <!-- end card-body -->
+                        </div>
                     </div>
-                    <!-- end card -->
-                </div> <!-- end col -->
+                </div>
             </div>
-            <!-- end row -->
         </div>
-        <!-- end container -->
     </div>
-    <!-- end page -->
 
     <!-- Vendor js -->
     <script src="<?php echo base_url('adminXeria/dist/assets/js/vendor.min.js'); ?>"></script>
-
     <!-- App js -->
     <script src="<?php echo base_url('adminXeria/dist/assets/js/app.min.js'); ?>"></script>
 
     <script>
     $(document).ready(function() {
-        $('form').submit(function(e) {
-            var nuevaPassword = $('#nueva_password').val();
-            var confirmarPassword = $('#confirmar_password').val();
-            if (nuevaPassword.length < 6) {
+        const formCambioPassword = $('#formCambioPassword');
+        const nuevaPassword = $('#nueva_password');
+        const confirmarPassword = $('#confirmar_password');
+        const passwordError = $('#password-error');
+        const confirmPasswordError = $('#confirm-password-error');
+
+        function validarPassword(password) {
+            if (password.length < 6 || password.length > 20) {
+                return 'La contraseña debe tener entre 6 y 20 caracteres.';
+            }
+            return '';
+        }
+
+        function validarConfirmacion(password, confirmacion) {
+            if (password !== confirmacion) {
+                return 'Las contraseñas no coinciden.';
+            }
+            return '';
+        }
+
+        nuevaPassword.on('input', function() {
+            const error = validarPassword($(this).val());
+            if (error) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                passwordError.text(error).show();
+            } else {
+                $(this).addClass('is-valid').removeClass('is-invalid');
+                passwordError.hide();
+            }
+        });
+
+        confirmarPassword.on('input', function() {
+            const error = validarConfirmacion(nuevaPassword.val(), $(this).val());
+            if (error) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                confirmPasswordError.text(error).show();
+            } else {
+                $(this).addClass('is-valid').removeClass('is-invalid');
+                confirmPasswordError.hide();
+            }
+        });
+
+        formCambioPassword.on('submit', function(e) {
+            const passwordValue = nuevaPassword.val();
+            const confirmValue = confirmarPassword.val();
+            
+            const passwordError = validarPassword(passwordValue);
+            const confirmError = validarConfirmacion(passwordValue, confirmValue);
+
+            if (passwordError || confirmError) {
                 e.preventDefault();
-                alert('La nueva contraseña debe tener al menos 6 caracteres.');
-            } else if (nuevaPassword !== confirmarPassword) {
-                e.preventDefault();
-                alert('Las contraseñas no coinciden.');
+                return false;
             }
         });
     });

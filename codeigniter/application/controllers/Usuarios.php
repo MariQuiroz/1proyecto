@@ -94,7 +94,7 @@ class Usuarios extends CI_Controller {
             redirect('usuarios/index');
         }
     
-        $this->form_validation->set_rules('nueva_password', 'Nueva Contraseña', 'required|min_length[6]');
+        $this->form_validation->set_rules('nueva_password', 'Nueva Contraseña', 'required|min_length[6]|max_length[20]');
         $this->form_validation->set_rules('confirmar_password', 'Confirmar Contraseña', 'required|matches[nueva_password]');
     
         if ($this->form_validation->run() == FALSE) {
@@ -1009,30 +1009,7 @@ private function _generar_contrasena_temporal() {
             redirect('usuarios/index');
         }
     
-        public function cambiar_password() {
-            $this->_verificar_sesion();
-    
-            $this->form_validation->set_rules('nueva_password', 'Nueva Contraseña', 'required|min_length[6]');
-            $this->form_validation->set_rules('confirmar_password', 'Confirmar Contraseña', 'required|matches[nueva_password]');
-    
-            if ($this->form_validation->run() == FALSE) {
-                $this->load->view('inc/header');
-                $this->load->view('usuarios/cambiar_password');
-                $this->load->view('inc/footer');
-            } else {
-                $idUsuario = $this->session->userdata('idUsuario');
-                $nueva_password = $this->input->post('nueva_password');
-    
-                if ($this->usuario_model->actualizar_password($idUsuario, $nueva_password)) {
-                    $this->session->set_flashdata('mensaje', 'Contraseña actualizada con éxito.');
-                    $this->_enviar_email_confirmacion_password($this->session->userdata('email'));
-                    redirect('usuarios/perfil');
-                } else {
-                    $this->session->set_flashdata('error', 'Error al actualizar la contraseña.');
-                    redirect('usuarios/cambiar_password');
-                }
-            }
-        }
+       
     
         private function _enviar_email_confirmacion_password($email) {
             $this->email->from('quirozmolinamaritza@gmail.com', 'Hemeroteca');
@@ -1404,6 +1381,40 @@ public function reenviar_verificacion()
             $this->load->view('usuarios/perfil', $data);
         }
         
+        $this->load->view('inc/footer');
+    }
+
+    public function cambiar_password() {
+        $this->_verificar_sesion();
+        $idUsuario = $this->session->userdata('idUsuario');
+        $rol = $this->session->userdata('rol');
+
+        $this->form_validation->set_rules('nueva_password', 'Nueva Contraseña', 'required|min_length[6]');
+        $this->form_validation->set_rules('confirmar_password', 'Confirmar Contraseña', 'required|matches[nueva_password]');
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->load->view('inc/header');
+            $this->load->view('usuarios/cambiar_password');
+            $this->load->view('inc/footer');
+        } else {
+            $idUsuario = $this->session->userdata('idUsuario');
+            $nueva_password = $this->input->post('nueva_password');
+
+            if ($this->usuario_model->actualizar_password($idUsuario, $nueva_password)) {
+                $this->session->set_flashdata('mensaje', 'Contraseña actualizada con éxito.');
+                $this->_enviar_email_confirmacion_password($this->session->userdata('email'));
+                redirect('usuarios/perfil');
+            } else {
+                $this->session->set_flashdata('error', 'Error al actualizar la contraseña.');
+                redirect('usuarios/cambiar_password');
+            }
+        }
+        $data['usuario'] = $this->usuario_model->obtener_usuario($idUsuario);
+        
+        $this->load->view('inc/header');
+        $this->load->view('inc/nabvar');
+        $this->load->view('inc/aside');
+        $this->load->view('usuarios/cambiar_password', $data);
         $this->load->view('inc/footer');
     }
     
