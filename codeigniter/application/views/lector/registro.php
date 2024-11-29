@@ -214,10 +214,16 @@
 
                             </div> <!-- end card-body -->
                         </div>
+                        <div class="row mt-3">
+                        <div class="col-12 text-center">
+                            <p class="text-muted">Volver al <a href="<?php echo site_url('usuarios/index'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">Inicio de sesión</b></a></p>
+                        </div>
+                    </div>
                         <!-- end card -->
                     </div> <!-- end col -->
                 </div>
                 <!-- end row -->
+
             </div>
             <!-- end container -->
         </div>
