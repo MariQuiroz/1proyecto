@@ -85,7 +85,7 @@
                                             'placeholder' => 'Ingrese su nombre de usuario'
                                         ]); ?>
                                         <div class="error-message" id="username-error"></div>
-                                        <small class="input-requirements text-muted">El usuario debe tener entre 4 y 20 caracteres</small>
+                                        
                                     </div>
 
                                     <div class="form-group mb-3">
@@ -100,7 +100,7 @@
                                             'placeholder' => 'Ingrese su contraseña'
                                         ]); ?>
                                         <div class="error-message" id="password-error"></div>
-                                        <small class="input-requirements text-muted">La contraseña debe tener entre 6 y 20 caracteres</small>
+                                        
                                     </div>
 
                                     <div class="form-group mb-3">
