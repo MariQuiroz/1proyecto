@@ -651,9 +651,10 @@ private function _generar_contrasena_temporal() {
         'max_length' => 'El nombre de usuario no puede exceder los 20 caracteres.'
     ]);
 
-    $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[6]', [
+    $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[6]|max_length[20]', [
         'required' => 'La contraseña es obligatoria.',
-        'min_length' => 'La contraseña debe tener al menos 6 caracteres.'
+        'min_length' => 'La contraseña debe tener al menos 6 caracteres.',
+        'max_length' => 'El nombre de usuario no puede exceder los 20 caracteres.'
     ]);
 
     $this->form_validation->set_rules('confirm_password', 'Confirmar Contraseña', 'required|matches[password]', [
