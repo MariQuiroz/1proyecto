@@ -44,6 +44,7 @@
             <div class="form-group">
                 <label for="password">Nueva Contraseña:</label>
                 <input type="password" name="password" id="password" class="form-control" required>
+                <small class="text-muted">La contraseña debe tener entre 6 y 20 caracteres</small>
             </div>
             <div class="form-group">
                 <label for="confirm_password">Confirmar Contraseña:</label>
