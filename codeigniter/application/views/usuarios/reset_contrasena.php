@@ -68,5 +68,64 @@
 <!-- App js -->
 <script src="<?php echo base_url(); ?>adminXeria/light/dist/assets/js/app.min.js"></script>
 
+<script>
+    $(document).ready(function() {
+        const formCambioPassword = $('#formCambioPassword');
+        const nuevaPassword = $('#password');
+        const confirmarPassword = $('#confirmar_password');
+        const passwordError = $('#password-error');
+        const confirmPasswordError = $('#confirm-password-error');
+
+        function validarPassword(password) {
+            if (password.length < 6 || password.length > 20) {
+                return 'La contraseña debe tener entre 6 y 20 caracteres.';
+            }
+            return '';
+        }
+
+        function validarConfirmacion(password, confirmacion) {
+            if (password !== confirmacion) {
+                return 'Las contraseñas no coinciden.';
+            }
+            return '';
+        }
+
+        nuevaPassword.on('input', function() {
+            const error = validarPassword($(this).val());
+            if (error) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                passwordError.text(error).show();
+            } else {
+                $(this).addClass('is-valid').removeClass('is-invalid');
+                passwordError.hide();
+            }
+        });
+
+        confirmarPassword.on('input', function() {
+            const error = validarConfirmacion(nuevaPassword.val(), $(this).val());
+            if (error) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                confirmPasswordError.text(error).show();
+            } else {
+                $(this).addClass('is-valid').removeClass('is-invalid');
+                confirmPasswordError.hide();
+            }
+        });
+
+        formCambioPassword.on('submit', function(e) {
+            const passwordValue = nuevaPassword.val();
+            const confirmValue = confirmarPassword.val();
+            
+            const passwordError = validarPassword(passwordValue);
+            const confirmError = validarConfirmacion(passwordValue, confirmValue);
+
+            if (passwordError || confirmError) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+    </script>
+
 </body>
 </html>

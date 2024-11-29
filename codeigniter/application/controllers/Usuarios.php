@@ -1306,7 +1306,7 @@ public function reenviar_verificacion()
             redirect('usuarios/recuperar_contrasena');
         }
 
-        $this->form_validation->set_rules('password', 'Nueva contraseña', 'required|min_length[6]');
+        $this->form_validation->set_rules('password', 'Nueva contraseña', 'required|min_length[6]|max_length[20]');
         $this->form_validation->set_rules('confirm_password', 'Confirmar contraseña', 'required|matches[password]');
 
         if ($this->form_validation->run() == FALSE) {
