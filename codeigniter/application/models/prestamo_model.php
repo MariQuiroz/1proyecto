@@ -8,74 +8,7 @@ class Prestamo_model extends CI_Model {
         $this->load->database();
     }
 
-// En Prestamo_model.php
-/*public function iniciar_prestamo($idSolicitud, $idEncargado) {
-    $this->db->trans_start();
-    
-    try {
-        
-        // Establecer la zona horaria correcta para Bolivia
-        date_default_timezone_set('America/La_Paz');
-        
-        // Crear objeto DateTime para manejar las fechas correctamente
-        $fechaHoraActual = new DateTime();
-        
-        // Obtener detalles de la solicitud
-        $this->db->select('
-            ds.idPublicacion, 
-            ds.idSolicitud,
-            sp.idUsuario,
-            p.titulo,
-            p.estado'
-        );
-        $this->db->from('SOLICITUD_PRESTAMO sp');
-        $this->db->join('DETALLE_SOLICITUD ds', 'sp.idSolicitud = ds.idSolicitud');
-        $this->db->join('PUBLICACION p', 'ds.idPublicacion = p.idPublicacion');
-        $this->db->where('sp.idSolicitud', $idSolicitud);
-        
-        $publicaciones = $this->db->get()->result();
 
-        if (empty($publicaciones)) {
-            log_message('error', "No se encontraron publicaciones para la solicitud {$idSolicitud}");
-            return false;
-        }
-
-        foreach ($publicaciones as $pub) {
-            // Crear registro de préstamo
-            $data_prestamo = array(
-                'idSolicitud' => $idSolicitud,
-                'idEncargadoPrestamo' => $idEncargado,
-                'fechaPrestamo' => $fechaHoraActual->format('Y-m-d'),
-                'horaInicio' => $fechaHoraActual->format('H:i:s'),
-                'estadoPrestamo' => ESTADO_PRESTAMO_ACTIVO,
-                'estado' => 1,
-                'fechaCreacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
-                'idUsuarioCreador' => $idEncargado
-            );
-            
-            $this->db->insert('PRESTAMO', $data_prestamo);
-            $idPrestamo = $this->db->insert_id();
-
-            // Actualizar estado de la publicación a EN_CONSULTA
-            $this->db->where('idPublicacion', $pub->idPublicacion);
-            $this->db->update('PUBLICACION', array(
-                'estado' => ESTADO_PUBLICACION_EN_CONSULTA,
-                'fechaActualizacion' => $fechaHoraActual->format('Y-m-d H:i:s'),
-                'idUsuarioCreador' => $idEncargado
-            ));
-
-            log_message('info', "Préstamo {$idPrestamo} iniciado para publicación {$pub->idPublicacion}");
-        }
-
-        $this->db->trans_complete();
-        return $this->db->trans_status();
-
-    } catch (Exception $e) {
-        $this->db->trans_rollback();
-        log_message('error', 'Error en iniciar_prestamo: ' . $e->getMessage());
-        return false;
-    }
-}*/
 public function iniciar_prestamo($idSolicitud, $idEncargado) {
     $this->db->trans_start();
     

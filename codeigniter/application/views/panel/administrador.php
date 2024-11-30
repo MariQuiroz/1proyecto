@@ -1,135 +1,130 @@
- <!-- ============================================================== -->
-            <!-- Start Page Content here -->
-            <!-- ============================================================== -->
+<div class="content-page">
+    <div class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Total Usuarios -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="widget-rounded-circle card-box bg-primary">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="avatar-lg rounded-circle bg-soft-light border-light border">
+                                    <i class="fe-users font-22 avatar-title text-white"></i>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <h4 class="text-white mb-1 mt-1"><span data-plugin="counterup"><?php echo $total_usuarios; ?></span></h4>
+                                <p class="text-white mb-1">Total Usuarios</p>
+                                <p class="text-white-50 mb-0">Usuarios Registrados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="content-page">
-              <div class="content">
-                <!-- Start Content-->
-                  <div class="container-fluid">
+                <!-- Total Publicaciones -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="widget-rounded-circle card-box bg-success">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="avatar-lg rounded-circle bg-soft-light border-light border">
+                                    <i class="fe-book font-22 avatar-title text-white"></i>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <h4 class="text-white mb-1 mt-1"><span data-plugin="counterup"><?php echo $total_publicaciones; ?></span></h4>
+                                <p class="text-white mb-1">Total Publicaciones</p>
+                                <p class="text-white-50 mb-0">Publicaciones Disponibles</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Préstamos Activos -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="widget-rounded-circle card-box bg-warning">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="avatar-lg rounded-circle bg-soft-light border-light border">
+                                    <i class="fe-bookmark font-22 avatar-title text-white"></i>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <h4 class="text-white mb-1 mt-1"><span data-plugin="counterup"><?php echo $prestamos_activos; ?></span></h4>
+                                <p class="text-white mb-1">Préstamos Activos</p>
+                                <p class="text-white-50 mb-0">En Circulación</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Préstamos No Devueltos -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="widget-rounded-circle card-box bg-danger">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="avatar-lg rounded-circle bg-soft-light border-light border">
+                                    <i class="fe-alert-triangle font-22 avatar-title text-white"></i>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <h4 class="text-white mb-1 mt-1"><span data-plugin="counterup"><?php echo $prestamos_no_devueltos; ?></span></h4>
+                                <p class="text-white mb-1">No Devueltos</p>
+                                <p class="text-white-50 mb-0">Préstamos Pendientes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Solicitudes Pendientes -->
+            <div class="row">
+                <div class="col-xl-3 col-md-6">
+                    <div class="widget-rounded-circle card-box bg-purple">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="avatar-lg rounded-circle bg-soft-light border-light border">
+                                    <i class="fe-clock font-22 avatar-title text-white"></i>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <h4 class="text-white mb-1 mt-1"><span data-plugin="counterup"><?php echo $solicitudes_pendientes; ?></span></h4>
+                                <p class="text-white mb-1">Solicitudes Pendientes</p>
+                                <p class="text-white-50 mb-0">En Espera de Aprobación</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card-box">
+                        <h4 class="header-title mb-4">Acciones Rápidas</h4>
                         <div class="row">
-                            <div class="col-xl-3 col-md-6">
-                                <div class="card-box">
-                                    <h4 class="header-title mt-0 mb-3">Total Usuarios</h4>
-                                    <div class="widget-chart-1">
-                                        <div class="widget-chart-box-1 float-left" dir="ltr">
-                                            <input data-plugin="knob" data-width="80" data-height="80" data-fgColor="#f05050 "
-                                                data-bgColor="#F9B9B9" value="<?php echo $total_usuarios; ?>"
-                                                data-skin="tron" data-angleOffset="180" data-readOnly=true
-                                                data-thickness=".15"/>
-                                        </div>
-                                        <div class="widget-detail-1 text-right">
-                                            <h2 class="font-weight-normal pt-2 mb-1"> <?php echo $total_usuarios; ?> </h2>
-                                            <p class="text-muted mb-1">Usuarios Registrados</p>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="col-md-3">
+                                <a href="<?php echo site_url('publicaciones/agregar'); ?>" class="btn btn-primary btn-lg btn-block waves-effect waves-light">
+                                    <i class="fe-plus-circle mr-1"></i> Agregar Publicación
+                                </a>
                             </div>
-
-                            <div class="col-xl-3 col-md-6">
-                                <div class="card-box">
-                                    <h4 class="header-title mt-0 mb-3">Total Publicaciones</h4>
-                                    <div class="widget-chart-1">
-                                        <div class="widget-chart-box-1 float-left" dir="ltr">
-                                            <input data-plugin="knob" data-width="80" data-height="80" data-fgColor="#ffbd4a"
-                                                data-bgColor="#FFE6BA" value="<?php echo $total_publicaciones; ?>"
-                                                data-skin="tron" data-angleOffset="180" data-readOnly=true
-                                                data-thickness=".15"/>
-                                        </div>
-                                        <div class="widget-detail-1 text-right">
-                                            <h2 class="font-weight-normal pt-2 mb-1"> <?php echo $total_publicaciones; ?> </h2>
-                                            <p class="text-muted mb-1">Publicaciones</p>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="col-md-3">
+                                <a href="<?php echo site_url('usuarios/agregar'); ?>" class="btn btn-success btn-lg btn-block waves-effect waves-light">
+                                    <i class="fe-user-plus mr-1"></i> Agregar Lector
+                                </a>
                             </div>
-                            
-
-                            <div class="col-xl-3 col-md-6">
-                                <div class="card-box">
-                                    <h4 class="header-title mt-0 mb-3">Préstamos Activos</h4>
-                                    <div class="widget-chart-1">
-                                        <div class="widget-chart-box-1 float-left" dir="ltr">
-                                            <input data-plugin="knob" data-width="80" data-height="80" data-fgColor="#3db9dc"
-                                                data-bgColor="#C3E8F5" value="<?php echo $prestamos_activos; ?>"
-                                                data-skin="tron" data-angleOffset="180" data-readOnly=true
-                                                data-thickness=".15"/>
-                                        </div>
-                                        <div class="widget-detail-1 text-right">
-                                            <h2 class="font-weight-normal pt-2 mb-1"> <?php echo $prestamos_activos; ?> </h2>
-                                            <p class="text-muted mb-1">Préstamos Activos</p>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="col-md-3">
+                                <a href="<?php echo site_url('solicitudes/pendientes'); ?>" class="btn btn-warning btn-lg btn-block waves-effect waves-light">
+                                    <i class="fe-list mr-1"></i> Ver Solicitudes
+                                </a>
                             </div>
-
-                            <div class="col-xl-3 col-md-6">
-                        <div class="card-box">
-                            <h4 class="header-title mt-0 mb-3">Préstamos No Devueltos</h4>
-                            <div class="widget-chart-1">
-                                <div class="widget-chart-box-1 float-left" dir="ltr">
-                                    <input data-plugin="knob" data-width="80" data-height="80" data-fgColor="#f05050 "
-                                        data-bgColor="#F9B9B9" value="<?php echo $prestamos_no_devueltos; ?>"
-                                        data-skin="tron" data-angleOffset="180" data-readOnly=true data-thickness=".15"/>
-                                </div>
-                                <div class="widget-detail-1 text-right">
-                                    <h2 class="font-weight-normal pt-2 mb-1"> <?php echo $prestamos_no_devueltos; ?> </h2>
-                                    <p class="text-muted mb-1">Préstamos No Devueltos Hoy</p>
-                                </div>
+                            <div class="col-md-3">
+                                <a href="<?php echo site_url('prestamos/nuevo'); ?>" class="btn btn-info btn-lg btn-block waves-effect waves-light">
+                                    <i class="fe-bookmark mr-1"></i> Nuevo Préstamo
+                                </a>
                             </div>
                         </div>
                     </div>
-                    </div>
-                        </div>
-                        <!-- end row -->
-                                                     <!-- Asegúrate de que estás usando $solicitudes_pendientes en lugar de $solicitudes_pendientes -->
-                    <div class="col-xl-3 col-md-6">
-                        <div class="card-box">
-                            <h4 class="header-title mt-0 mb-3">Solicitudes Pendientes</h4>
-                            <div class="widget-chart-1">
-                                <div class="widget-chart-box-1 float-left" dir="ltr">
-                                    <input data-plugin="knob" data-width="80" data-height="80" data-fgColor="#f05050 "
-                                        data-bgColor="#F9B9B9" value="<?php echo $solicitudes_pendientes; ?>"
-                                        data-skin="tron" data-angleOffset="180" data-readOnly=true data-thickness=".15"/>
-                                </div>
-                                <div class="widget-detail-1 text-right">
-                                    <h2 class="font-weight-normal pt-2 mb-1"> <?php echo $solicitudes_pendientes; ?> </h2>
-                                    <p class="text-muted mb-1">Solicitudes pendientes</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                        </div>
-                        <!-- end row -->
-                        
-
-                        <div class="row">
-                            <div class="col-xl-6">
-                                <div class="card-box">
-                                    <h4 class="header-title mt-0 mb-3">Acciones Rápidas</h4>
-                                    <div class="row mt-3">
-                                        <div class="col-6 mb-2">
-                                            <a href="<?php echo site_url('publicaciones/agregar'); ?>" class="btn btn-primary btn-block">Agregar Publicación</a>
-                                        </div>
-                                        <div class="col-6 mb-2">
-                                            <a href="<?php echo site_url('usuarios/agregar'); ?>" class="btn btn-success btn-block">Agregar Lector</a>
-                                        </div>
-                                        <div class="col-6">
-                                            <a href="<?php echo site_url('solicitudes/pendientes'); ?>" class="btn btn-warning btn-block">Ver Solicitudes</a>
-                                        </div>
-                                        <div class="col-6">
-                                            <a href="<?php echo site_url('prestamos/nuevo'); ?>" class="btn btn-info btn-block">Nuevo Préstamo</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- end col -->
-                        </div>
-                        <!-- end row -->                       
-
-
-            <!-- ============================================================== -->
-            <!-- End Page content -->
-            <!-- ============================================================== -->
-                    </div>   
-                </div> <!-- container -->
-             </div> <!-- content -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

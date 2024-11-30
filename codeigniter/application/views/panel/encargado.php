@@ -39,6 +39,12 @@
                                             <h2 class="font-weight-normal pt-2 mb-1"> <?php echo $prestamos_activos; ?> </h2>
                                             <p class="text-muted mb-1">Préstamos Activos</p>
                                         </div>
+                                        <div class="row mt-3">
+                                            <a href="<?php echo site_url('prestamos/activos'); ?>" class="btn btn-lg btn-block" 
+                                                style="background: #9C27B0; color: white; border: none; border-radius: 6px; padding: 15px;">
+                                                <i class="fe-bookmark mr-1"></i> Ver Préstamos Activos
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
