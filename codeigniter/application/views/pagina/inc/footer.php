@@ -5,7 +5,9 @@
                 <div class="col-md-4">
                     <h5 class="font-weight-bold mb-4">Contacto</h5>
                     <p><i class="la la-envelope mr-2"></i> hemeroteca@umss.edu.bo</p>
-                    <p><i class="la la-phone mr-2"></i> (591) 4-XXX-XXX</p>
+                    <p><i class="la la-phone mr-2"></i> (591-4) 4525252</p>
+                    <p><i class="la la-clock mr-2"></i> (591-4) 4231765</p>
+
                 </div>
                 <div class="col-md-4">
                     <h5 class="font-weight-bold mb-4">Horario de Atención</h5>
