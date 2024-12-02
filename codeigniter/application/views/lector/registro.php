@@ -260,7 +260,10 @@ a:hover {
                         </div>
                         <div class="row mt-3">
                         <div class="col-12 text-center">
-                            <p class="text-muted">Volver al <a href="<?php echo site_url('usuarios/index'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">Inicio de sesión</b></a></p>
+                            <p class="text-muted">Ir al <a href="<?php echo site_url('usuarios/index'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">Inicio de sesión</b></a></p>
+                        </div>
+                        <div class="col-12 text-center">
+                                        <p class="text-muted">Volver a la <a href="<?php echo site_url('home/index'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">página de inicio</b></a></p>
                         </div>
                     </div>
                         <!-- end card -->
