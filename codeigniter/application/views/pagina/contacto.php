@@ -19,15 +19,16 @@
                             Cochabamba, Bolivia
                         </p>
                     </div>
-                    
-
                     <div class="mb-3">
-                        <h5 class="font-weight-bold"><i class="la la-clock la-lg text-primary mr-2"></i>Horario</h5>
-                        <p class="text-muted ml-4 mb-2">
-                            Lunes a Viernes: 8:00 AM - 6:00 PM<br>
-                            Sábados: 8:00 AM - 12:00 PM
-                        </p>
+                        <h5 class="font-weight-bold"><i class="la la-directions la-lg text-primary mr-2"></i>Puntos de Referencia</h5>
+                        <ul class="text-muted ml-4 list-unstyled">
+                            <li><i class="la la-check-circle mr-2"></i>A 100 metros del Coliseo Universitario</li>
+                            <li><i class="la la-check-circle mr-2"></i>Frente a la Facultad de Tecnología</li>
+                            <li><i class="la la-check-circle mr-2"></i>Cerca del Comedor Universitario</li>
+                        </ul>
                     </div>
+
+ 
 
                     <div>
                         <h5 class="font-weight-bold"><i class="la la-bus la-lg text-primary mr-2"></i>Transporte</h5>
@@ -42,7 +43,10 @@
 
             <div class="col-md-7">
                 <div class="map-container bg-white p-3 rounded shadow-sm">
+                    <br>
+                    <br>
                     <div id="map" class="map-responsive"></div>
+                   
                 </div>
             </div>
         </div>
