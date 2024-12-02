@@ -23,7 +23,8 @@
                                     No tienes préstamos registrados.
                                 </div>
                             <?php else: ?>
-                                <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
+                                <div class="table-responsive">
+                                <table class="table table-striped" id="tabla-detalle">
                                     <thead>
                                         <tr>
                                             <th>N°</th>
@@ -84,6 +85,7 @@
                                 </table>
                             <?php endif; ?>
                         </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -111,4 +113,16 @@
         // Inicializar tooltips
         $('[data-toggle="tooltip"]').tooltip();
     });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    $('#tabla-detalle').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+        },
+        "order": [[3, "desc"]],
+        "pageLength": 10
+    });
+});
 </script>

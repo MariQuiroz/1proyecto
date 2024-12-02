@@ -18,7 +18,8 @@
                                 Aquí se muestran todas las solicitudes de préstamo que han sido rechazadas.
                             </p>
 
-                            <table id="basic-datatable" class="table dt-responsive nowrap">
+                            <div class="table-responsive">
+                            <table class="table table-striped" id="tabla-detalle">
                                 <thead>
                                     <tr>
                                         <th>N°</th>
@@ -46,7 +47,7 @@
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
-
+                            </div> 
                         </div> <!-- end card body-->
                     </div> <!-- end card -->
                 </div><!-- end col-->
@@ -77,4 +78,16 @@
         // Inicializar tooltips
         $('[data-toggle="tooltip"]').tooltip();
     });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    $('#tabla-detalle').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+        },
+        "order": [[3, "desc"]],
+        "pageLength": 10
+    });
+});
 </script>

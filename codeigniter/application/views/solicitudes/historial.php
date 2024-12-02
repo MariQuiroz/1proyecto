@@ -18,7 +18,8 @@
                                 Aquí se muestra el historial completo de todas las solicitudes de préstamo.
                             </p>
 
-                            <table id="basic-datatable" class="table dt-responsive nowrap">
+                            <div class="table-responsive">
+                            <table class="table table-striped" id="tabla-detalle">
                                 <thead>
                                     <tr>
                                         <th>N°</th>
@@ -51,6 +52,9 @@
                                                 case ESTADO_SOLICITUD_RECHAZADA:
                                                     echo '<span class="badge badge-danger">Rechazada</span>';
                                                     break;
+                                                case ESTADO_SOLICITUD_CANCELADA:
+                                                    echo '<span class="badge badge-danger">Cancelada</span>';
+                                                    break;
                                                 case ESTADO_SOLICITUD_FINALIZADA:
                                                     echo '<span class="badge badge-info">Finalizada</span>';
                                                     break;
@@ -67,7 +71,7 @@
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
-
+                            </div> 
                         </div> <!-- end card body-->
                     </div> <!-- end card -->
                 </div><!-- end col-->
@@ -100,3 +104,15 @@
     });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    $('#tabla-detalle').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+        },
+        "order": [[3, "desc"]],
+        "pageLength": 10
+    });
+});
+</script>

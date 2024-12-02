@@ -47,7 +47,8 @@
                                 Aquí se muestran todos los préstamos actualmente en curso.
                             </p>
                             
-                            <table id="prestamos-activos-table" class="table dt-responsive nowrap">
+                            <div class="table-responsive">
+                            <table class="table table-striped" id="tabla-detalle">
                                 <thead>
                                     <tr>
                                         <th>N°</th>
@@ -81,6 +82,7 @@
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -156,4 +158,16 @@ function abrirModalDevolucion(idPrestamo) {
     });
 
 
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    $('#tabla-detalle').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+        },
+        "order": [[3, "desc"]],
+        "pageLength": 10
+    });
+});
 </script>

@@ -40,7 +40,7 @@
                             <?php endif; ?>
 
                             <div class="table-responsive">
-                                <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
+                            <table class="table table-striped" id="tabla-detalle">
                                     <thead>
                                         <tr>
                                             <th>N°</th>
@@ -51,7 +51,7 @@
                                             <th>Fecha Devolución</th>
                                             <th>Estado</th>
                                             <th>Encargado</th>
-                                            <th>Acciones</th>
+                                        
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -68,13 +68,9 @@
                                                 <td>
                                                     <?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?>
                                                 </td>
-                                                <td>
-                                                    <?php 
-                                                    if ($prestamo->horaDevolucion) {
-                                                        echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo . ' ' . $prestamo->horaDevolucion));
-                                                    }
-                                                    ?>
-                                                </td>
+                                                
+                                                <td><?php echo $prestamo->horaDevolucion ? date('d/m/Y H:i', strtotime($prestamo->horaDevolucion)) : 'N/A'; ?></td>
+                                                
                                                 <td>
                                                     <?php
                                                     $estado_class = 'badge-secondary';
@@ -105,37 +101,7 @@
                                                     <?php echo htmlspecialchars($prestamo->nombre_encargado_devolucion . ' ' . 
                                                         $prestamo->apellido_encargado_devolucion); ?>
                                                 </td>
-                                                <td>
-                                                    
-                                                        
-                                                        <button type="button" 
-                                                                class="btn btn-primary btn-sm dropdown-toggle" 
-                                                                data-toggle="dropdown" 
-                                                                aria-haspopup="true" 
-                                                                aria-expanded="false">
-                                                            <i class="mdi mdi-file-document"></i>
-                                                        </button>
-                                                        <div class="dropdown-menu">
-                                                            <a class="dropdown-item" 
-                                                            href="<?php echo site_url('prestamos/generar_ficha_manual/'.$prestamo->idPrestamo); ?>" 
-                                                            target="_blank">
-                                                                <i class="mdi mdi-file-pdf text-danger"></i> Generar PDF
-                                                            </a>
-                                                            <a class="dropdown-item" 
-                                                            href="<?php echo site_url('prestamos/reenviar_ficha_email/'.$prestamo->idPrestamo); ?>"
-                                                            onclick="return confirm('¿Desea enviar la ficha por correo electrónico?');">
-                                                                <i class="mdi mdi-email text-info"></i> Enviar por Email
-                                                            </a>
-                                                            <?php if(isset($prestamo->pdf_path)): ?>
-                                                            <a class="dropdown-item" 
-                                                            href="<?php echo $prestamo->pdf_path; ?>" 
-                                                            download>
-                                                                <i class="mdi mdi-download text-success"></i> Descargar Última Ficha
-                                                            </a>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </div>
-                                                </td>
+                                                
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -194,4 +160,17 @@ $(document).ready(function() {
     });
 
 
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    $('#tabla-detalle').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+        },
+        "order": [[3, "desc"]],
+        "pageLength": 10
+    });
+});
 </script>

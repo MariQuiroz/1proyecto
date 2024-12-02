@@ -134,7 +134,7 @@
                                     <div class="col-md-6">
                                         <h5>Estados:</h5>
                                         <span class="badge badge-warning mr-2">Pendiente</span>
-                                        <span class="badge badge-secondary mr-2">Por Expirar</span>
+                                       
                                         <span class="badge badge-secondary">Expirada</span>
                                     </div>
                                     <div class="col-md-6">
