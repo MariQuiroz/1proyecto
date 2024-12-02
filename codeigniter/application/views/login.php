@@ -30,6 +30,81 @@
                 color: #666;
                 margin-top: 5px;
             }
+          /* Colores UMSS */
+:root {
+    --umss-red: #B3001B;     /* Rojo UMSS */
+    --umss-blue: #031B4E;    /* Azul oscuro UMSS */
+    --umss-light: #f8f9fa;   /* Color claro para textos */
+}
+
+/* Fondo principal */
+.authentication-bg {
+    background-color: var(--umss-blue) !important;
+    background-image: none !important;
+}
+
+/* Estilos para la tarjeta de login */
+.card {
+    border: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.card-body {
+    border-top: 4px solid var(--umss-red);
+}
+
+/* Botón principal */
+.btn-danger {
+    background-color: var(--umss-red) !important;
+    border-color: var(--umss-red) !important;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background-color: #8B0015 !important;
+    border-color: #8B0015 !important;
+}
+
+/* Enlaces */
+a {
+    color: var(--umss-blue) !important;
+}
+
+a:hover {
+    color: var(--umss-red) !important;
+}
+
+/* Checkbox personalizado */
+.custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--umss-red) !important;
+    border-color: var(--umss-red) !important;
+}
+
+/* Inputs focalizados */
+.form-control:focus {
+    border-color: var(--umss-red);
+    box-shadow: 0 0 0 0.2rem rgba(179, 0, 27, 0.25);
+}
+
+/* Títulos */
+.auth-title {
+    color: var(--umss-blue);
+    font-weight: bold;
+}
+
+/* Footer */
+.footer-alt {
+    color: var(--umss-light) !important;
+}
+
+/* Mensajes de alerta */
+.alert-success {
+    border-left: 4px solid #28a745;
+}
+
+.alert-danger {
+    border-left: 4px solid var(--umss-red);
+}
         </style>
     </head>
 

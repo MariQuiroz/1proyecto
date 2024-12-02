@@ -1,0 +1,54 @@
+/* Colores UMSS */
+:root {
+    --umss-blue: #031B4E;
+    --umss-red: #B3001B;
+    --umss-light: #f8f9fa;
+}
+
+/* Override del navbar */
+.navbar-custom {
+    background-color: var(--umss-blue) !important;
+}
+
+/* Override del logo area */
+.logo-box {
+    background-color: var(--umss-blue) !important;
+}
+
+/* Override del sidebar */
+.left-side-menu {
+    background-color: var(--umss-blue) !important;
+}
+
+/* Override de los enlaces del menú */
+#sidebar-menu > ul > li > a {
+    color: var(--umss-light) !important;
+}
+
+#sidebar-menu > ul > li > a:hover,
+#sidebar-menu > ul > li > a:focus,
+#sidebar-menu > ul > li > a:active {
+    color: var(--umss-red) !important;
+}
+
+/* Override de los botones primarios */
+.btn-primary {
+    background-color: var(--umss-red) !important;
+    border-color: var(--umss-red) !important;
+}
+
+.btn-primary:hover {
+    background-color: #8B0015 !important;
+    border-color: #8B0015 !important;
+}
+
+/* Override de los enlaces activos */
+.nav-link.active {
+    color: var(--umss-red) !important;
+}
+
+/* Override del footer */
+.footer {
+    background-color: var(--umss-blue) !important;
+    color: var(--umss-light) !important;
+}
