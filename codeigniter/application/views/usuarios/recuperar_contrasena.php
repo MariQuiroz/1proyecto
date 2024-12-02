@@ -11,6 +11,50 @@
     <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo base_url(); ?>adminXeria/light/dist/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+    <style>
+    :root {
+    --umss-red: #B3001B;     /* Rojo UMSS */
+    --umss-blue: #031B4E;    /* Azul oscuro UMSS */
+    --umss-light: #f8f9fa;   /* Color claro para textos */
+}
+
+/* Fondo principal */
+.authentication-bg {
+    background-color: var(--umss-blue) !important;
+    background-image: none !important;
+}
+
+/* Estilos para la tarjeta de login */
+.card {
+    border: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.card-body {
+    border-top: 4px solid var(--umss-red);
+}
+
+/* Botón principal */
+.btn-danger {
+    background-color: var(--umss-red) !important;
+    border-color: var(--umss-red) !important;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background-color: #8B0015 !important;
+    border-color: #8B0015 !important;
+}
+
+/* Enlaces */
+a {
+    color: var(--umss-blue) !important;
+}
+
+a:hover {
+    color: var(--umss-red) !important;
+}
+</style>
 </head>
 <body class="authentication-bg authentication-bg-pattern">
     <div class="account-pages mt-5 mb-5">
