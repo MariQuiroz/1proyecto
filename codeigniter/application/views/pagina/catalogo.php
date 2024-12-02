@@ -162,14 +162,19 @@
                 </span>
             </div>
 
-            <!-- Portada -->
             <div class="publicacion-portada">
                 <?php if ($publicacion->portada): ?>
                     <img src="<?php echo base_url('uploads/portadas/'.$publicacion->portada); ?>" 
-                         alt="Portada de <?php echo htmlspecialchars($publicacion->titulo); ?>">
+                        alt="Portada de <?php echo htmlspecialchars($publicacion->titulo); ?>"
+                        class="img-zoom"
+                        style="cursor: pointer;"
+                        onclick="openImageModal(this.src, '<?php echo htmlspecialchars($publicacion->titulo); ?>')">
                 <?php else: ?>
                     <img src="<?php echo base_url('assets/img/portada-default.jpg'); ?>" 
-                         alt="Portada por defecto">
+                        alt="Portada por defecto"
+                        class="img-zoom"
+                        style="cursor: pointer;"
+                        onclick="openImageModal(this.src, 'Portada por defecto')">
                 <?php endif; ?>
             </div>
 
@@ -214,3 +219,55 @@
         </div>
     <?php endif; ?>
 </div>
+<div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Portada</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Portada ampliada" style="max-width: 100%; height: auto;">
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function openImageModal(imageSrc, title) {
+    document.getElementById('modalImage').src = imageSrc;
+    document.getElementById('imageModalLabel').textContent = 'Portada: ' + title;
+    $('#imageModal').modal('show');
+}
+</script>
+
+<!-- Añadir estos estilos al CSS existente -->
+<style>
+.img-zoom {
+    transition: transform 0.3s ease;
+}
+
+.img-zoom:hover {
+    transform: scale(1.05);
+}
+
+.modal-body {
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+#modalImage {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 10px;
+    }
+}
+</style>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
