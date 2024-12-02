@@ -10,10 +10,7 @@
     background-color: var(--umss-blue) !important;
 }
 
-/* Override del logo area */
-.logo-box {
-    background-color: var(--umss-blue) !important;
-}
+
 
 /* Override del sidebar */
 .left-side-menu {
@@ -31,11 +28,7 @@
     color: var(--umss-while) !important;
 }
 
-/* Override de los botones primarios */
-.btn-primary {
-    background-color: var(--umss-red) !important;
-    border-color: var(--umss-red) !important;
-}
+
 
 .btn-primary:hover {
     background-color: #8B0015 !important;
