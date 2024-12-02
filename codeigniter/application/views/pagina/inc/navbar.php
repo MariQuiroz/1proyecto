@@ -2,7 +2,7 @@
 <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="<?php echo base_url(); ?>img/umss2.png" alt="logo" height="50"> 
+                <img src="<?php echo base_url(); ?>img/EscudoUMSS.png" alt="logo" height="50"> 
                 <span class="text-white font-weight-bold">Hemeroteca José Antonio Arze</span>
             </a>
             
@@ -19,7 +19,7 @@
                         <a class="nav-link text-white" href="<?php echo site_url('home/sobre_nosotros'); ?>">Sobre Nosotros</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="#catalogo">Catálogo</a>
+                        <a class="nav-link text-white" href="<?php echo site_url('home/catalogo'); ?>">Catálogo</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="<?php echo site_url('home/proceso'); ?>">Proceso de Préstamo</a>

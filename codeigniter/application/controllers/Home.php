@@ -31,4 +31,15 @@ class Home extends CI_Controller {
         $this->load->view('pagina/contacto');
         $this->load->view('pagina/inc/footer');
     }
+    public function catalogo() {
+        $this->load->model('Publicacion_model');
+        
+        $data['publicaciones'] = $this->Publicacion_model->obtener_catalogo_publico();
+        $data['tipos'] = $this->Publicacion_model->obtener_tipos_catalogo();
+        
+        $this->load->view('pagina/inc/header');
+        $this->load->view('pagina/inc/navbar');
+        $this->load->view('pagina/catalogo', $data);
+        $this->load->view('pagina/inc/footer');
+    }
 }

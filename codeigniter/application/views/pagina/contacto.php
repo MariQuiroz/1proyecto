@@ -74,8 +74,7 @@
     .location-section {
         background-color: #f8f9fa;
         position: relative;
-        z-index: 1; /* Asegura que la sección esté por debajo del header */
-    }
+        z-index: 1; 
 
     .location-info i {
         width: 30px;

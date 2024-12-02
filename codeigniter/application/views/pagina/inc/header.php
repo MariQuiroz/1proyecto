@@ -22,6 +22,7 @@
 
     body {
         font-family: 'Roboto', sans-serif;
+        
     }
 
     .hero-section {
@@ -32,8 +33,12 @@
         align-items: center;
         color: white;
         position: relative;
+       
     }
-    
+    .hero-sectio: h1{
+        color: #ffffff; /* Enfatizamos el color blanco específicamente para el h1 */
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Sombra mejorada para legibilidad */
+    }
     .hero-content {
         position: relative;
         z-index: 2;
@@ -103,6 +108,7 @@
         background-color: var(--umss-blue);
         color: white;
         padding: 60px 0 30px;
+        
     }
 
     .nav-link {

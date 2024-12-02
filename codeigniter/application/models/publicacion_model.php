@@ -1087,4 +1087,64 @@ public function validar_disponibilidad($idPublicacion) {
            (!$resultado->estadoSolicitud || 
             $resultado->estadoSolicitud != ESTADO_SOLICITUD_PENDIENTE);
 }
+public function obtener_catalogo_publico() {
+    // Agregamos campos importantes que faltaban
+    $this->db->select('
+        p.idPublicacion,      
+        p.titulo,
+        p.fechaPublicacion,
+        p.numeroPaginas,    
+        p.portada,
+        p.descripcion,
+        p.ubicacionFisica,    
+        p.estado,
+        t.nombreTipo,
+        e.nombreEditorial'
+    );
+    $this->db->from('PUBLICACION p');
+    // Optimizamos los JOIN usando LEFT JOIN para no perder publicaciones
+    $this->db->join('EDITORIAL e', 'e.idEditorial = p.idEditorial', 'left');
+    $this->db->join('TIPO t', 't.idTipo = p.idTipo', 'left');
+    // Filtramos solo publicaciones activas
+    $this->db->where('p.estado', 1);
+    // Ordenamos por fecha de creación descendente
+    $this->db->order_by('p.fechaCreacion', 'DESC');
+    
+    // Agregamos manejo de errores básico
+    try {
+        $result = $this->db->get()->result();
+        if (empty($result)) {
+            log_message('info', 'No se encontraron publicaciones en el catálogo público');
+        }
+        return $result;
+    } catch (Exception $e) {
+        log_message('error', 'Error al obtener catálogo público: ' . $e->getMessage());
+        return array();
+    }
+}
+
+public function obtener_tipos_catalogo() {
+    // Usamos distinct() del Query Builder en lugar de en el SELECT
+    $this->db->distinct();
+    $this->db->select('t.idTipo, t.nombreTipo');
+    $this->db->from('TIPO t');
+    // Cambiamos a LEFT JOIN para incluir todos los tipos
+    $this->db->join('PUBLICACION p', 't.idTipo = p.idTipo AND p.estado = 1', 'left');
+    // Solo tipos activos
+    $this->db->where('t.estado', 1);
+    // Agrupamos para asegurar resultados únicos
+    $this->db->group_by('t.idTipo, t.nombreTipo');
+    $this->db->order_by('t.nombreTipo', 'ASC');
+    
+    try {
+        $result = $this->db->get()->result();
+        if (empty($result)) {
+            log_message('info', 'No se encontraron tipos en el catálogo');
+        }
+        return $result;
+    } catch (Exception $e) {
+        log_message('error', 'Error al obtener tipos del catálogo: ' . $e->getMessage());
+        return array();
+    }
+}
 }
