@@ -7,7 +7,7 @@
                 <p class="text-muted mb-4">Fundada en 1972, nuestra hemeroteca ha sido un pilar fundamental en el desarrollo académico de la Facultad de Ciencias Económicas, proporcionando acceso a recursos invaluables para estudiantes, docentes e investigadores.</p>
             </div>
             <div class="col-md-6">
-                <img src="<?php echo base_url(); ?>img/hemeroteca-building.jpg" alt="Edificio Hemeroteca" class="img-fluid rounded shadow">
+                <img src="<?php echo base_url(); ?>img/img1.jpg" alt="Edificio Hemeroteca" class="img-fluid rounded shadow">
             </div>
         </div>
 

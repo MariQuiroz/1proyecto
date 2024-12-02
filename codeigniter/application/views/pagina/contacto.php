@@ -19,6 +19,7 @@
                             Cochabamba, Bolivia
                         </p>
                     </div>
+                    
 
                     <div class="mb-3">
                         <h5 class="font-weight-bold"><i class="la la-clock la-lg text-primary mr-2"></i>Horario</h5>

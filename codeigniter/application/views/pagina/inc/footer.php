@@ -4,7 +4,6 @@
             <div class="row">
                 <div class="col-md-4">
                     <h5 class="font-weight-bold mb-4">Contacto</h5>
-                    <p><i class="la la-map-marker mr-2"></i> Campus Central UMSS</p>
                     <p><i class="la la-envelope mr-2"></i> hemeroteca@umss.edu.bo</p>
                     <p><i class="la la-phone mr-2"></i> (591) 4-XXX-XXX</p>
                 </div>
@@ -14,13 +13,15 @@
                     <p><i class="la la-clock mr-2"></i> Sábado: 8:00 - 12:00</p>
                 </div>
                 <div class="col-md-4">
-                    <h5 class="font-weight-bold mb-4">Enlaces Rápidos</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-white">Preguntas Frecuentes</a></li>
-                        <li class="mb-2"><a href="#" class="text-white">Reglamento</a></li>
-                        <li class="mb-2"><a href="#" class="text-white">Catálogo en Línea</a></li>
-                    </ul>
+                <h5 class="font-weight-bold mb-4">Dirección</h5>
+                <p><i class="la la-map-marker mr-2"></i> Campus Central UMSS - Biblioteca Central
+                </p>
+                <p><i class="la la-clock mr-2"></i><br>
+                            Av. Ballivián esq. Oquendo<br>
+                            Cochabamba, Bolivia
+                        </p>
                 </div>
+                
             </div>
             <hr class="border-light mt-4">
             <div class="row mt-3">
