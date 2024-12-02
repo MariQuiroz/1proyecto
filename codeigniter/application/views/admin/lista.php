@@ -60,7 +60,7 @@
                                 <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
                                     <thead>
                                         <tr>
-
+                                            <th scope="col">N°</th>
                                             <th scope="col">CI</th>
                                             <th scope="col">Nombre Completo</th>
                                             <th scope="col">Email</th>
@@ -70,10 +70,10 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($usuarios as $usuario): ?>
+                                        <?php $contador = 1;  foreach ($usuarios as $usuario): ?>
 
                                             <tr>
-
+                                                <td><?php echo $contador++; ?></td>
                                                 <td><?php echo htmlspecialchars($usuario->carnet); ?></td>
                                                 <td><?php echo htmlspecialchars($usuario->nombres . ' ' . $usuario->apellidoPaterno. ' ' . $usuario->apellidoMaterno); ?></td>
                                                 <td><?php echo htmlspecialchars($usuario->email); ?></td>
@@ -107,3 +107,25 @@
         </div> <!-- container -->
     </div>
 
+    <script>
+    $(document).ready(function() {
+        // Inicializar DataTable con configuración para mantener la numeración correcta
+        $('#datatable-buttons').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
+            },
+            "buttons": ["copy", "excel", "pdf"],
+            // Asegurar que la numeración se mantenga correcta incluso con la paginación
+            "drawCallback": function(settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart;
+                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = startIndex + i + 1;
+                });
+            }
+        });
+
+        // Inicializar tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>

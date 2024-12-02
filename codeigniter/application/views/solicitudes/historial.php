@@ -21,6 +21,7 @@
                             <table id="basic-datatable" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
+                                        <th>N°</th>
                                         <th>CI</th>
                                         <th>Lector</th>
                                         <th>Publicación</th>
@@ -31,8 +32,9 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($solicitudes as $solicitud): ?>
+                                    <?php $contador = 1; foreach ($solicitudes as $solicitud): ?>
                                     <tr>
+                                        <td><?php echo $contador++; ?></td>
                                         <td><?php echo $solicitud->carnet; ?></td>
                                         <td><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno. ' ' . $solicitud->apellidoMaterno; ?></td>
                                         <td><?php echo $solicitud->titulo; ?></td>
@@ -75,4 +77,26 @@
     </div>
 </div>
 
+<script>
+    $(document).ready(function() {
+        // Inicializar DataTable con configuración para mantener la numeración correcta
+        $('#datatable-buttons').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
+            },
+            "buttons": ["copy", "excel", "pdf"],
+            // Asegurar que la numeración se mantenga correcta incluso con la paginación
+            "drawCallback": function(settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart;
+                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = startIndex + i + 1;
+                });
+            }
+        });
+
+        // Inicializar tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
 

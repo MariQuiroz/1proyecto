@@ -22,6 +22,7 @@
                                 <table id="basic-datatable" class="table dt-responsive nowrap">
                                     <thead>
                                         <tr>
+                                            <th>N°</th>
                                             <th>CI</th>
                                             <th>Lector</th>
                                             <th>Título Publicación</th>
@@ -33,13 +34,14 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($solicitudes as $solicitud): 
+                                        <?php $contador = 1; foreach ($solicitudes as $solicitud): 
                                             $tiempo_expiracion = strtotime($solicitud->fechaExpiracionReserva);
                                             $tiempo_actual = time();
                                             $tiempo_restante = $tiempo_expiracion - $tiempo_actual;
                                             $solicitud_activa = ($tiempo_restante > 0 && $solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE);
                                         ?>
                                         <tr>
+                                        <td><?php echo $contador++; ?></td>
                                         <td>
                                                 <?php echo htmlspecialchars($solicitud->carnet); ?>
                                             </td>
@@ -157,3 +159,26 @@
     window.open('<?php echo $this->input->get('pdf'); ?>', '_blank');
 </script>
 <?php endif; ?>
+
+<script>
+    $(document).ready(function() {
+        // Inicializar DataTable con configuración para mantener la numeración correcta
+        $('#datatable-buttons').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
+            },
+            "buttons": ["copy", "excel", "pdf"],
+            // Asegurar que la numeración se mantenga correcta incluso con la paginación
+            "drawCallback": function(settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart;
+                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = startIndex + i + 1;
+                });
+            }
+        });
+
+        // Inicializar tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
