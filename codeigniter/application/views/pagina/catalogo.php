@@ -133,6 +133,28 @@
             font-size: 20px;
         }
     }
+    .img-zoom {
+    transition: transform 0.3s ease;
+}
+
+.img-zoom:hover {
+    transform: scale(1.05);
+}
+
+.modal-body {
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+#modalImage {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 10px;
+    }
+}
 }
 </style>
 <div class="container py-5">
@@ -242,32 +264,6 @@ function openImageModal(imageSrc, title) {
 }
 </script>
 
-<!-- Añadir estos estilos al CSS existente -->
-<style>
-.img-zoom {
-    transition: transform 0.3s ease;
-}
 
-.img-zoom:hover {
-    transform: scale(1.05);
-}
 
-.modal-body {
-    padding: 20px;
-    background-color: #f8f9fa;
-}
 
-#modalImage {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-@media (max-width: 768px) {
-    .modal-dialog {
-        margin: 10px;
-    }
-}
-</style>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
