@@ -16,23 +16,23 @@
     <link href="<?php echo base_url('assets/libs/select2/select2.min.css'); ?>" rel="stylesheet" type="text/css" />
     
     <!-- App favicon -->
-    <link rel="shortcut icon" href="<?= base_url('adminXeria/dist/assets/images/favicon.ico'); ?>"/>
+    <link rel="shortcut icon" href="<?= base_url('adminXeria/light/dist/assets/images/favicon.ico'); ?>"/>
     
     <!-- Plugin CSS -->
-    <link href="<?= base_url('adminXeria/dist/assets/libs/jquery-vectormap/jquery-jvectormap-1.2.2.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('adminXeria/light/dist/assets/libs/jquery-vectormap/jquery-jvectormap-1.2.2.css'); ?>" rel="stylesheet" type="text/css" />
     
     <!-- App CSS -->
-    <link href="<?= base_url('adminXeria/dist/assets/css/bootstrap.min.css'); ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('adminXeria/dist/assets/css/icons.min.css'); ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('adminXeria/dist/assets/css/app.min.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('adminXeria/light/dist/assets/css/bootstrap.min.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('adminXeria/light/dist/assets/css/icons.min.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('adminXeria/light/dist/assets/css/app.min.css'); ?>" rel="stylesheet" type="text/css" />
     
     <!-- Third party CSS for DataTables -->
-    <link href="<?= base_url('adminXeria/dist/assets/libs/datatables/dataTables.bootstrap4.css'); ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('adminXeria/dist/assets/libs/datatables/responsive.bootstrap4.css'); ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('adminXeria/dist/assets/libs/datatables/buttons.bootstrap4.css'); ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('adminXeria/dist/assets/libs/datatables/select.bootstrap4.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('adminXeria/light/dist/assets/libs/datatables/dataTables.bootstrap4.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('adminXeria/light/dist/assets/libs/datatables/responsive.bootstrap4.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('adminXeria/light/dist/assets/libs/datatables/buttons.bootstrap4.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('adminXeria/light/dist/assets/libs/datatables/select.bootstrap4.css'); ?>" rel="stylesheet" type="text/css" />
 
-    <link href="<?= base_url('adminXeria/dist/assets/css/custom-styles.css'); ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('adminXeria/light/dist/assets/css/custom-styles.css'); ?>" rel="stylesheet" type="text/css" />
 </head>
 
 <body>

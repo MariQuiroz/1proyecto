@@ -1,0 +1,88 @@
+/* Colores UMSS */
+:root {
+    --umss-blue: #031B4E;
+    --umss-red: #B3001B;
+    --umss-light: #f8f9fa;
+}
+
+/* Override del navbar */
+.navbar-custom {
+    background-color: var(--umss-blue) !important;
+}
+
+/* Override del logo area */
+.logo-box {
+    background-color: var(--umss-blue) !important;
+}
+
+/* Override del sidebar */
+.left-side-menu {
+    background-color: var(--umss-blue) !important;
+}
+
+/* Override de los enlaces del menú */
+#sidebar-menu > ul > li > a {
+    color: var(--umss-light) !important;
+}
+
+#sidebar-menu > ul > li > a:hover,
+#sidebar-menu > ul > li > a:focus,
+#sidebar-menu > ul > li > a:active {
+    color: var(--umss-while) !important;
+}
+
+/* Override de los botones primarios */
+.btn-primary {
+    background-color: var(--umss-red) !important;
+    border-color: var(--umss-red) !important;
+}
+
+.btn-primary:hover {
+    background-color: #8B0015 !important;
+    border-color: #8B0015 !important;
+}
+
+/* Override de los enlaces activos */
+.nav-link.active {
+    color: var(--umss-red) !important;
+}
+
+/* Override del footer */
+.footer {
+    background-color: var(--umss-blue) !important;
+    color: var(--umss-light) !important;
+}
+.d-none.d-sm-block .nav-link {
+    color: #ffffff !important; /* Texto en blanco */
+    font-weight: 500 !important; /* Peso de la fuente */
+    background-color: transparent !important; /* Elimina el fondo */
+    padding: 8px 15px !important;
+    border-radius: 0 !important; /* Elimina el border-radius */
+    font-size: 14px !important;
+}
+
+/* Ajustes para el navbar custom */
+.navbar-custom {
+    background-color: #031B4E !important; /* Azul UMSS */
+    padding: 0 15px;
+}
+
+/* Estilos para el dropdown de usuario */
+.nav-user .pro-user-name {
+    color: #ffffff !important;
+}
+
+/* Ajuste para el logo box */
+.logo-box {
+    background-color: #031B4E !important;
+}
+
+/* Ajuste para los iconos en el navbar */
+.navbar-custom .topnav-menu .nav-link {
+    color: #ffffff !important;
+}
+
+/* Hover estado para los enlaces */
+.navbar-custom .topnav-menu .nav-link:hover {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
