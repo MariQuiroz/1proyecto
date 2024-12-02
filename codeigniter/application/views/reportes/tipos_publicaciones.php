@@ -77,39 +77,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Tabla de datos -->
-                                <div class="table-responsive">
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Tipo de Publicación</th>
-                                                <th>Total Publicaciones</th>
-                                                <th>Total Solicitudes</th>
-                                                <th>Total Préstamos</th>
-                                                <th>Tasa de Uso (%)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($estadisticas as $est): ?>
-                                                <tr>
-                                                    <td><?php echo htmlspecialchars($est->nombreTipo); ?></td>
-                                                    <td class="text-right"><?php echo $est->total_publicaciones; ?></td>
-                                                    <td class="text-right"><?php echo $est->total_solicitudes; ?></td>
-                                                    <td class="text-right"><?php echo $est->total_prestamos; ?></td>
-                                                    <td class="text-right">
-                                                        <?php 
-                                                        $tasa_uso = ($est->total_publicaciones > 0) 
-                                                            ? ($est->total_prestamos / $est->total_publicaciones) * 100 
-                                                            : 0;
-                                                        echo number_format($tasa_uso, 1);
-                                                        ?>%
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-
                                 <!-- Análisis y Recomendaciones -->
                                 <div class="row mt-4">
                                     <div class="col-12">
@@ -120,6 +87,7 @@
                                                     <table class="table table-sm">
                                                         <thead>
                                                             <tr>
+                                                                <th>N°</th>
                                                                 <th>Tipo</th>
                                                                 <th>Tasa de Uso</th>
                                                                 <th>Publicaciones</th>
@@ -133,7 +101,7 @@
                                                             $tipo_max_uso = '';
                                                             $min_uso = 100;
                                                             $tipo_min_uso = '';
-                                                            
+                                                            $contador = 1;
                                                             foreach ($estadisticas as $est):
                                                                 $tasa_uso = ($est->total_publicaciones > 0) 
                                                                     ? ($est->total_prestamos / $est->total_publicaciones) * 100 
@@ -149,6 +117,7 @@
                                                                 }
                                                             ?>
                                                                 <tr>
+                                                                    <td><?php echo $contador++; ?></td>
                                                                     <td><?php echo htmlspecialchars($est->nombreTipo); ?></td>
                                                                     <td><?php echo number_format($tasa_uso, 1); ?>%</td>
                                                                     <td><?php echo $est->total_publicaciones; ?></td>
@@ -193,6 +162,7 @@
                                                         <table class="table table-centered table-striped table-hover mb-0" id="datatable-buttons">
                                                             <thead>
                                                                 <tr>
+                                                                    <th>N°</th>
                                                                     <th>Título</th>
                                                                     <th>Fecha Publicación</th>
                                                                     <th>Tipo</th>
@@ -203,8 +173,9 @@
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                <?php foreach($publicaciones as $pub): ?>
+                                                                <?php $contador = 1; foreach($publicaciones as $pub): ?>
                                                                     <tr>
+                                                                        <td><?php echo $contador++; ?></td>
                                                                         <td><?php echo $pub->titulo; ?></td>
                                                                         <td><?php echo $pub->fecha_publicacion; ?></td>
                                                                         <td><?php echo $pub->nombreTipo; ?></td>
@@ -241,11 +212,12 @@
                                         <div class="col-12">
                                             <div class="card">
                                                 <div class="card-body">
-                                                    <h4 class="header-title">Historial Detallado de Préstamos</h4>
+                                                    <h4 class="header-title">Historial Detallado de Préstamos de Publicaciones</h4>
                                                     <div class="table-responsive">
                                                         <table class="table table-striped dt-responsive nowrap w-100">
                                                             <thead>
                                                                 <tr>
+                                                                    <th>N°</th>
                                                                     <th>Título</th>
                                                                     <th>Tipo</th>
                                                                     <th>Editorial</th>
@@ -257,8 +229,9 @@
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                <?php foreach($historial_prestamos as $prestamo): ?>
+                                                                <?php $contador = 1; foreach($historial_prestamos as $prestamo): ?>
                                                                     <tr>
+                                                                        <td><?php echo $contador++; ?></td>
                                                                         <td><?php echo $prestamo->titulo; ?></td>
                                                                         <td><?php echo $prestamo->nombreTipo; ?></td>
                                                                         <td><?php echo $prestamo->nombreEditorial; ?></td>
@@ -428,4 +401,26 @@ $(document).ready(function() {
     }
 });
 <?php endif; ?>
+</script>
+<script>
+    $(document).ready(function() {
+        // Inicializar DataTable con configuración para mantener la numeración correcta
+        $('#datatable-buttons').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
+            },
+            "buttons": ["copy", "excel", "pdf"],
+            // Asegurar que la numeración se mantenga correcta incluso con la paginación
+            "drawCallback": function(settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart;
+                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = startIndex + i + 1;
+                });
+            }
+        });
+
+        // Inicializar tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
 </script>

@@ -85,14 +85,16 @@
                                     <table class="table table-bordered">
                                         <thead>
                                             <tr>
+                                                <th>N°</th>
                                                 <th>Ocupación</th>
                                                 <th>Préstamos</th>
                                                 <th>Prom. Días</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php foreach ($estadisticas as $est): ?>
+                                            <?php $contador = 1; foreach ($estadisticas as $est): ?>
                                             <tr>
+                                                <td><?php echo $contador++; ?></td>
                                                 <td><?php echo htmlspecialchars($est->profesion); ?></td>
                                                 <td class="text-right"><?php echo $est->total_prestamos; ?></td>
                                                 <td class="text-right"><?php echo number_format($est->promedio_dias_prestamo, 1); ?></td>
@@ -133,6 +135,7 @@
                             <table class="table table-striped" id="tabla-detalle">
                                 <thead>
                                     <tr>
+                                        <th>N°</th>
                                         <th>CI</th>
                                         <th>Lector</th>
                                         <th>Ocupación</th>
@@ -145,8 +148,9 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($detalles as $detalle): ?>
+                                    <?php $contador = 1; foreach ($detalles as $detalle): ?>
                                     <tr>
+                                        <td><?php echo $contador++; ?></td>
                                         <td><?php echo $detalle->carnet; ?></td>
                                         <td><?php echo htmlspecialchars($detalle->nombres . ' ' . $detalle->apellidoPaterno); ?></td>
                                         <td><?php echo htmlspecialchars($detalle->profesion); ?></td>
@@ -384,4 +388,26 @@ $(document).ready(function() {
         }
     });
 });
+</script>
+<script>
+    $(document).ready(function() {
+        // Inicializar DataTable con configuración para mantener la numeración correcta
+        $('#datatable-buttons').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
+            },
+            "buttons": ["copy", "excel", "pdf"],
+            // Asegurar que la numeración se mantenga correcta incluso con la paginación
+            "drawCallback": function(settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart;
+                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = startIndex + i + 1;
+                });
+            }
+        });
+
+        // Inicializar tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
 </script>
