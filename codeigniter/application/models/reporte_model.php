@@ -55,6 +55,8 @@ class Reporte_model extends CI_Model {
             u.profesion,
             u.nombres,
             u.apellidoPaterno,
+            u.apellidoMaterno,
+            u.carnet,
             pub.titulo as titulo_publicacion,
             t.nombreTipo as tipo_publicacion,
             e.nombreEditorial,

@@ -40,7 +40,7 @@
                         <div class="col-md-3">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">Análisis por Profesión</h5>
+                                    <h5 class="card-title">Análisis por Ocupación</h5>
                                     <p>Comportamiento de lectores según su profesión</p>
                                     <a href="<?php echo site_url('reportes/por_profesion'); ?>" class="btn btn-primary">Ver Reporte</a>
                                 </div>

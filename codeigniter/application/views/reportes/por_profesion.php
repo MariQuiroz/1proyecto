@@ -133,6 +133,7 @@
                             <table class="table table-striped" id="tabla-detalle">
                                 <thead>
                                     <tr>
+                                        <th>CI</th>
                                         <th>Lector</th>
                                         <th>Ocupación</th>
                                         <th>Publicación</th>
@@ -146,6 +147,7 @@
                                 <tbody>
                                     <?php foreach ($detalles as $detalle): ?>
                                     <tr>
+                                        <td><?php echo $detalle->carnet; ?></td>
                                         <td><?php echo htmlspecialchars($detalle->nombres . ' ' . $detalle->apellidoPaterno); ?></td>
                                         <td><?php echo htmlspecialchars($detalle->profesion); ?></td>
                                         <td><?php echo htmlspecialchars($detalle->titulo_publicacion); ?></td>

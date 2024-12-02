@@ -21,7 +21,7 @@
                             <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
                                 <thead>
                                     <tr>
-                                       
+                                        <th>CI</th>
                                         <th>Lector</th>
                                         <th>Publicación</th>
                                         <th>Fecha Inicio</th>
@@ -33,8 +33,8 @@
                                 <tbody>
                                     <?php foreach ($prestamos as $prestamo): ?>
                                     <tr>
-                                     
-                                        <td><?php echo htmlspecialchars($prestamo->nombres . ' ' . $prestamo->apellidoPaterno); ?></td>
+                                        <td><?php echo htmlspecialchars($prestamo->carnet); ?></td> 
+                                        <td><?php echo htmlspecialchars($prestamo->nombres . ' ' . $prestamo->apellidoPaterno. ' ' . $prestamo->apellidoMaterno); ?></td>
                                         <td><?php echo htmlspecialchars($prestamo->titulo); ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
                                         <td><?php echo $prestamo->horaDevolucion ? date('d/m/Y H:i', strtotime($prestamo->horaDevolucion)) : 'N/A'; ?></td>

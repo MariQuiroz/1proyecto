@@ -86,6 +86,8 @@ public function obtener_prestamos_activos() {
         p.estadoPrestamo,
         u.nombres,
         u.apellidoPaterno,
+        u.apellidoMaterno,
+        u.carnet,
         e.nombreEditorial,
         GROUP_CONCAT(DISTINCT pub.titulo) as titulos,
         MIN(ds.observaciones) as observaciones
@@ -107,7 +109,9 @@ public function obtener_prestamos_activos() {
         p.horaInicio, 
         p.estadoPrestamo,
         u.nombres, 
-        u.apellidoPaterno, 
+        u.apellidoPaterno,
+        u.apellidoMaterno, 
+        u.carnet,  
         e.nombreEditorial
     ');
     $this->db->order_by('p.fechaPrestamo', 'DESC');
@@ -134,6 +138,8 @@ public function obtener_prestamos_activos() {
             p.estadoPrestamo,
             u.nombres,
             u.apellidoPaterno,
+            u.apellidoMaterno,
+            u.carnet,
             pub.titulo,
             ds.observaciones,
             e.nombreEditorial,
@@ -752,6 +758,7 @@ public function obtener_prestamos_devueltos() {
         sp.idUsuario,
         u.nombres as nombre_lector,
         u.apellidoPaterno as apellido_lector,
+        u.apellidoMaterno as apellido_lector,
         u.carnet,
         pub.titulo,
         pub.ubicacionFisica,

@@ -50,7 +50,7 @@
                             <table id="prestamos-activos-table" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
-                                       
+                                        <th>CI</th>
                                         <th>Lector</th>
                                         <th>Publicación</th>
                                         <th>Fecha Inicio</th>
@@ -60,8 +60,8 @@
                                 <tbody>
                                     <?php foreach ($prestamos as $prestamo): ?>
                                     <tr>
-                                        
-                                        <td><?php echo htmlspecialchars($prestamo->nombres . ' ' . $prestamo->apellidoPaterno); ?></td>
+                                        <td><?php echo $prestamo->carnet; ?></td>
+                                        <td><?php echo htmlspecialchars($prestamo->nombres . ' ' . $prestamo->apellidoPaterno. ' ' . $prestamo->apellidoMaterno); ?></td>
                                         <td><?php echo htmlspecialchars($prestamo->titulo); ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($prestamo->fechaPrestamo)); ?></td>
                                         <td>
