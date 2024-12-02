@@ -17,6 +17,7 @@
                                 <table id="basic-datatable" class="table dt-responsive nowrap">
                                     <thead>
                                         <tr>
+                                            <th>N°</th>
                                             <th>Publicación</th>
                                             <th>Fecha Solicitud</th>
                                             <th>Estado</th>
@@ -25,8 +26,9 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($solicitudes as $solicitud): ?>
+                                        <?php $contador = 1; foreach ($solicitudes as $solicitud): ?>
                                         <tr>
+                                            <td><?php echo $contador++; ?></td>
                                             <td><?php echo $solicitud->titulo; ?></td>
                                             <td><?php echo date('d/m/Y H:i:s', strtotime($solicitud->fechaSolicitud)); ?></td>
                                             <td>
@@ -131,4 +133,26 @@ function actualizarTiempoRestante() {
 
 // Actualizar cada segundo
 setInterval(actualizarTiempoRestante, 1000);
+</script>
+<script>
+    $(document).ready(function() {
+        // Inicializar DataTable con configuración para mantener la numeración correcta
+        $('#datatable-buttons').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
+            },
+            "buttons": ["copy", "excel", "pdf"],
+            // Asegurar que la numeración se mantenga correcta incluso con la paginación
+            "drawCallback": function(settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart;
+                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = startIndex + i + 1;
+                });
+            }
+        });
+
+        // Inicializar tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
 </script>

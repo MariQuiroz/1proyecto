@@ -82,7 +82,7 @@ a:hover {
 
 /* Inputs focalizados */
 .form-control:focus {
-    border-color: var(--umss-red);
+    border-color: var(--umss-blue:);
     box-shadow: 0 0 0 0.2rem rgba(179, 0, 27, 0.25);
 }
 
