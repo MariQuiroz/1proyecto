@@ -43,6 +43,7 @@
                                 <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
                                     <thead>
                                         <tr>
+                                            <th>N°</th>
                                             <th>CI</th>
                                             <th>Lector</th>
                                             <th>Publicación</th>
@@ -54,8 +55,9 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($prestamos as $prestamo): ?>
+                                        <?php $contador = 1; foreach ($prestamos as $prestamo): ?>
                                             <tr>
+                                                <td><?php echo $contador++; ?></td>
                                                 <td><?php echo htmlspecialchars($prestamo->carnet); ?></td> 
                                                 <td>
                                                     <?php echo htmlspecialchars($prestamo->nombre_lector . ' ' . 
@@ -169,4 +171,27 @@ $(document).ready(function() {
         }, 10000); // Ocultar después de 10 segundos
     }
 });
+
+    $(document).ready(function() {
+        // Inicializar DataTable con configuración para mantener la numeración correcta
+        $('#datatable-buttons').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
+            },
+            "buttons": ["copy", "excel", "pdf"],
+            // Asegurar que la numeración se mantenga correcta incluso con la paginación
+            "drawCallback": function(settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart;
+                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = startIndex + i + 1;
+                });
+            }
+        });
+
+        // Inicializar tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+
 </script>
