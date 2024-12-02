@@ -1,22 +1,22 @@
 
     <!-- Hero Section -->
     <div class="hero-section">
-        <div class="container hero-content text-center">
-            <h1 class="display-4 mb-4 font-weight-bold">Bienvenido a la Hemeroteca UMSS</h1>
-            <p class="lead mb-5">Tu fuente de conocimiento académico en la Facultad de Ciencias Económicas</p>
-            <div class="d-flex justify-content-center gap-3">
-                <a href="<?php echo site_url('usuarios/auto_registro'); ?>" class="btn btn-lg btn-hemeroteca mr-3">
-                    <i class="la la-user-plus mr-2"></i>Registrarse
-                </a>
-                <a href="<?php echo site_url('home/catalogo'); ?>" class="btn btn-lg btn-umss">
-                    <i class="la la-book mr-2"></i>Ver Catálogo
-                </a>
-            </div>
-            <div class="scroll-down text-white">
-                <i class="la la-arrow-down la-2x"></i>
-            </div>
+    <div class="container hero-content text-center">
+        <h1 class="display-4 mb-4 font-weight-bold text-white">Bienvenido a la Hemeroteca UMSS</h1>
+        <p class="lead mb-5">Tu fuente de conocimiento académico en la Facultad de Ciencias Económicas</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="<?php echo site_url('usuarios/auto_registro'); ?>" class="btn btn-lg btn-hemeroteca mr-3">
+                <i class="la la-user-plus mr-2"></i>Registrarse
+            </a>
+            <a href="<?php echo site_url('home/catalogo'); ?>" class="btn btn-lg btn-umss">
+                <i class="la la-book mr-2"></i>Ver Catálogo
+            </a>
+        </div>
+        <div class="scroll-down text-white">
+            <i class="la la-arrow-down la-2x"></i>
         </div>
     </div>
+</div>
 
     <!-- Features Section -->
     <div class="container py-5">

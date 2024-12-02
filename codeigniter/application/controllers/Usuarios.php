@@ -115,7 +115,7 @@ class Usuarios extends CI_Controller {
 
     public function logout() {
         $this->session->sess_destroy();
-        redirect('usuarios/index/1','refresh');
+        redirect('home/index/1','refresh');
     }
 
     public function panel() {

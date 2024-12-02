@@ -16,12 +16,11 @@
             <div class="timeline-steps">
                 <div class="timeline-step">
                     <div class="timeline-content">
-                        <div class="inner-circle">1</div>
-                        <h3 class="mb-3">Registro</h3>
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <h5 class="font-weight-bold">
-                                    <i class="la la-user-plus text-primary mr-2"></i>
+                    <h3 class="mb-3"><span class="badge bg-primary rounded-circle mr-2">1</span> Registro</h3>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="font-weight-bold">
+                        <i class="la la-user-plus text-primary mr-2"></i>
                                     Crear cuenta
                                 </h5>
                                 <ul class="list-unstyled mb-0">
@@ -43,14 +42,11 @@
                     </div>
                 </div>
 
-                <div class="timeline-step">
-                    <div class="timeline-content">
-                        <div class="inner-circle">2</div>
-                        <h3 class="mb-3">Solicitud</h3>
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <h5 class="font-weight-bold">
-                                    <i class="la la-search text-primary mr-2"></i>
+                <h3 class="mb-3"><span class="badge bg-primary rounded-circle mr-2">2</span> Solicitud</h3>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="font-weight-bold">
+                        <i class="la la-user-plus text-primary mr-2"></i>
                                     Buscar y solicitar
                                 </h5>
                                 <ul class="list-unstyled mb-0">
@@ -72,10 +68,9 @@
                     </div>
                 </div>
 
-                <div class="timeline-step">
-                    <div class="timeline-content">
-                        <div class="inner-circle">3</div>
-                        <h3 class="mb-3">Confirmación Presencial</h3>
+
+
+                    <h3 class="mb-3"><span class="badge bg-primary rounded-circle mr-2">3</span> Confirmación Presencial</h3>
                         <div class="card shadow-sm">
                             <div class="card-body">
                                 <h5 class="font-weight-bold">
@@ -105,10 +100,7 @@
                     </div>
                 </div>
 
-                <div class="timeline-step">
-                    <div class="timeline-content">
-                        <div class="inner-circle">4</div>
-                        <h3 class="mb-3">Préstamo y Devolución</h3>
+                <h3 class="mb-3"><span class="badge bg-primary rounded-circle mr-2">4</span> Préstamo y Devolución</h3>
                         <div class="card shadow-sm">
                             <div class="card-body">
                                 <h5 class="font-weight-bold">

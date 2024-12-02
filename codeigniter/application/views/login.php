@@ -110,6 +110,7 @@ a:hover {
 
     <body class="authentication-bg authentication-bg-pattern">
         <div class="account-pages mt-5 mb-5">
+            
             <div class="container">
                 <div class="row justify-content-center">
                     <div class="col-md-8 col-lg-6 col-xl-5">
@@ -177,7 +178,7 @@ a:hover {
                                         <div class="error-message" id="password-error"></div>
                                         
                                     </div>
-
+                                    
                                     <div class="form-group mb-3">
                                         <div class="custom-control custom-checkbox checkbox-info">
                                             <?php echo form_checkbox(['name' => 'remember', 'id' => 'checkbox-signin', 'class' => 'custom-control-input']); ?>
@@ -199,6 +200,9 @@ a:hover {
                             <div class="col-12 text-center">
                                 <p><a href="<?php echo site_url('usuarios/recuperar_contrasena'); ?>" class="text-muted ml-1">¿Olvidó su contraseña?</a></p>
                                 <p class="text-muted">¿No tiene una cuenta? <a href="<?php echo site_url('usuarios/auto_registro'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">Regístrese</b></a></p>
+                                <div class="col-12 text-center">
+                                        <p class="text-muted">Volver a la <a href="<?php echo site_url('home/index'); ?>" class="text-muted ml-1"><b class="font-weight-semibold">página de inicio</b></a></p>
+                                    </div>
                             </div> <!-- end col -->
                         </div>
                         <!-- end row -->
