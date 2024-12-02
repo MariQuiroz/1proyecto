@@ -22,9 +22,8 @@
                                 <table id="basic-datatable" class="table dt-responsive nowrap">
                                     <thead>
                                         <tr>
-
-                                            <th>Nombre Usuario</th>
-                                            <th>Carnet</th>
+                                            <th>CI</th>
+                                            <th>Lector</th>
                                             <th>Título Publicación</th>
                                             <th>Ubicación</th>
                                             <th>Fecha Solicitud</th>
@@ -41,15 +40,15 @@
                                             $solicitud_activa = ($tiempo_restante > 0 && $solicitud->estadoSolicitud == ESTADO_SOLICITUD_PENDIENTE);
                                         ?>
                                         <tr>
- 
-                                            
-                                            <td>
-                                                <strong><?php echo htmlspecialchars($solicitud->nombres . ' ' . $solicitud->apellidoPaterno); ?></strong>
-                                            </td>
-
-                                            <td>
+                                        <td>
                                                 <?php echo htmlspecialchars($solicitud->carnet); ?>
                                             </td>
+
+                                            
+                                            <td>
+                                                <strong><?php echo htmlspecialchars($solicitud->nombres . ' ' . $solicitud->apellidoPaterno. ' ' . $solicitud->apellidoMaterno); ?></strong>
+                                            </td>
+
 
                                             <td>
                                                 <?php echo htmlspecialchars($solicitud->titulo); ?>

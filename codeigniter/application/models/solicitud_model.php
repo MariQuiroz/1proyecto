@@ -136,6 +136,7 @@ class Solicitud_model extends CI_Model {
             sp.idUsuario,
             u.nombres,
             u.apellidoPaterno,
+            u.apellidoMaterno,
             u.carnet,                    
             ds.idPublicacion,
             ds.fechaExpiracionReserva,   
@@ -417,6 +418,8 @@ class Solicitud_model extends CI_Model {
             SP.estadoSolicitud,
             U.nombres,
             U.apellidoPaterno,
+            U.apellidoMaterno,
+            U.carnet,
             GROUP_CONCAT(P.titulo SEPARATOR ", ") as titulo
         ');
         $this->db->from('SOLICITUD_PRESTAMO SP');
@@ -427,7 +430,7 @@ class Solicitud_model extends CI_Model {
             'SP.estadoSolicitud' => $estado,
             'SP.estado' => 1
         ]);
-        $this->db->group_by('SP.idSolicitud, SP.fechaSolicitud, SP.fechaAprobacionRechazo, SP.estadoSolicitud, U.nombres, U.apellidoPaterno');
+        $this->db->group_by('SP.idSolicitud, SP.fechaSolicitud, SP.fechaAprobacionRechazo, SP.estadoSolicitud, U.nombres,U.carnet, U.apellidoPaterno,U.apellidoMaterno');
         
         return $this->db->get()->result();
     }
@@ -440,6 +443,7 @@ class Solicitud_model extends CI_Model {
             SP.fechaActualizacion,
             U.nombres,
             U.apellidoPaterno,
+            U.apellidoMaterno,
             U.carnet, 
             GROUP_CONCAT(P.titulo SEPARATOR ", ") as titulo
         ');
@@ -455,7 +459,8 @@ class Solicitud_model extends CI_Model {
             SP.fechaActualizacion, 
             U.nombres, 
             U.apellidoPaterno,
-             U.carnet
+            U.apellidoMaterno,
+            U.carnet
         ');
         $this->db->order_by('SP.fechaSolicitud', 'DESC');
         

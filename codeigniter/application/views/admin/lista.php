@@ -60,7 +60,9 @@
                                 <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
                                     <thead>
                                         <tr>
-                                            <th scope="col">Nombre</th>
+
+                                            <th scope="col">CI</th>
+                                            <th scope="col">Nombre Completo</th>
                                             <th scope="col">Email</th>
                                             <th scope="col">Rol</th>
                                             <th scope="col">Ocupación</th>
@@ -69,8 +71,11 @@
                                     </thead>
                                     <tbody>
                                         <?php foreach ($usuarios as $usuario): ?>
+
                                             <tr>
-                                                <td><?php echo htmlspecialchars($usuario->nombres . ' ' . $usuario->apellidoPaterno); ?></td>
+
+                                                <td><?php echo htmlspecialchars($usuario->carnet); ?></td>
+                                                <td><?php echo htmlspecialchars($usuario->nombres . ' ' . $usuario->apellidoPaterno. ' ' . $usuario->apellidoMaterno); ?></td>
                                                 <td><?php echo htmlspecialchars($usuario->email); ?></td>
                                                 <td>
                                                     <span class="badge badge-<?php echo $usuario->rol == 'administrador' ? 'danger' : ($usuario->rol == 'encargado' ? 'warning' : 'info'); ?>">

@@ -34,7 +34,7 @@
                                     <?php foreach ($solicitudes as $solicitud): ?>
                                     <tr>
                                         <td><?php echo $solicitud->carnet; ?></td>
-                                        <td><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno; ?></td>
+                                        <td><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno. ' ' . $solicitud->apellidoMaterno; ?></td>
                                         <td><?php echo $solicitud->titulo; ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($solicitud->fechaSolicitud)); ?></td>
                                         <td>

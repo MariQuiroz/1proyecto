@@ -39,7 +39,7 @@
                                             <th scope="col">Nombres</th>
                                             <th scope="col">Apellido Paterno</th>
                                             <th scope="col">Apellido Materno</th>
-                                            <th scope="col">Carnet</th>
+                                            <th scope="col">CI</th>
                                             <th scope="col">Tipo Usuario</th>
                                             <th scope="col">Acciones</th>
                                         </tr>

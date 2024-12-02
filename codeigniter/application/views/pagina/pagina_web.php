@@ -5,10 +5,10 @@
             <h1 class="display-4 mb-4 font-weight-bold">Bienvenido a la Hemeroteca UMSS</h1>
             <p class="lead mb-5">Tu fuente de conocimiento académico en la Facultad de Ciencias Económicas</p>
             <div class="d-flex justify-content-center gap-3">
-                <a href="<?php echo site_url('usuarios/registro'); ?>" class="btn btn-lg btn-hemeroteca mr-3">
+                <a href="<?php echo site_url('usuarios/auto_registro'); ?>" class="btn btn-lg btn-hemeroteca mr-3">
                     <i class="la la-user-plus mr-2"></i>Registrarse
                 </a>
-                <a href="<?php echo site_url('catalogo'); ?>" class="btn btn-lg btn-umss">
+                <a href="<?php echo site_url('home/catalogo'); ?>" class="btn btn-lg btn-umss">
                     <i class="la la-book mr-2"></i>Ver Catálogo
                 </a>
             </div>
@@ -25,33 +25,25 @@
             <p class="text-muted">Descubre todo lo que nuestra hemeroteca tiene para ofrecerte</p>
         </div>
         <div class="row">
-            <div class="col-md-4 mb-4">
+            <div class="col-md-6 mb-4">
                 <div class="feature-card h-100 shadow-sm p-4">
                     <div class="feature-icon">
-                        <i class="la la-book la-2x text-primary"></i>
+                        <i class="la la-search la-2x text-primary"></i>
                     </div>
                     <h5 class="text-center font-weight-bold">Amplio Catálogo</h5>
                     <p class="text-center text-muted">Accede a nuestra extensa colección de publicaciones académicas y científicas.</p>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
+            <div class="col-md-6 mb-4">
                 <div class="feature-card h-100 shadow-sm p-4">
                     <div class="feature-icon">
-                        <i class="la la-clock la-2x text-primary"></i>
+                        <i class="la la-book la-2x text-primary"></i>
                     </div>
                     <h5 class="text-center font-weight-bold">Préstamos Eficientes</h5>
                     <p class="text-center text-muted">Proceso simple con confirmación en 2 horas presentando tu carnet de identidad.</p>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="feature-card h-100 shadow-sm p-4">
-                    <div class="feature-icon">
-                        <i class="la la-bell la-2x text-primary"></i>
-                    </div>
-                    <h5 class="text-center font-weight-bold">Notificaciones</h5>
-                    <p class="text-center text-muted">Recibe alertas sobre el estado de tus solicitudes y disponibilidad.</p>
-                </div>
-            </div>
+           
         </div>
     </div>
 

@@ -159,7 +159,9 @@ class Usuario_model extends CI_Model {
         $this->db->select('
             u.idUsuario,
             u.nombres,
+            u.carnet,
             u.apellidoPaterno,
+            u.apellidoMaterno,
             u.email,
             u.rol,
             u.profesion,

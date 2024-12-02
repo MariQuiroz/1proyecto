@@ -147,7 +147,7 @@
     <div class="alert alert-info" role="alert">
         <i class="fe-info-circle mr-2"></i>
         Para solicitar préstamos de publicaciones, debe iniciar sesión primero. 
-        <a href="<?php echo site_url('usuarios/login'); ?>" class="alert-link">Iniciar sesión aquí</a>
+        <a href="<?php echo site_url('usuarios/index'); ?>" class="alert-link">Iniciar sesión aquí</a>
     </div>
 </div>
 </div>

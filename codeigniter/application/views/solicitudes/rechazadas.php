@@ -21,8 +21,8 @@
                             <table id="basic-datatable" class="table dt-responsive nowrap">
                                 <thead>
                                     <tr>
-                                      
-                                        <th>Usuario</th>
+                                        <th>CI</th>
+                                        <th>Lector</th>
                                         <th>Publicación</th>
                                         <th>Fecha Solicitud</th>
                                         <th>Fecha Rechazo</th>
@@ -32,8 +32,8 @@
                                 <tbody>
                                     <?php foreach ($solicitudes as $solicitud): ?>
                                     <tr>
-                                      
-                                        <td><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno; ?></td>
+                                        <td><?php echo htmlspecialchars($solicitud->carnet); ?></td>
+                                        <td><?php echo $solicitud->nombres . ' ' . $solicitud->apellidoPaterno. ' ' . $solicitud->apellidoMaterno; ?></td>
                                         <td><?php echo $solicitud->titulo; ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($solicitud->fechaSolicitud)); ?></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($solicitud->fechaAprobacionRechazo)); ?></td>
