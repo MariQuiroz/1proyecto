@@ -1,7 +1,6 @@
 <!-- ============================================================== -->
 <!-- Start Page Content here -->
 <!-- ============================================================== -->
-
 <div class="content-page">
     <div class="content">
         <!-- Start Content-->
@@ -27,20 +26,25 @@
                             <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
                                 <thead>
                                     <tr>
+                                        <th>N°</th>
                                         <th>Nombre del Tipo</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($tipos as $tipo): ?>
+                                    <?php 
+                                    $contador = 1;
+                                    foreach ($tipos as $tipo): 
+                                    ?>
                                     <tr>
+                                        <td><?php echo $contador++; ?></td>
                                         <td><?php echo $tipo->nombreTipo; ?></td>
                                         <td>
                                             <a href="<?php echo site_url('tipos/editar/'.$tipo->idTipo); ?>" class="btn btn-primary btn-sm" data-toggle="tooltip" title="Editar">
                                                 <i class="mdi mdi-pencil"></i>
                                             </a>
                                             <a href="<?php echo site_url('tipos/eliminar/'.$tipo->idTipo); ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este tipo?');" data-toggle="tooltip" title="Deshabilitar">
-                                                <i class="fe-trash-2"></i> 
+                                                <i class="fe-trash-2"></i>
                                             </a>
                                         </td>
                                     </tr>
@@ -61,12 +65,20 @@
 
 <script>
     $(document).ready(function() {
-        // Inicializar DataTable
+        // Inicializar DataTable con configuración para mantener la numeración correcta
         $('#datatable-buttons').DataTable({
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
             },
-            "buttons": ["copy", "excel", "pdf"]
+            "buttons": ["copy", "excel", "pdf"],
+            // Asegurar que la numeración se mantenga correcta incluso con la paginación
+            "drawCallback": function(settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart;
+                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = startIndex + i + 1;
+                });
+            }
         });
 
         // Inicializar tooltips
