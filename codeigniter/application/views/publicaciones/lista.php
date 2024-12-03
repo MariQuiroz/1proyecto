@@ -174,7 +174,7 @@
                                             </td>
                                             <td>
                                                 <a href="<?php echo site_url('publicaciones/ver/'.$publicacion->idPublicacion); ?>" 
-                                                   class="btn btn-info btn-sm" 
+                                                   class="btn btn-info btn-sm me-2 mb-2" 
                                                    title="Ver detalles">
                                                     <i class="mdi mdi-eye"></i>
                                                 </a>
@@ -182,19 +182,19 @@
                                                 <?php if ($this->session->userdata('rol') == 'administrador'): ?>
                                                     
                                                     <a href="<?php echo site_url('publicaciones/modificar/'.$publicacion->idPublicacion); ?>" 
-                                                       class="btn btn-primary btn-sm" 
+                                                       class="btn btn-primary btn-sm me-2 mb-2" 
                                                        title="Editar">
                                                         <i class="mdi mdi-pencil"></i>
                                                     </a>
 
                                                     <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
-                                                        <div class="btn-group">
+                                                       
                                                                 <a href="<?php echo site_url('publicaciones/eliminar/'.$publicacion->idPublicacion); ?>"
-                                                                class="btn btn-danger btn-sm" 
+                                                                class="btn btn-danger btn-sm me-2 mb-2" 
                                                                 onclick="return confirm('¿Está seguro de eliminar esta publicación?');">
                                                                     <i class="fe-trash-2"></i>
                                                                 </a>
-                                                        </div>
+                                                
                                                     <?php endif; ?>
 
                                                 <?php endif; ?>
@@ -202,7 +202,7 @@
     <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
         <!-- Solicitar préstamo -->
         <a href="<?php echo site_url('solicitudes/crear/'.$publicacion->idPublicacion); ?>"
-            class="btn btn-success btn-sm"
+            class="btn btn-success btn-sm me-2 mb-2"
             title="Solicitar préstamo">
             <i class="mdi mdi-book-open-page-variant"></i> Solicitar
         </a>
@@ -210,12 +210,12 @@
                  intval($publicacion->estado) === ESTADO_PUBLICACION_RESERVADA): ?>
         <?php if ($publicacion->es_mi_consulta == 1): ?>
             <!-- Publicación en consulta por el usuario actual -->
-            <button class="btn btn-info btn-sm" disabled>
+            <button class="btn btn-info btn-sm me-2 mb-2" disabled>
                 <i class="mdi mdi-book-account"></i> En tu poder (Consulta)
             </button>
         <?php elseif ($publicacion->es_mi_reserva == 1): ?>
             <!-- Publicación reservada por el usuario actual -->
-            <button class="btn btn-primary btn-sm" disabled>
+            <button class="btn btn-primary btn-sm me-2 mb-2" disabled>
                 <i class="mdi mdi-bookmark"></i> Reservada por ti
             </button>
         <?php else: ?>
@@ -229,17 +229,17 @@
             <?php if (!$interes_existente || $interes_existente->estado == ESTADO_INTERES_NOTIFICADO): ?>
                 <!-- Notificar interés -->
                 <a href="<?php echo site_url('notificaciones/agregar_interes_simple/'.$publicacion->idPublicacion); ?>"
-                    class="btn btn-warning btn-sm">
+                    class="btn btn-warning btn-sm me-2 mb-2">
                     <i class="mdi mdi-bell"></i> Notificarme cuando esté disponible
                 </a>
             <?php elseif ($interes_existente->estado == ESTADO_INTERES_SOLICITADO): ?>
                 <!-- Cancelar interés -->
-                <div class="btn-group">
+                <div class="btn-group me-2 mb-2 me-2 mb-2">
                     <button class="btn btn-secondary btn-sm" disabled>
                         <i class="mdi mdi-bell-check"></i> Notificación Activa
                     </button>
                     <a href="<?php echo site_url('notificaciones/cancelar_interes/'.$publicacion->idPublicacion); ?>"
-                        class="btn btn-secondary btn-sm"
+                        class="btn btn-secondary btn-sm me-2 mb-2"
                         title="Cancelar notificación">
                         <i class="mdi mdi-bell-off"></i>
                     </a>
