@@ -74,9 +74,11 @@
                                 </div>
                             <?php endif; ?>
 
-                            <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
+                            <div class="table-responsive">
+                            <table class="table table-striped" id="tabla-detalle">
                                 <thead>
                                     <tr>
+                                        <th>N°</th>
                                         <th>Portada</th>
                                         <th>Título</th>
                                         <th>Editorial</th>
@@ -87,12 +89,13 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($publicaciones as $publicacion): 
+                                    <?php $contador = 1; foreach ($publicaciones as $publicacion): 
                                         $ya_seleccionada = in_array($publicacion->idPublicacion, $publicaciones_seleccionadas);
                                         
                                         if (!($this->session->userdata('rol') == 'lector' && $ya_seleccionada)):
                                     ?>
                                         <tr>
+                                        <td><?php echo $contador++; ?></td>
                                             <td>
                                                 <?php if (!empty($publicacion->portada) && file_exists(FCPATH . 'uploads/portadas/' . $publicacion->portada)): ?>
                                                     <img src="<?php echo base_url('uploads/portadas/' . $publicacion->portada); ?>" 
@@ -253,6 +256,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -297,6 +301,38 @@ $(document).ready(function() {
                 text: 'Debes seleccionar al menos un método de notificación'
             });
         }
+    });
+});
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    $('#tabla-detalle').DataTable({
+        "language": {
+            "sProcessing":     "Procesando...",
+            "sLengthMenu":     "Mostrar _MENU_ registros",
+            "sZeroRecords":    "No se encontraron resultados",
+            "sEmptyTable":     "Ningún dato disponible en esta tabla",
+            "sInfo":           "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "sInfoEmpty":      "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "sInfoFiltered":   "(filtrado de un total de _MAX_ registros)",
+            "sInfoPostFix":    "",
+            "sSearch":         "Buscar:",
+            "sUrl":           "",
+            "sInfoThousands":  ",",
+            "sLoadingRecords": "Cargando...",
+            "oPaginate": {
+                "sFirst":    "Primero",
+                "sLast":     "Último",
+                "sNext":     "Siguiente",
+                "sPrevious": "Anterior"
+            },
+            "oAria": {
+                "sSortAscending":  ": Activar para ordenar la columna de manera ascendente",
+                "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+            }
+        },
+        "order": [[3, "desc"]],
+        "pageLength": 10
     });
 });
 </script>
