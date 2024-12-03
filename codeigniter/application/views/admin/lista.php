@@ -51,7 +51,7 @@
                             </div>
 
                             <div class="table-responsive">
-                                <table id="datatable-buttons" class="table table-striped dt-responsive nowrap">
+                            <table class="table table-striped" id="tabla-detalle">
                                     <thead>
                                         <tr>
                                             <th scope="col">N°</th>
@@ -102,24 +102,34 @@
     </div>
 
     <script>
-    $(document).ready(function() {
-        // Inicializar DataTable con configuración para mantener la numeración correcta
-        $('#datatable-buttons').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Spanish.json"
+  document.addEventListener('DOMContentLoaded', function() {
+    $('#tabla-detalle').DataTable({
+        "language": {
+            "sProcessing":     "Procesando...",
+            "sLengthMenu":     "Mostrar _MENU_ registros",
+            "sZeroRecords":    "No se encontraron resultados",
+            "sEmptyTable":     "Ningún dato disponible en esta tabla",
+            "sInfo":           "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "sInfoEmpty":      "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "sInfoFiltered":   "(filtrado de un total de _MAX_ registros)",
+            "sInfoPostFix":    "",
+            "sSearch":         "Buscar:",
+            "sUrl":           "",
+            "sInfoThousands":  ",",
+            "sLoadingRecords": "Cargando...",
+            "oPaginate": {
+                "sFirst":    "Primero",
+                "sLast":     "Último",
+                "sNext":     "Siguiente",
+                "sPrevious": "Anterior"
             },
-            "buttons": ["copy", "excel", "pdf"],
-            // Asegurar que la numeración se mantenga correcta incluso con la paginación
-            "drawCallback": function(settings) {
-                var api = this.api();
-                var startIndex = api.context[0]._iDisplayStart;
-                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
-                    cell.innerHTML = startIndex + i + 1;
-                });
+            "oAria": {
+                "sSortAscending":  ": Activar para ordenar la columna de manera ascendente",
+                "sSortDescending": ": Activar para ordenar la columna de manera descendente"
             }
-        });
-
-        // Inicializar tooltips
-        $('[data-toggle="tooltip"]').tooltip();
+        },
+        "order": [[3, "desc"]],
+        "pageLength": 10
     });
+});
 </script>
