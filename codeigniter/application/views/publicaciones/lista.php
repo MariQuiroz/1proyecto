@@ -187,9 +187,9 @@
                                                     <?php if (intval($publicacion->estado) === ESTADO_PUBLICACION_DISPONIBLE): ?>
                                                         <div class="btn-group">
                                                                 <a href="<?php echo site_url('publicaciones/eliminar/'.$publicacion->idPublicacion); ?>"
-                                                                class="dropdown-item text-danger" 
+                                                                class="btn btn-danger btn-sm" 
                                                                 onclick="return confirm('¿Está seguro de eliminar esta publicación?');">
-                                                                    <i class="mdi mdi-delete"></i> Eliminar
+                                                                    <i class="fe-trash-2"></i>
                                                                 </a>
                                                         </div>
                                                     <?php endif; ?>
