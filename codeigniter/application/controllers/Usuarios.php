@@ -226,9 +226,7 @@ class Usuarios extends CI_Controller {
             'max_length' => 'El apellido paterno no puede exceder los 25 caracteres.'
         ]);
     
-        $this->form_validation->set_rules('apellidoMaterno', 'Apellido Materno', 'trim|permit_empty|callback_validar_nombre_opcional', [
-            'validar_nombre_opcional' => 'El apellido materno solo puede contener letras y espacios'
-        ]);
+        $this->form_validation->set_rules('apellidoMaterno', 'Apellido Materno', 'trim|callback_validar_nombre_opcional');
 
     // Validación de carnet
     $this->form_validation->set_rules('carnet', 'Carnet', 'required|trim|callback__validar_carnet|is_unique[USUARIO.carnet]', [
@@ -352,11 +350,22 @@ public function validar_nombre($str) {
     }
     return TRUE;
 }
+
+
 public function validar_nombre_opcional($str) {
+    // Si está vacío, es válido
     if (empty($str)) {
-        return TRUE; // Campo vacío es válido para campos opcionales
+        return TRUE;
     }
-    return $this->validar_nombre($str);
+    
+    // Si no está vacío, validar que solo contenga letras y espacios
+    if (!preg_match('/^[A-ZÁÉÍÓÚÜÑa-záéíóúüñ\s]+$/', $str)) {
+        $this->form_validation->set_message('validar_nombre_opcional', 
+            'El {field} solo puede contener letras y espacios.');
+        return FALSE;
+    }
+    
+    return TRUE;
 }
 
 public function validar_edad($fecha) {

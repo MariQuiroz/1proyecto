@@ -133,35 +133,34 @@
                                 </div>
 
                                 <div class="text-center border-top pt-4">
-                                    <div class="btn-group btn-group-lg">
-                                        <?php if (count($publicaciones) < 5): ?>
-                                            <a href="<?php echo site_url('publicaciones'); ?>" class="btn btn-info">
-                                                <i class="mdi mdi-plus mr-1"></i>Añadir Más Publicaciones
-                                            </a>
-                                        <?php endif; ?>
+    <div class="btn-group-lg d-flex justify-content-center gap-2"> <!-- Cambiado de btn-group a d-flex -->
+        <?php if (count($publicaciones) < 5): ?>
+            <a href="<?php echo site_url('publicaciones'); ?>" class="btn btn-info mx-2">
+                <i class="mdi mdi-plus mr-1"></i>Añadir Más Publicaciones
+            </a>
+        <?php endif; ?>
 
-                                        <!-- Formulario de confirmación -->
-                                        <form action="<?php echo site_url('solicitudes/confirmar'); ?>" method="POST" style="display: inline;">
-                                            <?php if (isset($this->security)): ?>
-                                                <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" 
-                                                       value="<?php echo $this->security->get_csrf_hash(); ?>">
-                                            <?php endif; ?>
-                                            
-                                            <button type="submit" 
-                                                    class="btn btn-primary"
-                                                    onclick="return confirm('¿Está seguro de confirmar la solicitud? Una vez confirmada, tendrá 2 horas para presentarse en la hemeroteca.')">
-                                                <i class="mdi mdi-check-circle mr-1"></i>Confirmar Solicitud
-                                            </button>
-                                        </form>
+        <!-- Formulario de confirmación -->
+        <form action="<?php echo site_url('solicitudes/confirmar'); ?>" method="POST" class="d-inline mx-2">
+            <?php if (isset($this->security)): ?>
+                <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" 
+                       value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <?php endif; ?>
+            
+            <button type="submit" 
+                    class="btn btn-primary"
+                    onclick="return confirm('¿Está seguro de confirmar la solicitud? Una vez confirmada, tendrá 2 horas para presentarse en la hemeroteca.')">
+                <i class="mdi mdi-check-circle mr-1"></i>Confirmar Solicitud
+            </button>
+        </form>
 
-                                        <a href="<?php echo site_url('solicitudes/cancelar'); ?>" 
-                                           class="btn btn-danger"
-                                           onclick="return confirm('¿Está seguro de cancelar? Se eliminarán todas las publicaciones seleccionadas.');">
-                                            <i class="mdi mdi-close-circle mr-1"></i>Cancelar Selección
-                                        </a>
-                                    </div>
-                                </div>
-
+        <a href="<?php echo site_url('solicitudes/cancelar'); ?>" 
+           class="btn btn-danger mx-2"
+           onclick="return confirm('¿Está seguro de cancelar? Se eliminarán todas las publicaciones seleccionadas.');">
+            <i class="mdi mdi-close-circle mr-1"></i>Cancelar Selección
+        </a>
+    </div>
+</div>
                             <?php else: ?>
                                 <div class="alert alert-warning">
                                     <div class="d-flex align-items-center">
